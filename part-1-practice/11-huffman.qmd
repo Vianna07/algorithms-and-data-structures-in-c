@@ -1,0 +1,319 @@
+---
+# 11-huffman.qmd — Desafio final: compactador de Huffman (projeto integrador).
+---
+
+# [O desafio final: compactando com Huffman]{.typing-effect}
+
+Chegamos ao topo. Este capítulo não apresenta uma estrutura nova — ele **junta
+quase todas**. Vamos construir um compactador de arquivos de verdade, com o
+algoritmo de **Huffman**, e no caminho usar o histograma (arrays), o **heap do
+capítulo 10**, uma **árvore** binária, recursão para gerar códigos e a
+manipulação de **bits** que vem lá dos fundamentos. É o livro inteiro trabalhando
+junto para resolver um problema real: **gastar menos espaço**.
+
+A ideia central é desconfiar do óbvio. Um arquivo de texto gasta **8 bits fixos**
+para cada byte — o `'a'` e o `'z'` custam o mesmo, embora o `'a'` apareça muito
+mais. E se déssemos códigos **curtos** aos bytes frequentes e **longos** aos
+raros? Em média, o arquivo encolhe. Isso é Huffman.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* uma tabela de
+**código Morse** ao lado de uma tabela Huffman. No Morse, `E` é um ponto, `T` um
+traço (curtos, porque são comuns); `Q` e `Z` são longos. Setas mostram "frequente
+→ curto, raro → longo". Estilo lúdico à mão, paleta quente. Arte a comissionar —
+substituir este box.
+:::
+
+## A analogia: o código Morse
+
+O código Morse já fazia isso em 1840. As letras mais comuns do inglês recebem os
+sinais mais curtos: `E` é um único ponto (`·`), `T` um único traço (`–`). As raras
+ficam longas: `Q` é `– – · –`. Quem projetou o Morse contou (na mão) a frequência
+das letras e deu códigos curtos às campeãs. Huffman faz exatamente isso, mas de
+forma **automática e comprovadamente ótima** — nenhum outro código de tamanho
+variável que respeite as frequências bate o de Huffman.
+
+## O problema dos prefixos
+
+Códigos de tamanho variável têm uma armadilha. Se `a = 0` e `b = 01`, ao ler
+`0...` o decodificador não sabe se já viu um `a` ou se é o começo de um `b`. A
+solução é usar um **código livre de prefixo**: nenhum código pode ser o **começo**
+de outro. Aí a leitura é sempre sem ambiguidade.
+
+E como garantir isso? Com uma **árvore**. Se cada símbolo mora numa **folha**, e o
+código é o caminho da raiz até ela (0 = esquerda, 1 = direita), então nenhum
+código é prefixo de outro — porque nenhuma folha está no caminho de outra. A
+árvore *é* o código. Todo o algoritmo gira em torno de construir a melhor árvore
+possível.
+
+O pipeline tem cinco etapas, e a @fig-pipeline mostra como elas se encadeiam:
+
+```{dot}
+//| label: fig-pipeline
+//| fig-width: 5.2
+//| fig-height: 0.5
+//| fig-cap: "As cinco etapas do compactador. Cada uma reaproveita uma estrutura do livro — o destaque é a árvore montada com o heap do capítulo 10."
+digraph pipe {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="filled,rounded", fillcolor="#FBE3D3", color="#F5793B",
+        fontname="Inter", fontsize=9.5, margin="0.10,0.06"];
+  edge [color="#264653", arrowsize=0.6];
+  h [label="(a) histograma\nde frequências"];
+  t [label="(b) árvore de\nHuffman (heap)"];
+  c [label="(c) dicionário\nde códigos"];
+  b [label="(d) bits\nempacotados"];
+  o [label="(e) arquivo\ncomprimido"];
+  h -> t -> c -> b -> o;
+}
+```
+
+## Etapa (a): o histograma
+
+Tudo começa contando. Percorremos os dados uma vez e contamos quantas vezes cada
+um dos 256 valores de byte aparece — um array de 256 contadores:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="histogram"}
+```
+
+## Etapa (b): a árvore de Huffman
+
+Agora a sacada genial. Pegamos os **dois símbolos menos frequentes** e os juntamos
+sob um nó-pai, cuja frequência é a soma dos dois. Esse pai volta para o monte, e
+repetimos: sempre unindo os dois nós de menor frequência. Os raros, unidos cedo,
+afundam para longe da raiz (códigos longos); os frequentes ficam rasos (códigos
+curtos). "Retirar sempre os dois menores" é, literalmente, dois `pop` da **fila de
+prioridade** — o **heap do capítulo 10**, agora guardando nós de árvore:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="buildtree"}
+```
+
+A @fig-huffman-tree mostra a árvore para a palavra **`abracadabra`** (a:5, b:2,
+r:2, c:1, d:1). Siga os caminhos: o `a`, frequentíssimo, fica a um passo da raiz
+(código `0`); os raros `c` e `d` ficam a três passos (`100`, `101`).
+
+```{dot}
+//| label: fig-huffman-tree
+//| fig-width: 3.2
+//| fig-height: 3.3
+//| fig-cap: "Árvore de Huffman para `abracadabra`. Círculos escuros = nós internos (com a frequência somada); caixas laranja = folhas (símbolo:frequência). Lendo 0 à esquerda e 1 à direita: a=`0`, b=`110`, r=`111`, c=`100`, d=`101`."
+digraph huff {
+  bgcolor="transparent";
+  ordering=out;  // mantém o filho "0" à esquerda e o "1" à direita
+  node [fontname="Inter", fontsize=10];
+  edge [fontname="Inter", fontsize=10, color="#264653", arrowsize=0.6,
+        fontcolor="#2A9D8F"];
+
+  root [shape=circle, style=filled, fillcolor="#264653", fontcolor="white",
+        label="11", width=0.42, fixedsize=true];
+  z6 [shape=circle, style=filled, fillcolor="#264653", fontcolor="white",
+      label="6", width=0.42, fixedsize=true];
+  x2 [shape=circle, style=filled, fillcolor="#264653", fontcolor="white",
+      label="2", width=0.42, fixedsize=true];
+  y4 [shape=circle, style=filled, fillcolor="#264653", fontcolor="white",
+      label="4", width=0.42, fixedsize=true];
+  la [shape=box, style=filled, fillcolor="#F5793B", fontcolor="white", label="a:5"];
+  lc [shape=box, style=filled, fillcolor="#F5793B", fontcolor="white", label="c:1"];
+  ld [shape=box, style=filled, fillcolor="#F5793B", fontcolor="white", label="d:1"];
+  lb [shape=box, style=filled, fillcolor="#F5793B", fontcolor="white", label="b:2"];
+  lr [shape=box, style=filled, fillcolor="#F5793B", fontcolor="white", label="r:2"];
+
+  root -> la [label="0"];
+  root -> z6 [label="1"];
+  z6 -> x2 [label="0"];
+  z6 -> y4 [label="1"];
+  x2 -> lc [label="0"];
+  x2 -> ld [label="1"];
+  y4 -> lb [label="0"];
+  y4 -> lr [label="1"];
+}
+```
+
+## Etapa (c): o dicionário de códigos
+
+Com a árvore pronta, geramos a tabela de códigos descendo recursivamente: a cada
+passo à esquerda anexamos um `0`, à direita um `1`, e ao chegar numa folha
+registramos o código acumulado para aquele byte.
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="gencodes"}
+```
+
+## Etapa (d): a manipulação de bits
+
+Aqui está a parte que mais assusta e mais ensina. Os códigos têm tamanhos
+**quaisquer** — 1 bit, 3 bits, 7 bits — mas a memória só endereça **bytes** (8
+bits). Precisamos juntar bits soltos num acumulador e, a cada 8, cuspir um byte —
+e fazer o inverso na leitura. É a essência de qualquer formato binário:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="bitwriter"}
+```
+
+A leitura é o espelho: um deslocamento e uma máscara extraem o bit na posição
+certa do byte atual, devolvendo `-1` quando os dados terminam.
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="bitreader"}
+```
+
+## Etapa (e): juntando tudo
+
+Falta um detalhe crucial: o descompactador precisa da **mesma árvore** para
+decodificar. Em vez de recalcular frequências (e arriscar uma árvore diferente),
+**gravamos a árvore no início** do arquivo, em pré-ordem — um bit por nó:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="serialize"}
+```
+
+Com isso, comprimir é: montar a árvore, gerar os códigos, **escrever a árvore** no
+cabeçalho e então **escrever o código** de cada byte do original, bit a bit:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="compress"}
+```
+
+E descomprimir é o caminho de volta: **reconstruir a árvore** do cabeçalho e, para
+cada byte do original, **descer a árvore** seguindo os bits lidos até cair numa
+folha — que revela o byte:
+
+```{.c include="src/ch11-huffman/huffman.c" snippet="decompress"}
+```
+
+## Vendo funcionar
+
+O programa comprime um parágrafo, descomprime de volta e confere se o resultado é
+**idêntico** ao original (o teste de *round-trip*, que prova que não perdemos nada):
+
+```{.c include="src/ch11-huffman/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+original:   361 bytes
+comprimido: 221 bytes (inclui a arvore no cabecalho)
+taxa:       61.2% do original
+round-trip: OK (identico ao original)
+```
+
+::: {.callout-tip title="Complexidade (Big-O)"}
+Para $n$ bytes e $k$ símbolos distintos ($k \le 256$): o histograma é $O(n)$;
+montar a árvore com o heap é $O(k \log k)$; gerar os códigos é $O(k)$; e codificar
+é $O(n)$. No total, **$O(n + k \log k)$** — linear no tamanho do arquivo, já que
+$k$ é limitado a 256. A taxa de 61% acima é modesta porque o texto é curto e o
+cabeçalho da árvore pesa; **quanto maior e mais repetitivo o arquivo, melhor a
+taxa** — o cabeçalho se dilui e a estatística fica mais clara.
+:::
+
+## Veja acontecer
+
+::: {.content-visible when-format="html"}
+**Digite e veja os códigos.** Escreva um texto e observe Huffman dar códigos
+**curtos** aos caracteres frequentes e **longos** aos raros — e quanto isso
+economiza sobre os 8 bits fixos por caractere (só o *payload*, sem o cabeçalho):
+
+```{ojs}
+//| echo: false
+viewof txt = Inputs.text({ value: "abracadabra", label: "Texto", width: 300 })
+```
+
+```{ojs}
+//| echo: false
+{
+  const s = txt.length ? txt : "abracadabra";
+  const freq = new Map();
+  for (const ch of s) freq.set(ch, (freq.get(ch) || 0) + 1);
+
+  let nodes = [...freq.entries()].map(([ch, f]) => ({ ch, f, l: null, r: null }));
+  if (nodes.length === 1) nodes.push({ ch: null, f: 0, l: null, r: null });
+  while (nodes.length > 1) {
+    nodes.sort((a, b) => a.f - b.f);
+    const a = nodes.shift(), b = nodes.shift();
+    nodes.push({ ch: null, f: a.f + b.f, l: a, r: b });
+  }
+  const codes = new Map();
+  (function walk(node, code) {
+    if (node.l === null && node.r === null) { codes.set(node.ch, code || "0"); return; }
+    walk(node.l, code + "0");
+    walk(node.r, code + "1");
+  })(nodes[0], "");
+
+  const rows = [...freq.entries()].sort((a, b) => b[1] - a[1]).map(([ch, f]) => {
+    const disp = ch === " " ? "␣" : ch;
+    const code = codes.get(ch);
+    return `<tr><td style="padding:2px 10px"><b>${disp}</b></td><td style="padding:2px 10px">${f}×</td>
+      <td style="padding:2px 10px;font-family:monospace;color:#F5793B">${code}</td>
+      <td style="padding:2px 10px">${code.length} bit${code.length > 1 ? "s" : ""}</td></tr>`;
+  }).join("");
+
+  const huff = [...freq.entries()].reduce((acc, [ch, f]) => acc + f * codes.get(ch).length, 0);
+  const fixed = s.length * 8;
+  return html`<div>
+    <table style="font:13px sans-serif;border-collapse:collapse">
+      <tr style="color:#2A9D8F;text-align:left"><th style="padding:2px 10px">símbolo</th><th style="padding:2px 10px">freq.</th><th style="padding:2px 10px">código</th><th style="padding:2px 10px">tam.</th></tr>
+      ${rows}
+    </table>
+    <div style="margin-top:8px;font:13px sans-serif;color:#264653">
+      payload: <b style="color:#F5793B">${huff} bits</b> (Huffman) vs <b>${fixed} bits</b> (8 fixos) =
+      <b>${(100 * huff / fixed).toFixed(0)}%</b></div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção deixa você digitar um texto e ver os códigos de Huffman e a
+economia em tempo real. Para `abracadabra`, os códigos são `a=0`, `b=110`,
+`r=111`, `c=100`, `d=101` (ver @fig-huffman-tree): 23 bits de *payload* contra 88
+bits (11 × 8) fixos — cerca de 26%.
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Huffman brilha quando há **frequências desiguais** e você pode pagar uma passada
+para contá-las. Mas conheça os limites: ele dá códigos de **bits inteiros**, então
+um símbolo com probabilidade 0,9 "deveria" custar 0,15 bit e paga 1 — desperdício
+que a *codificação aritmética* elimina. Ele também não capta **repetições de
+sequências** ("abc" repetido mil vezes); para isso, combina-se Huffman com um
+estágio de dicionário (LZ77), e é o que os compressores reais fazem. Por fim,
+guarde a lição estrutural: um problema grande se resolve **compondo** estruturas
+simples — array, heap, árvore, bits — cada uma fazendo bem a sua parte.
+:::
+
+::: {.callout-note title="No mundo real"}
+Huffman está em todo lugar, quase sempre como o **estágio final** de algo maior. O
+**DEFLATE** (do gzip, do zip e do PNG) combina LZ77 — que substitui repetições por
+referências — com Huffman. O **JPEG** aplica Huffman depois da DCT e da
+quantização para comprimir imagens. Compressores modernos como o **Zstandard
+(zstd)** e o **Brotli** evoluem essa receita com dicionários e modelagem melhores.
+E a **codificação aritmética** (e sua prima *ANS*) é a alternativa que supera o
+limite de "bits inteiros" do Huffman, ao custo de mais computação.
+:::
+
+## Fim da travessia
+
+Você construiu um compactador de arquivos do zero — e, com ele, fechou a Parte da
+prática. Olhe para trás e veja quanta coisa se encaixou neste último projeto:
+
+- o **array** para o histograma e para guardar o heap (cap. 5);
+- a noção de **nó e ponteiro** das listas, agora em forma de árvore (cap. 6);
+- a generalidade do **`void*`** na disciplina de tratar bytes crus (cap. 7);
+- a **fila** (FIFO) reaproveitada como ideia, e a fila de **prioridade** como peça
+  central (caps. 8 e 10);
+- a **árvore** e seus percursos recursivos (cap. 9);
+- e, sob tudo, os **ponteiros, a memória e os bits** dos fundamentos.
+
+Nenhuma dessas estruturas é difícil sozinha. A maestria do projetista está em
+**escolher a certa** para cada parte e **compô-las** num todo que funciona — e
+isso, agora, você fez. As próximas páginas (a Parte de fundamentos) destrincham o
+C que sustentou tudo isto; leia-as quando quiser firmar o chão sob os pés.
+
+### Tabela de complexidade do capítulo
+
+| Etapa | Tempo | Estrutura reaproveitada |
+|:--|:--:|:--|
+| (a) Histograma | $O(n)$ | array de contadores (cap. 5) |
+| (b) Árvore de Huffman | $O(k \log k)$ | **heap / fila de prioridade** (cap. 10) |
+| (c) Dicionário de códigos | $O(k)$ | árvore + recursão (cap. 9) |
+| (d) Codificar em bits | $O(n)$ | buffer de bytes (cap. 5) |
+| Total | $O(n + k \log k)$ | — |
+
+: O compactador, etapa a etapa. $n$ = bytes do arquivo; $k \le 256$ = símbolos distintos. {tbl-colwidths="[34,22,44]"}
