@@ -1,0 +1,42 @@
+# ============================================================================
+# _quarto-book.yml — Perfil do LIVRO (PDF via Typst). Mescla com _quarto.yml.
+#   quarto render --profile book   →  _book/
+#
+# Typst já vem embutido no Quarto (não precisa de LaTeX). A paleta e as fontes
+# vêm do _brand.yml; aqui ajustamos página, tipografia de código e o preâmbulo.
+# ============================================================================
+
+project:
+  type: book
+  output-dir: _book
+
+format:
+  typst:
+    papersize: a4
+    margin:
+      x: 2.5cm
+      y: 2.5cm
+    fontsize: 11pt
+
+    # Fonte de TEXTO: para o visual "amigável" de Entendendo Algoritmos, instale
+    # "Source Serif 4" e descomente a linha abaixo. Sem ela, o Typst usa seu
+    # padrão (New Computer Modern) — o build NÃO quebra, só muda a tipografia.
+    # mainfont: "Source Serif 4"
+
+    # Fonte de CÓDIGO: JetBrains Mono já está instalada nesta máquina (Nerd Font).
+    monofont: "JetBrainsMono Nerd Font"
+
+    toc: true
+    toc-title: "Sumário"
+    section-numbering: "1.1.1"
+
+    # Partial customizado: localiza "Capítulo"/"Parte" no template orange-book
+    # (que não deriva esses rótulos de `lang` sozinho).
+    template-partials:
+      - assets/typst/typst-show.typ
+
+    # Funções de caixa didática (Typst) ficam disponíveis no preâmbulo.
+    # São OPCIONAIS: as caixas padrão do livro usam callouts nativos do Quarto
+    # (fonte única, renderizam em HTML e PDF). Veja assets/typst/_boxes.typ.
+    include-in-header:
+      - assets/typst/_boxes.typ

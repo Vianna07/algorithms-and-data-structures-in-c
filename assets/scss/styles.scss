@@ -1,0 +1,55 @@
+/*-- scss:defaults --*/
+// ============================================================================
+// styles.scss — Tema do SITE (HTML). Estende o tema base + o _brand.yml.
+// O grosso da paleta vem do _brand.yml; aqui reforçamos acentos, tipografia de
+// código e os efeitos de movimento (typing effect, entrada de seções).
+// ============================================================================
+
+// Fonte de código (fallbacks caso o _brand.yml não carregue a webfont).
+$font-family-monospace: "JetBrains Mono", "Fira Code", ui-monospace, monospace !default;
+
+// Acentos de apoio (a fonte primária da paleta é o _brand.yml).
+$accent-warm: #f5793b !default;
+$accent-cool: #2a9d8f !default;
+
+/*-- scss:rules --*/
+
+// --- Efeito de digitação (par com assets/js/typing-effect.js) ---------------
+// Cursor piscante exibido enquanto o título está sendo "digitado".
+.typing-effect--running::after {
+  content: "▍";
+  display: inline-block;
+  margin-left: 0.05em;
+  color: $accent-warm;
+  animation: te-blink 1s step-end infinite;
+}
+@keyframes te-blink {
+  50% { opacity: 0; }
+}
+
+// --- Animação sutil de entrada das seções -----------------------------------
+section.level2 {
+  animation: te-fade-in 0.5s ease both;
+}
+@keyframes te-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+// Respeita quem pediu menos movimento.
+@media (prefers-reduced-motion: reduce) {
+  .typing-effect--running::after,
+  section.level2 {
+    animation: none;
+  }
+}
+
+// --- Acabamento de código e callouts ----------------------------------------
+div.sourceCode {
+  border-radius: 8px;
+}
+
+// Barra de cor mais marcada nos boxes didáticos (callouts).
+.callout {
+  border-left-width: 4px;
+}

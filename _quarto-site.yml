@@ -1,0 +1,45 @@
+# ============================================================================
+# _quarto-site.yml — Perfil do SITE (HTML interativo). Mescla com _quarto.yml.
+#   quarto render --profile site   →  _site/
+#
+# Recursos exclusivos do HTML: dark mode, realce de sintaxe colorido,
+# code-copy, anotações de linha e o efeito de digitação nos títulos.
+# ============================================================================
+
+project:
+  type: book
+  output-dir: _site
+
+format:
+  html:
+    # Dark mode nativo: tema claro + escuro, com o mesmo SCSS por cima de ambos.
+    theme:
+      light:
+        - cosmo
+        - assets/scss/styles.scss
+      dark:
+        - darkly
+        - assets/scss/styles.scss
+    toc: true
+    toc-depth: 3
+    toc-title: "Nesta página"
+    number-sections: true
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-newwindow: true
+
+    # --- Código ---
+    code-copy: true
+    code-overflow: wrap
+    code-line-numbers: true
+    code-annotations: hover
+    highlight-style: a11y
+
+    # --- Efeito de digitação (HTML apenas) ---
+    # Injeta <script src="assets/js/typing-effect.js"> antes de </body>.
+    include-after-body:
+      - assets/js/typing-effect.html
+
+# Garante que o JS do efeito de digitação seja copiado para o site final.
+resources:
+  - assets/js/typing-effect.js

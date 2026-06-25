@@ -1,0 +1,44 @@
+# ============================================================================
+# _brand.yml — Identidade visual ÚNICA (paleta + tipografia + logo).
+# O Quarto consome este arquivo automaticamente nos dois formatos:
+#   - HTML:  vira variáveis SCSS do tema (cores, fontes).
+#   - Typst: vira cores e fontes do livro.
+# Referência de estilo: paleta quente e amigável de "Entendendo Algoritmos".
+# ============================================================================
+
+color:
+  palette:
+    orange:  "#F5793B"   # destaque primário (margens, cabeçalhos, links de ação)
+    amber:   "#F2A65A"
+    coral:   "#E2725B"
+    teal:    "#2A9D8F"   # acento frio (links, detalhes)
+    navy:    "#264653"   # títulos e texto escuro
+    sand:    "#FBF7F0"   # fundo claro
+    ink:     "#15151E"   # fundo do dark mode
+    cloud:   "#E9E4DC"
+    slate:   "#4A4A4A"
+  foreground: navy
+  background: sand
+  primary:    orange
+  secondary:  teal
+  # Cores semânticas reaproveitadas pelos callouts/boxes didáticos.
+  info:    teal
+  warning: amber
+  danger:  coral
+  success: teal
+
+typography:
+  fonts:
+    - family: "Source Serif 4"
+      source: google
+    - family: "Inter"
+      source: google
+    - family: "JetBrains Mono"
+      source: google
+  base:      { family: "Inter" }
+  headings:  { family: "Source Serif 4", weight: 700 }
+  monospace: { family: "JetBrains Mono" }
+
+# logo:
+#   images:
+#     - path: assets/img/logo.png   # PLACEHOLDER — arte a definir (ver brief no index.qmd)

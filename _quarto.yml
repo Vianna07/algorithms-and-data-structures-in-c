@@ -1,0 +1,75 @@
+# ============================================================================
+# _quarto.yml — Configuração COMUM aos dois artefatos (site HTML e livro Typst).
+#
+# Fonte única (Single Source of Truth): aqui ficam a lista de capítulos, os
+# metadados e a bibliografia. O que muda entre formatos (tema, fontes, layout)
+# vive nos perfis _quarto-site.yml (HTML) e _quarto-book.yml (Typst).
+#
+# Renderização:
+#   quarto render --profile site   # → _site/  (HTML interativo)
+#   quarto render --profile book   # → _book/  (PDF via Typst)
+#
+# Requisitos: Quarto >= 1.6 (suporte a _brand.yml). O Typst já vem embutido no
+# Quarto — não é preciso instalar LaTeX.
+# ============================================================================
+
+project:
+  type: book
+
+book:
+  title: "Estruturas de Dados e Algoritmos em C"
+  subtitle: "O caderno do projetista: da RAM ao compactador de Huffman"
+  author:
+    - "Gustavo Vianna"
+    - "Gabriel Cardoso"
+  date: today
+  search: true
+
+  # --------------------------------------------------------------------------
+  # ORDEM DE LEITURA (≠ ordem de escrita).
+  # Os fundamentos de C vêm primeiro para o leitor; a prática vem depois.
+  # Os nomes de pasta guardam a ORDEM DE ESCRITA do projeto:
+  #   - part-2-foundations/  = escrita por último, LIDA primeiro (cap. 1–4)
+  #   - part-1-practice/     = escrita primeiro,  LIDA depois    (cap. 5–11)
+  # Os números dos capítulos (1→11) já estão na ordem de leitura.
+  # --------------------------------------------------------------------------
+  chapters:
+    - index.qmd
+    - part: "Parte I — Fundamentos do C"
+      chapters:
+        - part-2-foundations/01-pointers.qmd
+        - part-2-foundations/02-memory.qmd
+        - part-2-foundations/03-structs-unions.qmd
+        - part-2-foundations/04-modularization.qmd
+    - part: "Parte II — A prática do projetista"
+      chapters:
+        - part-1-practice/05-dynamic-array.qmd
+        - part-1-practice/06-linked-lists.qmd
+        - part-1-practice/07-shadow-data.qmd
+        - part-1-practice/08-stacks-queues.qmd
+        - part-1-practice/09-bst.qmd
+        - part-1-practice/10-heaps.qmd
+        - part-1-practice/11-huffman.qmd
+    - part: "Páginas interativas"
+      chapters:
+        - interactive/pointers-scroll.qmd
+        - interactive/huffman-scroll.qmd
+  appendices:
+    - appendices/a1-big-o-table.qmd
+    - appendices/a2-horizon.qmd
+    - references.qmd
+
+# Português para tudo que o leitor vê (rótulos "Figura", "Tabela", etc.).
+lang: pt
+
+bibliography: refs.bib
+# csl: csl/ieee.csl   # descomente após adicionar um CSL (ver csl/README.md)
+
+# Filtros de extensão. include-code-files: inclui código de arquivos .c/.h reais
+# nos blocos via `include="..."` e `snippet="..."` (fonte única para o código).
+filters:
+  - include-code-files
+
+# Acelera rebuilds: congela resultados computados (ojs, etc.) até a fonte mudar.
+execute:
+  freeze: auto

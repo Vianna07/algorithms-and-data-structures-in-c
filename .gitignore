@@ -1,0 +1,24 @@
+# Saídas de renderização (geradas; não versionar)
+/_site/
+/_book/
+/.quarto/
+
+# Cache de render do Quarto (regenerável; não versionar neste projeto).
+/_freeze/
+
+# Figuras/recursos gerados pelo Quarto ao renderizar (diagramas rasterizados etc.)
+**/*_files/
+
+# Typst intermediário (gerado quando keep-typ está ativo)
+/index.typ
+
+# Binários/objetos compilados do código C de exemplo
+src/**/*.o
+src/**/demo
+
+# Sistema operacional / editores
+.DS_Store
+Thumbs.db
+*.log
+
+**/*.quarto_ipynb
