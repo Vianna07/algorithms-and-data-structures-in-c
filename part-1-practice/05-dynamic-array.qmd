@@ -1,0 +1,433 @@
+---
+# 05-dynamic-array.qmd — Capítulo-piloto (template de qualidade dos demais).
+# Código/infra em inglês; tudo que o leitor vê, em pt-BR.
+---
+
+# [Array dinâmico: o vetor que cresce sozinho]{.typing-effect}
+
+Você já programou com arrays. Em C, eles têm um defeito incômodo: **nascem com um
+tamanho fixo**. Você decide `int v[100];` e pronto — se chegarem 101 elementos,
+azar. Mas a vida real raramente avisa quantos itens virão. Como guardar uma lista
+que *não sabemos o tamanho de antemão*, sem desperdiçar memória nem estourar?
+
+A resposta é o **array dinâmico** (também chamado *ArrayList*, *vector* ou
+*growable array*): um array contíguo que **realoca a si mesmo** quando enche.
+É a primeira estrutura do nosso caminho como projetistas — e a mais usada no mundo
+todo. Vamos construí-la do zero, desenhar cada byte que ela move, e aprender no
+caminho um conceito que assombra muita gente: a **complexidade amortizada**.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* uma família
+mudando de uma casa pequena (4 cômodos cheios) para uma casa do **dobro** do
+tamanho, carregando os móveis um a um pela rua. Legenda visual: *"quando enche,
+alugamos uma casa maior e mudamos tudo de uma vez"*. Estilo lúdico à mão, paleta
+quente. Arte a comissionar — substituir este box.
+:::
+
+## A analogia: a casa que dobra de tamanho
+
+Imagine que você mora numa casa com **4 cômodos** e todos estão ocupados. Chega
+mais um morador. Você tem duas opções:
+
+1. **Mudar de casa toda vez que chega alguém** — alugar uma casa com 5 cômodos,
+   carregar todos os móveis, e repetir no próximo morador (6 cômodos), e no
+   próximo (7)... Mudar é caro, e você mudaria *o tempo todo*.
+2. **Mudar de casa, mas para o dobro** — quando os 4 cômodos enchem, você aluga
+   uma de **8**. Carrega os móveis uma vez e ganha **4 cômodos livres** de folga.
+   Só vai mudar de novo quando esses 8 encherem — e aí pula para 16.
+
+A segunda estratégia é o coração do array dinâmico. Mudar (copiar tudo) é caro,
+mas se você **dobra** o espaço a cada mudança, as mudanças ficam tão raras que,
+*na média*, cada novo morador custa quase nada. Guarde essa imagem: vamos
+formalizá-la na seção sobre complexidade amortizada.
+
+## A ideia central: `size` não é `capacity`
+
+Toda a estrutura nasce de uma distinção que parece pequena e muda tudo:
+
+::: {.callout-note title="Ideia central"}
+Um array dinâmico guarda **dois números** sobre si mesmo:
+
+- **`size`** (tamanho): quantos elementos *de verdade* existem agora.
+- **`capacity`** (capacidade): quantos elementos *cabem* no bloco que já
+  reservamos no heap, antes de precisar realocar.
+
+Sempre vale `size ≤ capacity`. O espaço entre os dois é a **folga** que torna as
+inserções baratas. Quando `size` alcança `capacity`, e só então, a estrutura
+cresce.
+:::
+
+Visualmente, a struct mora na **pilha** e aponta para um **bloco contíguo no
+heap**. A @fig-anatomy mostra um array com três elementos (`size = 3`) num bloco
+com quatro lugares (`capacity = 4`):
+
+```{dot}
+//| label: fig-anatomy
+//| fig-width: 4.5
+//| fig-height: 1.45
+//| fig-cap: "A struct `DynamicArray` vive na pilha e aponta para um bloco contíguo no heap. `size` conta os elementos existentes; `capacity` conta quantos cabem."
+digraph anatomy {
+  rankdir=LR;
+  bgcolor="transparent";
+  size="5.0,9.0";  // limita a largura (~12,7cm) p/ caber na coluna do A4
+  node [fontname="Inter", fontsize=12];
+
+  stack [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+      <tr><td colspan="2"><b>DynamicArray</b> (pilha)</td></tr>
+      <tr><td align="left">data</td><td port="p">&#8226;</td></tr>
+      <tr><td align="left">size</td><td>3</td></tr>
+      <tr><td align="left">capacity</td><td>4</td></tr>
+    </table>>];
+
+  heap [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr>
+        <td bgcolor="#F5793B"><font color="white">10</font></td>
+        <td bgcolor="#F5793B"><font color="white">20</font></td>
+        <td bgcolor="#F5793B"><font color="white">30</font></td>
+        <td bgcolor="#E9E4DC">&#183;</td>
+      </tr>
+      <tr>
+        <td><font point-size="9">[0]</font></td>
+        <td><font point-size="9">[1]</font></td>
+        <td><font point-size="9">[2]</font></td>
+        <td><font point-size="9">[3]</font></td>
+      </tr>
+    </table>>];
+
+  stack:p -> heap [label="  bloco no heap"];
+}
+```
+
+A cor laranja marca os **elementos** (a faixa `size`); o cinza, a **capacidade
+ociosa** (a folga). Vamos manter essa convenção de cor no livro inteiro.
+
+## A struct e a interface
+
+Começamos pelo *contrato* — o cabeçalho. Um projetista pensa primeiro em **o que**
+a estrutura oferece, depois em **como** ela cumpre. Para este capítulo, um array
+dinâmico de `int` basta; a versão genérica (com `void*`) chega no capítulo de
+Shadow Data.
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.h"}
+```
+
+As funções que podem **falhar por falta de memória** devolvem `bool` (`true` =
+ok). Esse hábito — admitir que `malloc`/`realloc` podem falhar — separa código de
+brinquedo de código de produção.
+
+## Nascer e morrer: `da_init` e `da_free`
+
+A implementação mora em `dynamic_array.c`, que começa puxando o cabeçalho e as
+bibliotecas usadas pelos próximos trechos:
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.c" snippet="includes"}
+```
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.c" snippet="lifecycle"}
+```
+
+::: {.callout-warning title="Cuidado: memory leak"}
+A regra de ouro deste livro: **cada `malloc`/`calloc`/`realloc` tem exatamente um
+`free`**. Aqui, todo o bloco vive em `da->data`; um único `free` no `da_free`
+quita a dívida. Zerar `da->data` para `NULL` depois do `free` evita dois bugs
+clássicos: o *double free* (liberar duas vezes) e o *dangling pointer* (usar um
+ponteiro que já aponta para memória devolvida).
+:::
+
+## O coração: `da_push` e a realocação
+
+Inserir no fim é o caso comum. A lógica tem duas partes: **se está cheio, cresce;
+depois, grava**.
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.c" snippet="grow_push"}
+```
+
+Três detalhes desse trecho merecem atenção:
+
+1. A regra de crescimento: **dobrar**. Partindo de uma capacidade vazia, o
+   primeiro `grow` reserva 1; depois 2, 4, 8, 16… A próxima seção justifica por
+   que dobrar (e não somar uma quantia fixa).
+2. `realloc` pode **mover o bloco inteiro** para outro endereço se não houver
+   espaço contíguo logo após o atual. Quando isso acontece, ele copia os bytes
+   antigos para o novo lugar — é o custo $O(n)$ da realocação.
+3. Detalhe que evita vazamento: guardamos o retorno num **ponteiro temporário**
+   (`new_data`). Se `realloc` falha, ele devolve `NULL` mas **não libera** o bloco
+   antigo — que continua acessível por `da->data`. Se tivéssemos escrito
+   `da->data = realloc(da->data, ...)`, um `NULL` apagaria a única referência ao
+   bloco e o vazaríamos.
+
+A @fig-realloc mostra o instante da mudança de casa: o bloco de capacidade 4
+estava cheio, e `realloc` reserva um de capacidade 8, copiando os quatro
+elementos:
+
+```{dot}
+//| label: fig-realloc
+//| fig-width: 4.5
+//| fig-height: 2.8
+//| fig-cap: "Quando `size` alcança `capacity`, `realloc` reserva um bloco com o dobro do tamanho e copia os elementos existentes. O bloco antigo é devolvido ao sistema."
+digraph realloc {
+  rankdir=TB;
+  bgcolor="transparent";
+  size="5.0,9.0";  // limita a largura (~12,7cm) p/ caber na coluna do A4
+  node [fontname="Inter", fontsize=12];
+
+  old [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr><td colspan="4"><font point-size="10">bloco antigo &#8212; capacity = 4 (cheio)</font></td></tr>
+      <tr>
+        <td bgcolor="#F5793B"><font color="white">10</font></td>
+        <td bgcolor="#F5793B"><font color="white">20</font></td>
+        <td bgcolor="#F5793B"><font color="white">30</font></td>
+        <td bgcolor="#F5793B"><font color="white">40</font></td>
+      </tr>
+    </table>>];
+
+  new [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr><td colspan="8"><font point-size="10">bloco novo &#8212; capacity = 8</font></td></tr>
+      <tr>
+        <td bgcolor="#F5793B"><font color="white">10</font></td>
+        <td bgcolor="#F5793B"><font color="white">20</font></td>
+        <td bgcolor="#F5793B"><font color="white">30</font></td>
+        <td bgcolor="#F5793B"><font color="white">40</font></td>
+        <td bgcolor="#E9E4DC">&#183;</td>
+        <td bgcolor="#E9E4DC">&#183;</td>
+        <td bgcolor="#E9E4DC">&#183;</td>
+        <td bgcolor="#E9E4DC">&#183;</td>
+      </tr>
+    </table>>];
+
+  old -> new [label="  realloc copia os 4 elementos: O(n)"];
+}
+```
+
+## Por que dobrar? A complexidade amortizada
+
+Aqui está a pergunta que confunde muita gente: se uma realocação custa $O(n)$
+(copiar tudo), como podemos dizer que `da_push` é $O(1)$? A resposta é a
+**análise amortizada** — olhar o custo *médio por operação ao longo de muitas
+operações*, e não o pior caso isolado.
+
+Vamos inserir $n$ elementos do zero, dobrando a capacidade ($1, 2, 4, \dots, n$).
+As realocações copiam, no total:
+
+$$
+\underbrace{1 + 2 + 4 + 8 + \cdots + \tfrac{n}{2}}_{\text{cópias em cada realocação}}
+\;=\; n - 1 \;<\; n .
+$$
+
+É uma soma geométrica: cada termo é a metade do seguinte, então o total **não
+passa de $n$**, e não de $n \log n$ como a intuição às vezes sugere. Somando as
+$n$ gravações em si (cada uma $O(1)$), o custo de inserir $n$ elementos é $O(n)$
+no total. Divida por $n$ operações:
+
+::: {.callout-tip title="Complexidade (Big-O)"}
+**`da_push` é $O(1)$ amortizado.** Inserir $n$ elementos custa $O(n)$ no total,
+logo $O(1)$ *em média* por inserção — mesmo que uma inserção isolada possa custar
+$O(n)$ quando dispara a realocação. "Amortizado" significa exatamente isto: o
+custo raro e caro se **dilui** sobre as muitas operações baratas que o cercam.
+
+E por que **dobrar**, e não crescer de 1 em 1? Crescer +1 a cada vez forçaria uma
+cópia em *toda* inserção: $1 + 2 + 3 + \cdots + n = O(n^2)$ no total, ou $O(n)$
+*por push*. Dobrar transforma esse $O(n)$ em $O(1)$ amortizado. A folga é o que
+compra a velocidade.
+:::
+
+## Acesso $O(1)$ e o contraste central do livro
+
+O array dinâmico tem um superpoder que vamos comparar com *todas* as estruturas
+seguintes: o **acesso por índice em tempo constante**.
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.c" snippet="access"}
+```
+
+Por que $O(1)$? Porque o bloco é **contíguo**. O endereço do elemento `index` é
+simplesmente `data + index * sizeof(int)` — uma multiplicação e uma soma, sem
+percorrer nada. Não importa se você quer o elemento 0 ou o 1.000.000: o custo é o
+mesmo.
+
+Há um segundo ganho, invisível no Big-O mas enorme na prática: a **localidade de
+cache**. Como os elementos são vizinhos na memória, quando a CPU busca um, ela já
+traz os vizinhos para o cache. Varrer um array dinâmico voa. Esse é o contraste
+que vai nos acompanhar:
+
+::: {.callout-important title="Trade-off: contíguo × encadeado"}
+- **Array dinâmico (contíguo):** acesso por índice $O(1)$, localidade de cache
+  excelente, memória compacta. **Mas** inserir/remover no *meio* custa $O(n)$
+  (é preciso deslocar elementos), e crescer exige realocar e copiar.
+- **Lista encadeada (próximo capítulo):** inserir/remover é $O(1)$ *se você já
+  está no ponto certo*, sem realocação. **Mas** o acesso por índice vira $O(n)$
+  (é preciso seguir ponteiro a ponteiro), e cada elemento gasta memória extra com
+  ponteiros, espalhados pela RAM — péssima localidade de cache.
+
+Não existe "melhor": existe **adequado ao uso**. Acessa muito por índice e varre
+sequências? Contíguo. Insere e remove muito no meio, sem precisar de índice?
+Encadeado. Vamos repetir essa decisão em cada estrutura.
+:::
+
+## Remover do fim e o porquê de não encolher
+
+```{.c include="src/ch05-dynamic-array/dynamic_array.c" snippet="pop"}
+```
+
+Repare que `da_pop` **não devolve memória** — apenas diminui `size`. A capacidade
+fica como estava, pronta para futuras inserções. Encolher (chamar `realloc` para
+um bloco menor) é possível, mas costuma ser má ideia: se o tamanho oscila perto de
+um limite, você entraria num vai-e-vem de realocações (*thrashing*). A heurística
+usual é encolher só quando `size` cai abaixo de **um quarto** da capacidade — mas,
+para a maioria dos usos, simplesmente não encolher é a escolha certa.
+
+### Vendo tudo funcionar
+
+```{.c include="src/ch05-dynamic-array/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+size = 6, capacity = 8
+numbers[0] = 10
+numbers[1] = 20
+numbers[2] = 30
+numbers[3] = 40
+numbers[4] = 50
+numbers[5] = 60
+```
+
+Seis elementos couberam num bloco de capacidade 8: a estrutura cresceu `2 → 4 → 8`
+sozinha, sem o programador se preocupar.
+
+## Veja acontecer
+
+::: {.content-visible when-format="html"}
+**Crescimento das funções Big-O.** Arraste o slider e veja quantas operações cada
+classe de complexidade exige para um mesmo `n`. Note como $O(n^2)$ dispara
+enquanto $O(1)$ e $O(\log n)$ mal saem do chão (eixo vertical em escala log):
+
+```{ojs}
+//| echo: false
+viewof n_big_o = Inputs.range([1, 64], { value: 16, step: 1, label: "n (elementos)" })
+```
+
+```{ojs}
+//| echo: false
+big_o_data = [
+  { classe: "O(1)",     ops: 1 },
+  { classe: "O(log n)", ops: Math.max(1, Math.ceil(Math.log2(n_big_o))) },
+  { classe: "O(n)",     ops: n_big_o },
+  { classe: "O(n²)",    ops: n_big_o * n_big_o }
+]
+```
+
+```{ojs}
+//| echo: false
+Plot.plot({
+  marginLeft: 60,
+  x: { label: null },
+  y: { type: "log", label: "operações (aprox.)", grid: true },
+  color: { legend: false },
+  marks: [
+    Plot.barY(big_o_data, { x: "classe", y: "ops", fill: "classe" }),
+    Plot.text(big_o_data, { x: "classe", y: "ops", text: (d) => d.ops, dy: -8 })
+  ]
+})
+```
+
+**`size` × `capacity` ao inserir.** Arraste para inserir elementos (push) e veja a
+capacidade **dobrar** só quando o bloco enche. Laranja = elemento; cinza = folga:
+
+```{ojs}
+//| echo: false
+viewof k_push = Inputs.range([0, 20], { value: 5, step: 1, label: "elementos inseridos (push)" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const size = k_push;
+  const capacity = size === 0 ? 0 : Math.pow(2, Math.ceil(Math.log2(size)));
+  const cells = Array.from({ length: capacity }, (_, i) => i < size);
+  return html`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+    ${cells.map(
+      (filled, i) => html`<div style="width:36px;height:36px;display:flex;
+        align-items:center;justify-content:center;border-radius:6px;
+        font:600 13px sans-serif;background:${filled ? "#F5793B" : "#E9E4DC"};
+        color:${filled ? "#fff" : "#999"}">${filled ? i : "·"}</div>`
+    )}
+    <div style="margin-left:12px;font:14px/1.4 sans-serif">
+      <b>size</b> = ${size} &nbsp; <b>capacity</b> = ${capacity}
+    </div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção traz dois componentes interativos: um comparador visual das
+classes de Big-O e uma animação de `size` × `capacity`. Para a versão impressa,
+a tabela abaixo registra como a capacidade evolui ao inserir, partindo de
+`capacity = 2`:
+
+| push nº | valor | size | capacity | realocou? |
+|:------:|:----:|:----:|:--------:|:---------:|
+| 1 | 10 | 1 | 2 | — (inicial) |
+| 2 | 20 | 2 | 2 | não |
+| 3 | 30 | 3 | 4 | **sim** (2→4) |
+| 4 | 40 | 4 | 4 | não |
+| 5 | 50 | 5 | 8 | **sim** (4→8) |
+| 6 | 60 | 6 | 8 | não |
+
+: Evolução de `size` e `capacity`. Em 6 inserções, apenas 2 realocações.
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+O array dinâmico deve ser sua **escolha padrão** para uma coleção sequencial — o
+"até prova em contrário". Ele é compacto, rapidíssimo para varrer e acessar por
+índice, e amortiza bem o crescimento. Só troque por outra estrutura quando o
+*perfil de uso* pedir: muita inserção/remoção no meio (pense em lista encadeada),
+busca por chave (tabela hash, fora do nosso escopo), ou ordem por prioridade
+(heap, capítulo 10). Comece simples; complique só quando os números exigirem.
+:::
+
+::: {.callout-note title="No mundo real"}
+Você raramente vai escrever um `da_push` na vida profissional — porque **as
+linguagens já trazem o seu**. O `std::vector` do C++, o `ArrayList` do Java e a
+`list` do Python são, por dentro, exatamente isto: um array dinâmico que dobra
+(ou cresce por um fator parecido) a capacidade ao encher. Quando você faz
+`lista.append(x)` em Python e ele "simplesmente funciona", é o `da_grow` deste
+capítulo rodando lá no fundo, em C.
+:::
+
+## Resumo
+
+- Um array dinâmico é um **bloco contíguo no heap** que cresce sozinho via
+  `realloc`, distinguindo **`size`** (o que existe) de **`capacity`** (o que
+  cabe).
+- A estratégia de **dobrar a capacidade** torna a inserção no fim **$O(1)$
+  amortizado**, mesmo com realocações $O(n)$ ocasionais.
+- O ganho central é o **acesso por índice $O(1)$** e a **localidade de cache**; o
+  custo é o $O(n)$ para inserir/remover no meio. Esse é o **trade-off
+  contíguo × encadeado** que guia o resto do livro.
+- Disciplina de memória: cada `malloc`/`realloc` tem seu `free`; proteja o
+  ponteiro antigo numa variável temporária ao realocar.
+
+### Tabela de complexidade do capítulo
+
+| Operação | Tempo | Espaço | Por quê |
+|:--|:--:|:--:|:--|
+| Acesso por índice (`da_get`/`da_set`) | $O(1)$ | $O(1)$ | aritmética de ponteiro num bloco contíguo |
+| Inserção no fim (`da_push`) | $O(1)$ amortizado | $O(1)$ | $O(n)$ no pior caso quando realoca |
+| Remoção do fim (`da_pop`) | $O(1)$ | $O(1)$ | só decrementa `size` |
+| Inserção/remoção no meio | $O(n)$ | $O(1)$ | desloca os elementos seguintes |
+| Busca (coleção não ordenada) | $O(n)$ | $O(1)$ | varre do início ao fim |
+| Memória total | $O(n)$ | — | até ~2× de `n` por capacidade ociosa |
+
+: Complexidades do array dinâmico. {tbl-colwidths="[40,18,14,28]"}
+
+No próximo capítulo, atacamos o outro lado do trade-off: as **listas encadeadas**,
+onde inserir no meio é barato — ao custo de perder o acesso $O(1)$ e a localidade
+de cache que tornam o array dinâmico tão veloz.
