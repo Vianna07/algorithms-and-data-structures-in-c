@@ -1,0 +1,324 @@
+---
+# 02-memory.qmd — Fundamentos: gerenciamento de memória (pilha, heap, malloc/free).
+---
+
+# [Gerenciamento de memória: a pilha e o heap]{.typing-effect}
+
+No capítulo 1, vimos que um ponteiro guarda um endereço. Mas de **onde vêm** esses
+endereços? Toda a memória de um programa se divide em duas regiões com regras
+opostas: a **pilha** (*stack*), automática e efêmera, e o **heap**, manual e
+duradouro. Cada `malloc` da Parte da prática pediu memória ao heap, e cada `free`
+pagou a conta. Este capítulo é sobre essa conta — o **ciclo de vida** de um bloco
+— e sobre os dois fantasmas que assombram todo programador C: o **vazamento**
+(*leak*) e o **ponteiro pendurado** (*dangling*).
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* à esquerda, uma
+**pilha de bandejas** de refeitório (empilha ao entrar numa função, desempilha ao
+sair — automático). À direita, um **balcão de almoxarifado** onde um personagem
+pede uma caixa (malloc), usa, e precisa devolvê-la no balcão (free); uma caixa
+esquecida num canto tem uma etiqueta "perdida" (leak). Estilo lúdico à mão, paleta
+quente. Arte a comissionar — substituir este box.
+:::
+
+## As duas regiões: pilha e heap
+
+Quando um programa roda, sua memória tem (entre outras) duas áreas que nos
+interessam:
+
+- A **pilha (stack)** guarda as **variáveis locais** e os "quadros" de cada chamada
+  de função. É **automática**: ao entrar numa função, suas variáveis nascem; ao
+  retornar, **morrem sozinhas**. É rápida, mas efêmera e limitada — e você não a
+  controla diretamente.
+- O **heap** é uma área grande de onde você pede blocos **sob demanda** com
+  `malloc`. É **manual**: o bloco vive até **você** mandar liberá-lo com `free`.
+  Flexível e duradouro, mas com uma responsabilidade que é toda sua.
+
+A @fig-stack-heap mostra as duas convivendo: uma variável local `p`, na pilha,
+guardando o endereço de um bloco que vive no heap.
+
+```{dot}
+//| label: fig-stack-heap
+//| fig-width: 4.4
+//| fig-height: 2.1
+//| fig-cap: "A variável `x` e o ponteiro `p` vivem na **pilha** (somem ao fim do escopo). O bloco apontado por `p` vive no **heap** e só some quando você chama `free`. `p` guarda o endereço que o `malloc` devolveu."
+digraph mem {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=plaintext, fontname="Inter", fontsize=11];
+
+  stack [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td colspan="2" bgcolor="#EAF4F2"><b>Pilha (stack)</b></td></tr>
+      <tr><td colspan="2"><font point-size="8" color="#888">automática · some no fim do escopo</font></td></tr>
+      <tr><td>x</td><td bgcolor="#F5793B"><font color="white">5</font></td></tr>
+      <tr><td>p</td><td port="p" bgcolor="#E7F1EF">0x55…80</td></tr>
+    </table>>];
+
+  heap [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td bgcolor="#FBE3D3"><b>Heap</b></td></tr>
+      <tr><td><font point-size="8" color="#888">manual · malloc / free</font></td></tr>
+      <tr><td bgcolor="#F5793B"><font color="white"><b>42</b></font></td></tr>
+      <tr><td><font point-size="8" color="#888">mora em 0x55…80</font></td></tr>
+    </table>>];
+
+  stack:p -> heap [label="  malloc()  ", color="#2A9D8F", fontcolor="#2A9D8F"];
+}
+```
+
+::: {.callout-warning title="Cuidado: não devolva o efêmero"}
+Como as variáveis locais morrem no `return`, **nunca devolva o endereço de uma
+variável local**:
+
+```c
+int *errado(void) {
+    int x = 42;
+    return &x;   // ❌ x morre aqui; o endereço devolvido é lixo
+}
+```
+
+Para um valor sobreviver à função, ele precisa morar no **heap** (`malloc`) — não
+na pilha.
+:::
+
+## O ciclo de vida de um bloco: `malloc` e `free`
+
+Trabalhar com o heap é seguir um ciclo de quatro passos: **pedir**, **usar**,
+**devolver** e **zerar**. O `malloc` reserva um bloco e devolve seu endereço (ou
+`NULL` se faltar memória); o `free` o devolve ao sistema.
+
+```{.c include="src/ch02-memory/memory.c" snippet="lifecycle"}
+```
+
+::: {.callout-tip title="Ideia central"}
+**Cada `malloc` tem exatamente um `free`.** É a regra de ouro do livro inteiro.
+Quem aloca é dono do bloco e responsável por liberá-lo — uma vez só, no momento
+certo. Zerar o ponteiro (`a = NULL`) após o `free` é o detalhe que evita os dois
+bugs deste capítulo de uma só tacada.
+:::
+
+## A família: `calloc` e `realloc`
+
+Além do `malloc`, dois primos completam a família:
+
+- **`calloc(n, tamanho)`** aloca `n` elementos e os **zera** — conveniente para
+  arrays que devem começar limpos (em `malloc`, o conteúdo é lixo).
+
+```{.c include="src/ch02-memory/memory.c" snippet="calloc"}
+```
+
+- **`realloc(ptr, novo_tamanho)`** redimensiona um bloco existente, **preservando**
+  o conteúdo. Ele pode **mover** o bloco para outro endereço (e por isso devolve o
+  novo ponteiro) — foi o motor do array dinâmico do capítulo 5.
+
+```{.c include="src/ch02-memory/memory.c" snippet="realloc"}
+```
+
+::: {.callout-warning title="Cuidado: o ponteiro temporário do realloc"}
+Repare que guardamos o retorno do `realloc` numa variável **nova** (`bigger`) e só
+sobrescrevemos `v` após confirmar que não deu `NULL`. Escrever
+`v = realloc(v, ...)` direto é uma armadilha: se `realloc` falha e devolve `NULL`,
+você perde a única referência ao bloco antigo — que ainda existe — e o **vaza**.
+:::
+
+## Fantasma 1: o vazamento (*memory leak*)
+
+Um **vazamento** acontece quando você perde a única referência a um bloco sem
+liberá-lo: o bloco continua reservado, mas **ninguém consegue mais alcançá-lo**
+para chamar `free`. Ele fica perdido até o programa terminar. Em programas longos
+(servidores, jogos), vazamentos se acumulam e consomem a memória até travar.
+
+```c
+void vaza(void) {
+    int *p = malloc(100);
+    p = malloc(50);   // ❌ perdeu o 1º bloco: 100 bytes vazados para sempre
+    free(p);          // libera só o 2º; o 1º virou um fantasma
+}
+```
+
+A @fig-leak mostra o bloco órfão: `p` foi reapontado para o segundo bloco, e o
+primeiro ficou sem ninguém apontando para ele.
+
+```{dot}
+//| label: fig-leak
+//| fig-width: 3.4
+//| fig-height: 0.9
+//| fig-cap: "Vazamento: `p` foi reapontado para o 2º bloco. O 1º continua reservado no heap, mas nenhum ponteiro o alcança — é impossível liberá-lo."
+digraph leak {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+
+  p [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>p</b></td><td port="v" bgcolor="#E7F1EF">&#8226;</td></tr>
+    </table>>];
+  b1 [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr><td bgcolor="#E9E4DC"><font color="#777">1º bloco</font></td></tr>
+      <tr><td><font point-size="8" color="#E2725B"><b>VAZADO</b> (ninguém aponta)</font></td></tr>
+    </table>>];
+  b2 [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr><td bgcolor="#F5793B"><font color="white"><b>2º bloco</b></font></td></tr>
+    </table>>];
+
+  p:v -> b2 [color="#2A9D8F"];
+  b1 -> b2 [style=invis];
+}
+```
+
+## Fantasma 2: o ponteiro pendurado (*dangling*)
+
+O oposto do vazamento: aqui você **libera** o bloco, mas **continua usando** o
+ponteiro que apontava para ele. Esse ponteiro está **pendurado** — aponta para
+memória que já foi devolvida e pode ser reusada por outra alocação a qualquer
+momento. Usá-lo é **comportamento indefinido**: às vezes "funciona", às vezes
+corrompe dados, às vezes trava.
+
+```c
+int *p = malloc(sizeof(int));
+*p = 42;
+free(p);            // o bloco volta ao sistema
+printf("%d", *p);   // ❌ use-after-free: p está pendurado
+free(p);            // ❌ double free: liberar de novo corrompe o heap
+```
+
+A @fig-dangling mostra o estado perigoso: `p` ainda guarda o endereço, mas a casa
+já não é sua.
+
+```{dot}
+//| label: fig-dangling
+//| fig-width: 3.2
+//| fig-height: 1.7
+//| fig-cap: "Ponteiro pendurado: depois do `free`, o bloco voltou ao sistema (cinza), mas `p` ainda aponta para ele. Ler, escrever ou liberar de novo é comportamento indefinido."
+digraph dang {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+
+  p [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>p</b></td><td port="v" bgcolor="#E7F1EF">&#8226;</td></tr>
+    </table>>];
+  b [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr><td bgcolor="#E9E4DC"><font color="#777">bloco</font></td></tr>
+      <tr><td><font point-size="8" color="#E2725B"><b>LIBERADO</b> — não use!</font></td></tr>
+    </table>>];
+
+  p:v -> b [color="#E2725B", style=dashed, label="  pendurado", fontcolor="#E2725B"];
+}
+```
+
+::: {.callout-tip title="A cura dos dois fantasmas"}
+Os dois bugs têm o mesmo antídoto, que aplicamos no livro inteiro: **libere no
+momento certo e zere o ponteiro logo depois** (`free(p); p = NULL;`). Um ponteiro
+`NULL` não vaza (você ainda sabe que não há nada lá) e não fica pendurado
+(`free(NULL)` é seguro, e `*NULL` falha na hora, num erro fácil de achar, em vez de
+corromper silenciosamente).
+:::
+
+## Vendo funcionar
+
+As três demonstrações de uso correto produzem:
+
+```text
+a = [10, 20, 30]
+calloc: [0, 0, 0, 0]
+realloc: [1, 2, 3, 4]
+```
+
+::: {.content-visible when-format="html"}
+**O ciclo de vida, passo a passo.** Avance e veja o bloco no heap nascer com
+`malloc`, ser usado, e voltar ao sistema com `free` — e por que zerar `p` no fim
+fecha a porta para o ponteiro pendurado:
+
+```{ojs}
+//| echo: false
+viewof passo = Inputs.range([0, 4], { value: 0, step: 1, label: "passo do ciclo de vida" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const steps = [
+    { desc: "antes: p ainda não aponta para nada", val: null, p: "—", arrow: false, color: "#E9E4DC", danger: false },
+    { desc: "malloc(): bloco reservado no heap (conteúdo é lixo)", val: "?", p: "0x…80", arrow: true, color: "#F2A65A", danger: false },
+    { desc: "uso: *p = 42 grava no bloco", val: "42", p: "0x…80", arrow: true, color: "#F5793B", danger: false },
+    { desc: "free(p): o bloco volta ao sistema — mas p ainda aponta! (pendurado)", val: "liberado", p: "0x…80", arrow: true, color: "#E9E4DC", danger: true },
+    { desc: "p = NULL: sem ponteiro pendurado — seguro", val: "liberado", p: "NULL", arrow: false, color: "#E9E4DC", danger: false }
+  ];
+  const s = steps[passo];
+  const pbox = `<div style="display:inline-flex;font:600 13px sans-serif">
+      <span style="background:#fff;border:1px solid #ccc;padding:7px 10px;border-radius:6px 0 0 6px">p</span>
+      <span style="background:#E7F1EF;border:1px solid #ccc;border-left:none;padding:7px 12px;border-radius:0 6px 6px 0;font-family:monospace;color:${s.p === "NULL" ? "#2A9D8F" : "#264653"}">${s.p}</span>
+    </div>`;
+  const arrow = s.arrow ? `<span style="font-size:22px;color:${s.danger ? "#E2725B" : "#2A9D8F"}">${s.danger ? "⇢" : "→"}</span>` : `<span style="font-size:22px;color:#ccc">→</span>`;
+  const block = `<div style="width:84px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:${s.color};color:${s.val === "42" || s.val === "?" ? "#fff" : "#777"};font:600 14px sans-serif;border:${s.danger ? "2px dashed #E2725B" : "1px solid #ddd"}">${s.val ?? "(nada)"}</div>`;
+  return html`<div>
+    <div style="display:flex;align-items:center;gap:12px">${pbox}${arrow}${block}<span style="font:11px sans-serif;color:#999">heap</span></div>
+    <div style="margin-top:10px;font:13px sans-serif;color:${s.danger ? "#E2725B" : "#264653"}">${s.danger ? "⚠️ " : ""}${s.desc}</div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção anima o ciclo de vida de um bloco: `malloc` (reserva), uso
+(`*p = 42`), `free` (devolve — e `p` fica pendurado) e `p = NULL` (seguro). Ver
+@fig-stack-heap e @fig-dangling.
+:::
+
+## A ferramenta: valgrind
+
+::: {.callout-note title="Detecte os fantasmas com o valgrind"}
+Vazamentos e ponteiros pendurados são silenciosos — o programa pode parecer
+funcionar. O **valgrind** os caça para você: ele roda o programa numa máquina
+virtual que vigia cada `malloc`/`free` e cada acesso. `valgrind --leak-check=full
+./programa` aponta exatamente onde um bloco vazou ou onde houve um *use-after-free*.
+Todo o código C deste livro passa pelo valgrind sem um único erro — e o seu também
+deveria.
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+A pergunta mais importante sobre qualquer bloco do heap é: **quem é o dono?** —
+isto é, quem tem a responsabilidade de chamá-lo `free`, e quando. Defina isso
+*antes* de alocar. Padrões que ajudam: alocar e liberar **na mesma camada** (a
+função que cria também destrói, como os pares `da_init`/`da_free` do livro);
+preferir a **pilha** quando o tempo de vida é claramente o do escopo (mais simples
+e impossível de vazar); e desconfiar de qualquer `malloc` cujo `free`
+correspondente você não consiga apontar com o dedo.
+:::
+
+::: {.callout-note title="No mundo real"}
+A dor de gerenciar memória à mão moldou as linguagens modernas. Java, Python e Go
+trazem um **coletor de lixo** (*garbage collector*) que rastreia referências e
+libera o que ninguém mais alcança — adeus vazamentos (quase), ao custo de pausas e
+de menos controle. C++ inventou o **RAII** (liberar no destrutor, automaticamente
+no fim do escopo) e os *smart pointers*. **Rust** vai além, com um sistema de
+**posse** (*ownership*) verificado em compilação que torna vazamentos e *dangling*
+praticamente impossíveis — uma formalização exata daquela pergunta "quem é o dono?".
+Entender o heap em C é entender o problema que todas elas tentam resolver.
+:::
+
+## Resumo
+
+- A memória de um programa tem a **pilha** (variáveis locais, automática, some no
+  fim do escopo) e o **heap** (blocos sob demanda, manual, vive até o `free`).
+- **Nunca devolva o endereço de uma variável local** — ela mora na pilha e morre
+  no `return`.
+- O ciclo de um bloco é **pedir → usar → devolver → zerar**: `malloc`, usar,
+  `free`, `p = NULL`. **Cada `malloc` tem um `free`.**
+- **`calloc`** zera; **`realloc`** redimensiona e pode mover (guarde o retorno num
+  ponteiro temporário antes de confiar nele).
+- **Vazamento**: perdeu a referência sem liberar. **Dangling**: usou o ponteiro
+  depois do `free`. A cura comum: liberar na hora certa e zerar o ponteiro. O
+  **valgrind** caça os dois.
+
+No próximo capítulo, vamos compor tipos com **structs e uniões** — e ver como o
+compilador organiza seus campos na memória (com o custo escondido do *alinhamento*),
+fechando a base sobre a qual cada estrutura do livro foi construída.
