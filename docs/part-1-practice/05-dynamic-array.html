@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt" xml:lang="pt"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>5&nbsp; Array dinâmico: o vetor que cresce sozinho – Estruturas de Dados e Algoritmos em C</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../part-1-practice/06-linked-lists.html" rel="next">
+<link href="../part-2-foundations/04-modularization.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9bfc61b20ce54e18ae6b25bf56d136e1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Estruturas de Dados e Algoritmos em C</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="typing-effect">Estruturas de Dados e Algoritmos em C</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte I — Fundamentos do C</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/01-pointers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Ponteiros: o endereço é o dado</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/02-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/03-structs-unions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/04-modularization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte II — A prática do projetista</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/05-dynamic-array.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/06-linked-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/07-shadow-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/08-stacks-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/09-bst.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/10-heaps.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/11-huffman.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Páginas interativas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/pointers-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/huffman-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Montagem da árvore de Huffman (scrollytelling)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a1-big-o-table.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Tabela-resumo de complexidade Big-O</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a2-horizon.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Horizonte: o que estudar depois</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-analogia-a-casa-que-dobra-de-tamanho" id="toc-a-analogia-a-casa-que-dobra-de-tamanho" class="nav-link active" data-scroll-target="#a-analogia-a-casa-que-dobra-de-tamanho"><span class="header-section-number">5.1</span> A analogia: a casa que dobra de tamanho</a></li>
+  <li><a href="#a-ideia-central-size-não-é-capacity" id="toc-a-ideia-central-size-não-é-capacity" class="nav-link" data-scroll-target="#a-ideia-central-size-não-é-capacity"><span class="header-section-number">5.2</span> A ideia central: <code>size</code> não é <code>capacity</code></a></li>
+  <li><a href="#a-struct-e-a-interface" id="toc-a-struct-e-a-interface" class="nav-link" data-scroll-target="#a-struct-e-a-interface"><span class="header-section-number">5.3</span> A struct e a interface</a></li>
+  <li><a href="#nascer-e-morrer-da_init-e-da_free" id="toc-nascer-e-morrer-da_init-e-da_free" class="nav-link" data-scroll-target="#nascer-e-morrer-da_init-e-da_free"><span class="header-section-number">5.4</span> Nascer e morrer: <code>da_init</code> e <code>da_free</code></a></li>
+  <li><a href="#o-coração-da_push-e-a-realocação" id="toc-o-coração-da_push-e-a-realocação" class="nav-link" data-scroll-target="#o-coração-da_push-e-a-realocação"><span class="header-section-number">5.5</span> O coração: <code>da_push</code> e a realocação</a></li>
+  <li><a href="#por-que-dobrar-a-complexidade-amortizada" id="toc-por-que-dobrar-a-complexidade-amortizada" class="nav-link" data-scroll-target="#por-que-dobrar-a-complexidade-amortizada"><span class="header-section-number">5.6</span> Por que dobrar? A complexidade amortizada</a></li>
+  <li><a href="#acesso-o1-e-o-contraste-central-do-livro" id="toc-acesso-o1-e-o-contraste-central-do-livro" class="nav-link" data-scroll-target="#acesso-o1-e-o-contraste-central-do-livro"><span class="header-section-number">5.7</span> Acesso <span class="math inline">\(O(1)\)</span> e o contraste central do livro</a></li>
+  <li><a href="#remover-do-fim-e-o-porquê-de-não-encolher" id="toc-remover-do-fim-e-o-porquê-de-não-encolher" class="nav-link" data-scroll-target="#remover-do-fim-e-o-porquê-de-não-encolher"><span class="header-section-number">5.8</span> Remover do fim e o porquê de não encolher</a>
+  <ul class="collapse">
+  <li><a href="#vendo-tudo-funcionar" id="toc-vendo-tudo-funcionar" class="nav-link" data-scroll-target="#vendo-tudo-funcionar"><span class="header-section-number">5.8.1</span> Vendo tudo funcionar</a></li>
+  </ul></li>
+  <li><a href="#veja-acontecer" id="toc-veja-acontecer" class="nav-link" data-scroll-target="#veja-acontecer"><span class="header-section-number">5.9</span> Veja acontecer</a></li>
+  <li><a href="#pense-como-projetista" id="toc-pense-como-projetista" class="nav-link" data-scroll-target="#pense-como-projetista"><span class="header-section-number">5.10</span> Pense como projetista</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">5.11</span> Resumo</a>
+  <ul class="collapse">
+  <li><a href="#tabela-de-complexidade-do-capítulo" id="toc-tabela-de-complexidade-do-capítulo" class="nav-link" data-scroll-target="#tabela-de-complexidade-do-capítulo"><span class="header-section-number">5.11.1</span> Tabela de complexidade do capítulo</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Você já programou com arrays. Em C, eles têm um defeito incômodo: <strong>nascem com um tamanho fixo</strong>. Você decide <code>int v[100];</code> e pronto — se chegarem 101 elementos, azar. Mas a vida real raramente avisa quantos itens virão. Como guardar uma lista que <em>não sabemos o tamanho de antemão</em>, sem desperdiçar memória nem estourar?</p>
+<p>A resposta é o <strong>array dinâmico</strong> (também chamado <em>ArrayList</em>, <em>vector</em> ou <em>growable array</em>): um array contíguo que <strong>realoca a si mesmo</strong> quando enche. É a primeira estrutura do nosso caminho como projetistas — e a mais usada no mundo todo. Vamos construí-la do zero, desenhar cada byte que ela move, e aprender no caminho um conceito que assombra muita gente: a <strong>complexidade amortizada</strong>.</p>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>🎨 <strong>Placeholder de ilustração — analogia de abertura.</strong> <em>Brief:</em> uma família mudando de uma casa pequena (4 cômodos cheios) para uma casa do <strong>dobro</strong> do tamanho, carregando os móveis um a um pela rua. Legenda visual: <em>“quando enche, alugamos uma casa maior e mudamos tudo de uma vez”</em>. Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.</p>
+</div>
+</div>
+</div>
+<section id="a-analogia-a-casa-que-dobra-de-tamanho" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="a-analogia-a-casa-que-dobra-de-tamanho"><span class="header-section-number">5.1</span> A analogia: a casa que dobra de tamanho</h2>
+<p>Imagine que você mora numa casa com <strong>4 cômodos</strong> e todos estão ocupados. Chega mais um morador. Você tem duas opções:</p>
+<ol type="1">
+<li><strong>Mudar de casa toda vez que chega alguém</strong> — alugar uma casa com 5 cômodos, carregar todos os móveis, e repetir no próximo morador (6 cômodos), e no próximo (7)… Mudar é caro, e você mudaria <em>o tempo todo</em>.</li>
+<li><strong>Mudar de casa, mas para o dobro</strong> — quando os 4 cômodos enchem, você aluga uma de <strong>8</strong>. Carrega os móveis uma vez e ganha <strong>4 cômodos livres</strong> de folga. Só vai mudar de novo quando esses 8 encherem — e aí pula para 16.</li>
+</ol>
+<p>A segunda estratégia é o coração do array dinâmico. Mudar (copiar tudo) é caro, mas se você <strong>dobra</strong> o espaço a cada mudança, as mudanças ficam tão raras que, <em>na média</em>, cada novo morador custa quase nada. Guarde essa imagem: vamos formalizá-la na seção sobre complexidade amortizada.</p>
+</section>
+<section id="a-ideia-central-size-não-é-capacity" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="a-ideia-central-size-não-é-capacity"><span class="header-section-number">5.2</span> A ideia central: <code>size</code> não é <code>capacity</code></h2>
+<p>Toda a estrutura nasce de uma distinção que parece pequena e muda tudo:</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Ideia central">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Ideia central
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Um array dinâmico guarda <strong>dois números</strong> sobre si mesmo:</p>
+<ul>
+<li><strong><code>size</code></strong> (tamanho): quantos elementos <em>de verdade</em> existem agora.</li>
+<li><strong><code>capacity</code></strong> (capacidade): quantos elementos <em>cabem</em> no bloco que já reservamos no heap, antes de precisar realocar.</li>
+</ul>
+<p>Sempre vale <code>size ≤ capacity</code>. O espaço entre os dois é a <strong>folga</strong> que torna as inserções baratas. Quando <code>size</code> alcança <code>capacity</code>, e só então, a estrutura cresce.</p>
+</div>
+</div>
+<p>Visualmente, a struct mora na <strong>pilha</strong> e aponta para um <strong>bloco contíguo no heap</strong>. A <a href="#fig-anatomy" class="quarto-xref">Figura&nbsp;<span>5.1</span></a> mostra um array com três elementos (<code>size = 3</code>) num bloco com quatro lugares (<code>capacity = 4</code>):</p>
+<div class="cell" data-fig-width="4.5" data-fig-height="1.45" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-anatomy" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-anatomy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="432" height="139" viewbox="0.00 0.00 360.00 113.63" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(0.887724 0.887724) rotate(0) translate(4 124)">
+<title>anatomy</title>
+<!-- stack -->
+<g id="node1" class="node">
+<title>stack</title>
+<polygon fill="none" stroke="black" points="8,-88 8,-116 134,-116 134,-88 8,-88"></polygon>
+<text text-anchor="start" x="14.85" y="-99.2" font-family="Inter" font-weight="bold" font-size="12.00">DynamicArray</text>
+<text text-anchor="start" x="92.16" y="-99.2" font-family="Inter" font-size="12.00"> (pilha)</text>
+<polygon fill="none" stroke="black" points="8,-60 8,-88 86,-88 86,-60 8,-60"></polygon>
+<text text-anchor="start" x="15" y="-70.2" font-family="Inter" font-size="12.00">data</text>
+<polygon fill="none" stroke="black" points="86,-60 86,-88 134,-88 134,-60 86,-60"></polygon>
+<text text-anchor="start" x="105.5" y="-70.2" font-family="Inter" font-size="12.00">•</text>
+<polygon fill="none" stroke="black" points="8,-32 8,-60 86,-60 86,-32 8,-32"></polygon>
+<text text-anchor="start" x="15" y="-42.2" font-family="Inter" font-size="12.00">size</text>
+<polygon fill="none" stroke="black" points="86,-32 86,-60 134,-60 134,-32 86,-32"></polygon>
+<text text-anchor="start" x="107" y="-42.2" font-family="Inter" font-size="12.00">3</text>
+<polygon fill="none" stroke="black" points="8,-4 8,-32 86,-32 86,-4 8,-4"></polygon>
+<text text-anchor="start" x="15" y="-14.2" font-family="Inter" font-size="12.00">capacity</text>
+<polygon fill="none" stroke="black" points="86,-4 86,-32 134,-32 134,-4 86,-4"></polygon>
+<text text-anchor="start" x="107" y="-14.2" font-family="Inter" font-size="12.00">4</text>
+</g>
+<!-- heap -->
+<g id="node2" class="node">
+<title>heap</title>
+<polygon fill="#f5793b" stroke="transparent" points="271.53,-72 271.53,-104 301.53,-104 301.53,-72 271.53,-72"></polygon>
+<polygon fill="none" stroke="black" points="271.53,-72 271.53,-104 301.53,-104 301.53,-72 271.53,-72"></polygon>
+<text text-anchor="start" x="280.53" y="-84.2" font-family="Inter" font-size="12.00" fill="white">10</text>
+<polygon fill="#f5793b" stroke="transparent" points="301.53,-72 301.53,-104 331.53,-104 331.53,-72 301.53,-72"></polygon>
+<polygon fill="none" stroke="black" points="301.53,-72 301.53,-104 331.53,-104 331.53,-72 301.53,-72"></polygon>
+<text text-anchor="start" x="310.53" y="-84.2" font-family="Inter" font-size="12.00" fill="white">20</text>
+<polygon fill="#f5793b" stroke="transparent" points="331.53,-72 331.53,-104 361.53,-104 361.53,-72 331.53,-72"></polygon>
+<polygon fill="none" stroke="black" points="331.53,-72 331.53,-104 361.53,-104 361.53,-72 331.53,-72"></polygon>
+<text text-anchor="start" x="340.53" y="-84.2" font-family="Inter" font-size="12.00" fill="white">30</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="361.53,-72 361.53,-104 389.53,-104 389.53,-72 361.53,-72"></polygon>
+<polygon fill="none" stroke="black" points="361.53,-72 361.53,-104 389.53,-104 389.53,-72 361.53,-72"></polygon>
+<text text-anchor="start" x="372.53" y="-84.2" font-family="Inter" font-size="12.00">·</text>
+<polygon fill="none" stroke="black" points="271.53,-44 271.53,-72 301.53,-72 301.53,-44 271.53,-44"></polygon>
+<text text-anchor="start" x="281.28" y="-54.9" font-family="Inter" font-size="9.00">[0]</text>
+<polygon fill="none" stroke="black" points="301.53,-44 301.53,-72 331.53,-72 331.53,-44 301.53,-44"></polygon>
+<text text-anchor="start" x="311.28" y="-54.9" font-family="Inter" font-size="9.00">[1]</text>
+<polygon fill="none" stroke="black" points="331.53,-44 331.53,-72 361.53,-72 361.53,-44 331.53,-44"></polygon>
+<text text-anchor="start" x="341.28" y="-54.9" font-family="Inter" font-size="9.00">[2]</text>
+<polygon fill="none" stroke="black" points="361.53,-44 361.53,-72 389.53,-72 389.53,-44 361.53,-44"></polygon>
+<text text-anchor="start" x="370.28" y="-54.9" font-family="Inter" font-size="9.00">[3]</text>
+</g>
+<!-- stack&#45;&gt;heap -->
+<g id="edge1" class="edge">
+<title>stack:p-&gt;heap</title>
+<path fill="none" stroke="black" d="M135,-74C173.88,-74 217.14,-74 252.97,-74"></path>
+<polygon fill="black" stroke="black" points="253.35,-77.5 263.35,-74 253.35,-70.5 253.35,-77.5"></polygon>
+<text text-anchor="middle" x="202.77" y="-78.2" font-family="Times,serif" font-size="14.00"> &nbsp;bloco no heap</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-anatomy-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;5.1: A struct <code>DynamicArray</code> vive na pilha e aponta para um bloco contíguo no heap. <code>size</code> conta os elementos existentes; <code>capacity</code> conta quantos cabem.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>A cor laranja marca os <strong>elementos</strong> (a faixa <code>size</code>); o cinza, a <strong>capacidade ociosa</strong> (a folga). Vamos manter essa convenção de cor no livro inteiro.</p>
+</section>
+<section id="a-struct-e-a-interface" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="a-struct-e-a-interface"><span class="header-section-number">5.3</span> A struct e a interface</h2>
+<p>Começamos pelo <em>contrato</em> — o cabeçalho. Um projetista pensa primeiro em <strong>o que</strong> a estrutura oferece, depois em <strong>como</strong> ela cumpre. Para este capítulo, um array dinâmico de <code>int</code> basta; a versão genérica (com <code>void*</code>) chega no capítulo de Shadow Data.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * dynamic_array.h — Array dinâmico de inteiros (ArrayList).</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"> * Projeto:   PIESC — Estruturas de Dados e Algoritmos em C</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"> * Capítulo:  5 — Array dinâmico</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"> * Padrão:    C17 (ISO/IEC 9899:2018)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"> * Build:     gcc/clang -std=c17 -Wall -Wextra -Wpedantic   (ver Makefile)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef DYNAMIC_ARRAY_H</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="pp">#define DYNAMIC_ARRAY_H</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stddef.h&gt;</span><span class="pp">  </span><span class="co">// size_t</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdbool.h&gt;</span><span class="pp"> </span><span class="co">// bool</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="op">*</span>data<span class="op">;</span>       <span class="co">// bloco contíguo de elementos, no heap</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> size<span class="op">;</span>     <span class="co">// quantos elementos existem</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> capacity<span class="op">;</span> <span class="co">// quantos cabem antes de realocar</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> DynamicArray<span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">// Ciclo de vida.</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_init<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> initial_capacity<span class="op">);</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> da_free<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">);</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co">// Inserção e remoção no fim.</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_push<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">int</span> value<span class="op">);</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_pop<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">);</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co">// Acesso por índice e tamanho.</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> da_get<span class="op">(</span><span class="dt">const</span> DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> index<span class="op">);</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> da_set<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> index<span class="op">,</span> <span class="dt">int</span> value<span class="op">);</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> da_size<span class="op">(</span><span class="dt">const</span> DynamicArray <span class="op">*</span>da<span class="op">);</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif </span><span class="co">// DYNAMIC_ARRAY_H</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>As funções que podem <strong>falhar por falta de memória</strong> devolvem <code>bool</code> (<code>true</code> = ok). Esse hábito — admitir que <code>malloc</code>/<code>realloc</code> podem falhar — separa código de brinquedo de código de produção.</p>
+</section>
+<section id="nascer-e-morrer-da_init-e-da_free" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="nascer-e-morrer-da_init-e-da_free"><span class="header-section-number">5.4</span> Nascer e morrer: <code>da_init</code> e <code>da_free</code></h2>
+<p>A implementação mora em <code>dynamic_array.c</code>, que começa puxando o cabeçalho e as bibliotecas usadas pelos próximos trechos:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-snippet="includes" data-startfrom="10"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 9;"><span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">"dynamic_array.h"</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;assert.h&gt;</span><span class="pp"> </span><span class="co">// assert</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdlib.h&gt;</span><span class="pp"> </span><span class="co">// malloc, realloc, free</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-snippet="lifecycle" data-startfrom="17"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 16;"><span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">// Prepara um array vazio (capacidade inicial opcional).</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="co">// Devolve false só se a alocação inicial falhar.</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_init<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> initial_capacity<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>data <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>size <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>capacity <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>initial_capacity <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        da<span class="op">-&gt;</span>data <span class="op">=</span> malloc<span class="op">(</span>initial_capacity <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">));</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>da<span class="op">-&gt;</span>data <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// sem memória: struct fica vazia, mas válida</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        da<span class="op">-&gt;</span>capacity <span class="op">=</span> initial_capacity<span class="op">;</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="co">// Libera o bloco e zera a struct (evita dangling pointer / double free).</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> da_free<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>da<span class="op">-&gt;</span>data<span class="op">);</span> <span class="co">// free(NULL) é seguro</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>data <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>size <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>capacity <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Cuidado: memory leak">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Aviso</span>Cuidado: memory leak
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A regra de ouro deste livro: <strong>cada <code>malloc</code>/<code>calloc</code>/<code>realloc</code> tem exatamente um <code>free</code></strong>. Aqui, todo o bloco vive em <code>da-&gt;data</code>; um único <code>free</code> no <code>da_free</code> quita a dívida. Zerar <code>da-&gt;data</code> para <code>NULL</code> depois do <code>free</code> evita dois bugs clássicos: o <em>double free</em> (liberar duas vezes) e o <em>dangling pointer</em> (usar um ponteiro que já aponta para memória devolvida).</p>
+</div>
+</div>
+</section>
+<section id="o-coração-da_push-e-a-realocação" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="o-coração-da_push-e-a-realocação"><span class="header-section-number">5.5</span> O coração: <code>da_push</code> e a realocação</h2>
+<p>Inserir no fim é o caso comum. A lógica tem duas partes: <strong>se está cheio, cresce; depois, grava</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-snippet="grow_push" data-startfrom="44"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 43;"><span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">// Cresce o bloco dobrando a capacidade. Detalhe interno (static).</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> da_grow<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> new_capacity <span class="op">=</span> <span class="op">(</span>da<span class="op">-&gt;</span>capacity <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">?</span> <span class="dv">1</span> <span class="op">:</span> da<span class="op">-&gt;</span>capacity <span class="op">*</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="op">*</span>new_data <span class="op">=</span> realloc<span class="op">(</span>da<span class="op">-&gt;</span>data<span class="op">,</span> new_capacity <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">));</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>new_data <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// realloc falhou; o bloco antigo continua válido</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>data <span class="op">=</span> new_data<span class="op">;</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>capacity <span class="op">=</span> new_capacity<span class="op">;</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="co">// Insere um valor no fim. O(1) amortizado.</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_push<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>da<span class="op">-&gt;</span>size <span class="op">==</span> da<span class="op">-&gt;</span>capacity<span class="op">)</span> <span class="op">{</span> <span class="co">// sem folga?</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>da_grow<span class="op">(</span>da<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// falhou ao crescer: nada é perdido</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>data<span class="op">[</span>da<span class="op">-&gt;</span>size<span class="op">]</span> <span class="op">=</span> value<span class="op">;</span> <span class="co">// grava na primeira posição livre</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>size <span class="op">+=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Três detalhes desse trecho merecem atenção:</p>
+<ol type="1">
+<li>A regra de crescimento: <strong>dobrar</strong>. Partindo de uma capacidade vazia, o primeiro <code>grow</code> reserva 1; depois 2, 4, 8, 16… A próxima seção justifica por que dobrar (e não somar uma quantia fixa).</li>
+<li><code>realloc</code> pode <strong>mover o bloco inteiro</strong> para outro endereço se não houver espaço contíguo logo após o atual. Quando isso acontece, ele copia os bytes antigos para o novo lugar — é o custo <span class="math inline">\(O(n)\)</span> da realocação.</li>
+<li>Detalhe que evita vazamento: guardamos o retorno num <strong>ponteiro temporário</strong> (<code>new_data</code>). Se <code>realloc</code> falha, ele devolve <code>NULL</code> mas <strong>não libera</strong> o bloco antigo — que continua acessível por <code>da-&gt;data</code>. Se tivéssemos escrito <code>da-&gt;data = realloc(da-&gt;data, ...)</code>, um <code>NULL</code> apagaria a única referência ao bloco e o vazaríamos.</li>
+</ol>
+<p>A <a href="#fig-realloc" class="quarto-xref">Figura&nbsp;<span>5.2</span></a> mostra o instante da mudança de casa: o bloco de capacidade 4 estava cheio, e <code>realloc</code> reserva um de capacidade 8, copiando os quatro elementos:</p>
+<div class="cell" data-fig-width="4.5" data-fig-height="2.8" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-realloc" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-realloc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="432" height="269" viewbox="0.00 0.00 323.43 200.80" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 196.8)">
+<title>realloc</title>
+<!-- old -->
+<g id="node1" class="node">
+<title>old</title>
+<polygon fill="none" stroke="black" points="37,-158.8 37,-188.8 196,-188.8 196,-158.8 37,-158.8"></polygon>
+<text text-anchor="start" x="45.51" y="-170.8" font-family="Inter" font-size="10.00">bloco antigo — capacity = 4 (cheio)</text>
+<polygon fill="#f5793b" stroke="transparent" points="37,-126.8 37,-158.8 86,-158.8 86,-126.8 37,-126.8"></polygon>
+<polygon fill="none" stroke="black" points="37,-126.8 37,-158.8 86,-158.8 86,-126.8 37,-126.8"></polygon>
+<text text-anchor="start" x="55.5" y="-139" font-family="Inter" font-size="12.00" fill="white">10</text>
+<polygon fill="#f5793b" stroke="transparent" points="86,-126.8 86,-158.8 126,-158.8 126,-126.8 86,-126.8"></polygon>
+<polygon fill="none" stroke="black" points="86,-126.8 86,-158.8 126,-158.8 126,-126.8 86,-126.8"></polygon>
+<text text-anchor="start" x="100" y="-139" font-family="Inter" font-size="12.00" fill="white">20</text>
+<polygon fill="#f5793b" stroke="transparent" points="126,-126.8 126,-158.8 161,-158.8 161,-126.8 126,-126.8"></polygon>
+<polygon fill="none" stroke="black" points="126,-126.8 126,-158.8 161,-158.8 161,-126.8 126,-126.8"></polygon>
+<text text-anchor="start" x="137.5" y="-139" font-family="Inter" font-size="12.00" fill="white">30</text>
+<polygon fill="#f5793b" stroke="transparent" points="161,-126.8 161,-158.8 196,-158.8 196,-126.8 161,-126.8"></polygon>
+<polygon fill="none" stroke="black" points="161,-126.8 161,-158.8 196,-158.8 196,-126.8 161,-126.8"></polygon>
+<text text-anchor="start" x="172.5" y="-139" font-family="Inter" font-size="12.00" fill="white">40</text>
+</g>
+<!-- new -->
+<g id="node2" class="node">
+<title>new</title>
+<polygon fill="none" stroke="black" points="8,-36 8,-66 224,-66 224,-36 8,-36"></polygon>
+<text text-anchor="start" x="62.92" y="-48" font-family="Inter" font-size="10.00">bloco novo — capacity = 8</text>
+<polygon fill="#f5793b" stroke="transparent" points="8,-4 8,-36 38,-36 38,-4 8,-4"></polygon>
+<polygon fill="none" stroke="black" points="8,-4 8,-36 38,-36 38,-4 8,-4"></polygon>
+<text text-anchor="start" x="17" y="-16.2" font-family="Inter" font-size="12.00" fill="white">10</text>
+<polygon fill="#f5793b" stroke="transparent" points="38,-4 38,-36 68,-36 68,-4 38,-4"></polygon>
+<polygon fill="none" stroke="black" points="38,-4 38,-36 68,-36 68,-4 38,-4"></polygon>
+<text text-anchor="start" x="47" y="-16.2" font-family="Inter" font-size="12.00" fill="white">20</text>
+<polygon fill="#f5793b" stroke="transparent" points="68,-4 68,-36 98,-36 98,-4 68,-4"></polygon>
+<polygon fill="none" stroke="black" points="68,-4 68,-36 98,-36 98,-4 68,-4"></polygon>
+<text text-anchor="start" x="77" y="-16.2" font-family="Inter" font-size="12.00" fill="white">30</text>
+<polygon fill="#f5793b" stroke="transparent" points="98,-4 98,-36 128,-36 128,-4 98,-4"></polygon>
+<polygon fill="none" stroke="black" points="98,-4 98,-36 128,-36 128,-4 98,-4"></polygon>
+<text text-anchor="start" x="107" y="-16.2" font-family="Inter" font-size="12.00" fill="white">40</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="128,-4 128,-36 152,-36 152,-4 128,-4"></polygon>
+<polygon fill="none" stroke="black" points="128,-4 128,-36 152,-36 152,-4 128,-4"></polygon>
+<text text-anchor="start" x="137" y="-16.2" font-family="Inter" font-size="12.00">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="152,-4 152,-36 176,-36 176,-4 152,-4"></polygon>
+<polygon fill="none" stroke="black" points="152,-4 152,-36 176,-36 176,-4 152,-4"></polygon>
+<text text-anchor="start" x="161" y="-16.2" font-family="Inter" font-size="12.00">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="176,-4 176,-36 200,-36 200,-4 176,-4"></polygon>
+<polygon fill="none" stroke="black" points="176,-4 176,-36 200,-36 200,-4 176,-4"></polygon>
+<text text-anchor="start" x="185" y="-16.2" font-family="Inter" font-size="12.00">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="200,-4 200,-36 224,-36 224,-4 200,-4"></polygon>
+<polygon fill="none" stroke="black" points="200,-4 200,-36 224,-36 224,-4 200,-4"></polygon>
+<text text-anchor="start" x="209" y="-16.2" font-family="Inter" font-size="12.00">·</text>
+</g>
+<!-- old&#45;&gt;new -->
+<g id="edge1" class="edge">
+<title>old-&gt;new</title>
+<path fill="none" stroke="black" d="M116,-122.51C116,-109.5 116,-94.49 116,-80.67"></path>
+<polygon fill="black" stroke="black" points="119.5,-80.38 116,-70.38 112.5,-80.38 119.5,-80.38"></polygon>
+<text text-anchor="middle" x="215.72" y="-92.2" font-family="Times,serif" font-size="14.00"> &nbsp;realloc copia os 4 elementos: O(n)</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-realloc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;5.2: Quando <code>size</code> alcança <code>capacity</code>, <code>realloc</code> reserva um bloco com o dobro do tamanho e copia os elementos existentes. O bloco antigo é devolvido ao sistema.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="por-que-dobrar-a-complexidade-amortizada" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="por-que-dobrar-a-complexidade-amortizada"><span class="header-section-number">5.6</span> Por que dobrar? A complexidade amortizada</h2>
+<p>Aqui está a pergunta que confunde muita gente: se uma realocação custa <span class="math inline">\(O(n)\)</span> (copiar tudo), como podemos dizer que <code>da_push</code> é <span class="math inline">\(O(1)\)</span>? A resposta é a <strong>análise amortizada</strong> — olhar o custo <em>médio por operação ao longo de muitas operações</em>, e não o pior caso isolado.</p>
+<p>Vamos inserir <span class="math inline">\(n\)</span> elementos do zero, dobrando a capacidade (<span class="math inline">\(1, 2, 4, \dots, n\)</span>). As realocações copiam, no total:</p>
+<p><span class="math display">\[
+\underbrace{1 + 2 + 4 + 8 + \cdots + \tfrac{n}{2}}_{\text{cópias em cada realocação}}
+\;=\; n - 1 \;&lt;\; n .
+\]</span></p>
+<p>É uma soma geométrica: cada termo é a metade do seguinte, então o total <strong>não passa de <span class="math inline">\(n\)</span></strong>, e não de <span class="math inline">\(n \log n\)</span> como a intuição às vezes sugere. Somando as <span class="math inline">\(n\)</span> gravações em si (cada uma <span class="math inline">\(O(1)\)</span>), o custo de inserir <span class="math inline">\(n\)</span> elementos é <span class="math inline">\(O(n)\)</span> no total. Divida por <span class="math inline">\(n\)</span> operações:</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Complexidade (Big-O)">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Complexidade (Big-O)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong><code>da_push</code> é <span class="math inline">\(O(1)\)</span> amortizado.</strong> Inserir <span class="math inline">\(n\)</span> elementos custa <span class="math inline">\(O(n)\)</span> no total, logo <span class="math inline">\(O(1)\)</span> <em>em média</em> por inserção — mesmo que uma inserção isolada possa custar <span class="math inline">\(O(n)\)</span> quando dispara a realocação. “Amortizado” significa exatamente isto: o custo raro e caro se <strong>dilui</strong> sobre as muitas operações baratas que o cercam.</p>
+<p>E por que <strong>dobrar</strong>, e não crescer de 1 em 1? Crescer +1 a cada vez forçaria uma cópia em <em>toda</em> inserção: <span class="math inline">\(1 + 2 + 3 + \cdots + n = O(n^2)\)</span> no total, ou <span class="math inline">\(O(n)\)</span> <em>por push</em>. Dobrar transforma esse <span class="math inline">\(O(n)\)</span> em <span class="math inline">\(O(1)\)</span> amortizado. A folga é o que compra a velocidade.</p>
+</div>
+</div>
+</section>
+<section id="acesso-o1-e-o-contraste-central-do-livro" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="acesso-o1-e-o-contraste-central-do-livro"><span class="header-section-number">5.7</span> Acesso <span class="math inline">\(O(1)\)</span> e o contraste central do livro</h2>
+<p>O array dinâmico tem um superpoder que vamos comparar com <em>todas</em> as estruturas seguintes: o <strong>acesso por índice em tempo constante</strong>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-snippet="access" data-startfrom="72"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 71;"><span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a><span class="co">// Lê o elemento em index. O(1).</span></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> da_get<span class="op">(</span><span class="dt">const</span> DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> index<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>index <span class="op">&lt;</span> da<span class="op">-&gt;</span>size<span class="op">);</span> <span class="co">// índice fora do tamanho = erro de programação</span></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> da<span class="op">-&gt;</span>data<span class="op">[</span>index<span class="op">];</span>   <span class="co">// endereço = data + index*sizeof(int)</span></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a><span class="co">// Sobrescreve o elemento em index. O(1).</span></span>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> da_set<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">size_t</span> index<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>    assert<span class="op">(</span>index <span class="op">&lt;</span> da<span class="op">-&gt;</span>size<span class="op">);</span></span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>data<span class="op">[</span>index<span class="op">]</span> <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Por que <span class="math inline">\(O(1)\)</span>? Porque o bloco é <strong>contíguo</strong>. O endereço do elemento <code>index</code> é simplesmente <code>data + index * sizeof(int)</code> — uma multiplicação e uma soma, sem percorrer nada. Não importa se você quer o elemento 0 ou o 1.000.000: o custo é o mesmo.</p>
+<p>Há um segundo ganho, invisível no Big-O mas enorme na prática: a <strong>localidade de cache</strong>. Como os elementos são vizinhos na memória, quando a CPU busca um, ela já traz os vizinhos para o cache. Varrer um array dinâmico voa. Esse é o contraste que vai nos acompanhar:</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Trade-off: contíguo × encadeado">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Trade-off: contíguo × encadeado
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Array dinâmico (contíguo):</strong> acesso por índice <span class="math inline">\(O(1)\)</span>, localidade de cache excelente, memória compacta. <strong>Mas</strong> inserir/remover no <em>meio</em> custa <span class="math inline">\(O(n)\)</span> (é preciso deslocar elementos), e crescer exige realocar e copiar.</li>
+<li><strong>Lista encadeada (próximo capítulo):</strong> inserir/remover é <span class="math inline">\(O(1)\)</span> <em>se você já está no ponto certo</em>, sem realocação. <strong>Mas</strong> o acesso por índice vira <span class="math inline">\(O(n)\)</span> (é preciso seguir ponteiro a ponteiro), e cada elemento gasta memória extra com ponteiros, espalhados pela RAM — péssima localidade de cache.</li>
+</ul>
+<p>Não existe “melhor”: existe <strong>adequado ao uso</strong>. Acessa muito por índice e varre sequências? Contíguo. Insere e remove muito no meio, sem precisar de índice? Encadeado. Vamos repetir essa decisão em cada estrutura.</p>
+</div>
+</div>
+</section>
+<section id="remover-do-fim-e-o-porquê-de-não-encolher" class="level2" data-number="5.8">
+<h2 data-number="5.8" class="anchored" data-anchor-id="remover-do-fim-e-o-porquê-de-não-encolher"><span class="header-section-number">5.8</span> Remover do fim e o porquê de não encolher</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-snippet="pop" data-startfrom="86"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 85;"><span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a><span class="co">// Remove o último elemento; copia-o para *out se out != NULL. O(1).</span></span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> da_pop<span class="op">(</span>DynamicArray <span class="op">*</span>da<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>da<span class="op">-&gt;</span>size <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// nada a remover</span></span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a>    da<span class="op">-&gt;</span>size <span class="op">-=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>out <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>out <span class="op">=</span> da<span class="op">-&gt;</span>data<span class="op">[</span>da<span class="op">-&gt;</span>size<span class="op">];</span></span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb6-96"><a href="#cb6-96" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-97"><a href="#cb6-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a><span class="dt">size_t</span> da_size<span class="op">(</span><span class="dt">const</span> DynamicArray <span class="op">*</span>da<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> da<span class="op">-&gt;</span>size<span class="op">;</span></span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Repare que <code>da_pop</code> <strong>não devolve memória</strong> — apenas diminui <code>size</code>. A capacidade fica como estava, pronta para futuras inserções. Encolher (chamar <code>realloc</code> para um bloco menor) é possível, mas costuma ser má ideia: se o tamanho oscila perto de um limite, você entraria num vai-e-vem de realocações (<em>thrashing</em>). A heurística usual é encolher só quando <code>size</code> cai abaixo de <strong>um quarto</strong> da capacidade — mas, para a maioria dos usos, simplesmente não encolher é a escolha certa.</p>
+<section id="vendo-tudo-funcionar" class="level3" data-number="5.8.1">
+<h3 data-number="5.8.1" class="anchored" data-anchor-id="vendo-tudo-funcionar"><span class="header-section-number">5.8.1</span> Vendo tudo funcionar</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-snippet="main" data-startfrom="10"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 9;"><span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">"dynamic_array.h"</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdio.h&gt;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    DynamicArray numbers<span class="op">;</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    da_init<span class="op">(&amp;</span>numbers<span class="op">,</span> <span class="dv">2</span><span class="op">);</span> <span class="co">// começa pequeno de propósito</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">6</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        da_push<span class="op">(&amp;</span>numbers<span class="op">,</span> i <span class="op">*</span> <span class="dv">10</span><span class="op">);</span> <span class="co">// força os crescimentos: 2 -&gt; 4 -&gt; 8</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"size = </span><span class="sc">%zu</span><span class="st">, capacity = </span><span class="sc">%zu\n</span><span class="st">"</span><span class="op">,</span> da_size<span class="op">(&amp;</span>numbers<span class="op">),</span> numbers<span class="op">.</span>capacity<span class="op">);</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">size_t</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> da_size<span class="op">(&amp;</span>numbers<span class="op">);</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">"numbers[</span><span class="sc">%zu</span><span class="st">] = </span><span class="sc">%d\n</span><span class="st">"</span><span class="op">,</span> i<span class="op">,</span> da_get<span class="op">(&amp;</span>numbers<span class="op">,</span> i<span class="op">));</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    da_free<span class="op">(&amp;</span>numbers<span class="op">);</span> <span class="co">// todo malloc tem seu free</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Saída do programa:</p>
+<pre class="text"><code>size = 6, capacity = 8
+numbers[0] = 10
+numbers[1] = 20
+numbers[2] = 30
+numbers[3] = 40
+numbers[4] = 50
+numbers[5] = 60</code></pre>
+<p>Seis elementos couberam num bloco de capacidade 8: a estrutura cresceu <code>2 → 4 → 8</code> sozinha, sem o programador se preocupar.</p>
+</section>
+</section>
+<section id="veja-acontecer" class="level2" data-number="5.9">
+<h2 data-number="5.9" class="anchored" data-anchor-id="veja-acontecer"><span class="header-section-number">5.9</span> Veja acontecer</h2>
+<p><strong>Crescimento das funções Big-O.</strong> Arraste o slider e veja quantas operações cada classe de complexidade exige para um mesmo <code>n</code>. Note como <span class="math inline">\(O(n^2)\)</span> dispara enquanto <span class="math inline">\(O(1)\)</span> e <span class="math inline">\(O(\log n)\)</span> mal saem do chão (eixo vertical em escala log):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb9" data-startfrom="310" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 309;"><span id="cb9-310"><a href="#cb9-310" aria-hidden="true" tabindex="-1"></a>viewof n_big_o <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">1</span><span class="op">,</span> <span class="dv">64</span>]<span class="op">,</span> { <span class="dt">value</span><span class="op">:</span> <span class="dv">16</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"n (elementos)"</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb10" data-startfrom="315" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 314;"><span id="cb10-315"><a href="#cb10-315" aria-hidden="true" tabindex="-1"></a>big_o_data <span class="op">=</span> [</span>
+<span id="cb10-316"><a href="#cb10-316" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">classe</span><span class="op">:</span> <span class="st">"O(1)"</span><span class="op">,</span>     <span class="dt">ops</span><span class="op">:</span> <span class="dv">1</span> }<span class="op">,</span></span>
+<span id="cb10-317"><a href="#cb10-317" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">classe</span><span class="op">:</span> <span class="st">"O(log n)"</span><span class="op">,</span> <span class="dt">ops</span><span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">max</span>(<span class="dv">1</span><span class="op">,</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">ceil</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">log2</span>(n_big_o))) }<span class="op">,</span></span>
+<span id="cb10-318"><a href="#cb10-318" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">classe</span><span class="op">:</span> <span class="st">"O(n)"</span><span class="op">,</span>     <span class="dt">ops</span><span class="op">:</span> n_big_o }<span class="op">,</span></span>
+<span id="cb10-319"><a href="#cb10-319" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">classe</span><span class="op">:</span> <span class="st">"O(n²)"</span><span class="op">,</span>    <span class="dt">ops</span><span class="op">:</span> n_big_o <span class="op">*</span> n_big_o }</span>
+<span id="cb10-320"><a href="#cb10-320" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb11" data-startfrom="325" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 324;"><span id="cb11-325"><a href="#cb11-325" aria-hidden="true" tabindex="-1"></a>Plot<span class="op">.</span><span class="fu">plot</span>({</span>
+<span id="cb11-326"><a href="#cb11-326" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marginLeft</span><span class="op">:</span> <span class="dv">60</span><span class="op">,</span></span>
+<span id="cb11-327"><a href="#cb11-327" aria-hidden="true" tabindex="-1"></a>  <span class="dt">x</span><span class="op">:</span> { <span class="dt">label</span><span class="op">:</span> <span class="kw">null</span> }<span class="op">,</span></span>
+<span id="cb11-328"><a href="#cb11-328" aria-hidden="true" tabindex="-1"></a>  <span class="dt">y</span><span class="op">:</span> { <span class="dt">type</span><span class="op">:</span> <span class="st">"log"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"operações (aprox.)"</span><span class="op">,</span> <span class="dt">grid</span><span class="op">:</span> <span class="kw">true</span> }<span class="op">,</span></span>
+<span id="cb11-329"><a href="#cb11-329" aria-hidden="true" tabindex="-1"></a>  <span class="dt">color</span><span class="op">:</span> { <span class="dt">legend</span><span class="op">:</span> <span class="kw">false</span> }<span class="op">,</span></span>
+<span id="cb11-330"><a href="#cb11-330" aria-hidden="true" tabindex="-1"></a>  <span class="dt">marks</span><span class="op">:</span> [</span>
+<span id="cb11-331"><a href="#cb11-331" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">barY</span>(big_o_data<span class="op">,</span> { <span class="dt">x</span><span class="op">:</span> <span class="st">"classe"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"ops"</span><span class="op">,</span> <span class="dt">fill</span><span class="op">:</span> <span class="st">"classe"</span> })<span class="op">,</span></span>
+<span id="cb11-332"><a href="#cb11-332" aria-hidden="true" tabindex="-1"></a>    Plot<span class="op">.</span><span class="fu">text</span>(big_o_data<span class="op">,</span> { <span class="dt">x</span><span class="op">:</span> <span class="st">"classe"</span><span class="op">,</span> <span class="dt">y</span><span class="op">:</span> <span class="st">"ops"</span><span class="op">,</span> <span class="dt">text</span><span class="op">:</span> (d) <span class="kw">=&gt;</span> d<span class="op">.</span><span class="at">ops</span><span class="op">,</span> <span class="dt">dy</span><span class="op">:</span> <span class="op">-</span><span class="dv">8</span> })</span>
+<span id="cb11-333"><a href="#cb11-333" aria-hidden="true" tabindex="-1"></a>  ]</span>
+<span id="cb11-334"><a href="#cb11-334" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-3" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<p><strong><code>size</code> × <code>capacity</code> ao inserir.</strong> Arraste para inserir elementos (push) e veja a capacidade <strong>dobrar</strong> só quando o bloco enche. Laranja = elemento; cinza = folga:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb12" data-startfrom="342" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 341;"><span id="cb12-342"><a href="#cb12-342" aria-hidden="true" tabindex="-1"></a>viewof k_push <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">20</span>]<span class="op">,</span> { <span class="dt">value</span><span class="op">:</span> <span class="dv">5</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"elementos inseridos (push)"</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-4" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb13" data-startfrom="347" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 346;"><span id="cb13-347"><a href="#cb13-347" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb13-348"><a href="#cb13-348" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> size <span class="op">=</span> k_push<span class="op">;</span></span>
+<span id="cb13-349"><a href="#cb13-349" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> capacity <span class="op">=</span> size <span class="op">===</span> <span class="dv">0</span> <span class="op">?</span> <span class="dv">0</span> <span class="op">:</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">pow</span>(<span class="dv">2</span><span class="op">,</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">ceil</span>(<span class="bu">Math</span><span class="op">.</span><span class="fu">log2</span>(size)))<span class="op">;</span></span>
+<span id="cb13-350"><a href="#cb13-350" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> cells <span class="op">=</span> <span class="bu">Array</span><span class="op">.</span><span class="fu">from</span>({ <span class="dt">length</span><span class="op">:</span> capacity }<span class="op">,</span> (_<span class="op">,</span> i) <span class="kw">=&gt;</span> i <span class="op">&lt;</span> size)<span class="op">;</span></span>
+<span id="cb13-351"><a href="#cb13-351" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"&gt;</span></span>
+<span id="cb13-352"><a href="#cb13-352" aria-hidden="true" tabindex="-1"></a><span class="vs">    </span><span class="sc">${</span>cells<span class="op">.</span><span class="fu">map</span>(</span>
+<span id="cb13-353"><a href="#cb13-353" aria-hidden="true" tabindex="-1"></a>      (filled<span class="op">,</span> i) <span class="kw">=&gt;</span> <span class="fu">html</span><span class="vs">`&lt;div style="width:36px;height:36px;display:flex;</span></span>
+<span id="cb13-354"><a href="#cb13-354" aria-hidden="true" tabindex="-1"></a><span class="vs">        align-items:center;justify-content:center;border-radius:6px;</span></span>
+<span id="cb13-355"><a href="#cb13-355" aria-hidden="true" tabindex="-1"></a><span class="vs">        font:600 13px sans-serif;background:</span><span class="sc">${</span>filled <span class="op">?</span> <span class="st">"#F5793B"</span> <span class="op">:</span> <span class="st">"#E9E4DC"</span><span class="sc">}</span><span class="vs">;</span></span>
+<span id="cb13-356"><a href="#cb13-356" aria-hidden="true" tabindex="-1"></a><span class="vs">        color:</span><span class="sc">${</span>filled <span class="op">?</span> <span class="st">"#fff"</span> <span class="op">:</span> <span class="st">"#999"</span><span class="sc">}</span><span class="vs">"&gt;</span><span class="sc">${</span>filled <span class="op">?</span> i <span class="op">:</span> <span class="st">"·"</span><span class="sc">}</span><span class="vs">&lt;/div&gt;`</span></span>
+<span id="cb13-357"><a href="#cb13-357" aria-hidden="true" tabindex="-1"></a>    )<span class="sc">}</span></span>
+<span id="cb13-358"><a href="#cb13-358" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="margin-left:12px;font:14px/1.4 sans-serif"&gt;</span></span>
+<span id="cb13-359"><a href="#cb13-359" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;b&gt;size&lt;/b&gt; = </span><span class="sc">${</span>size<span class="sc">}</span><span class="vs"> &amp;nbsp; &lt;b&gt;capacity&lt;/b&gt; = </span><span class="sc">${</span>capacity<span class="sc">}</span></span>
+<span id="cb13-360"><a href="#cb13-360" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;/div&gt;</span></span>
+<span id="cb13-361"><a href="#cb13-361" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb13-362"><a href="#cb13-362" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-5" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="pense-como-projetista" class="level2" data-number="5.10">
+<h2 data-number="5.10" class="anchored" data-anchor-id="pense-como-projetista"><span class="header-section-number">5.10</span> Pense como projetista</h2>
+<div class="callout callout-style-default callout-tip callout-titled" title="Pense como projetista">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Pense como projetista
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O array dinâmico deve ser sua <strong>escolha padrão</strong> para uma coleção sequencial — o “até prova em contrário”. Ele é compacto, rapidíssimo para varrer e acessar por índice, e amortiza bem o crescimento. Só troque por outra estrutura quando o <em>perfil de uso</em> pedir: muita inserção/remoção no meio (pense em lista encadeada), busca por chave (tabela hash, fora do nosso escopo), ou ordem por prioridade (heap, capítulo 10). Comece simples; complique só quando os números exigirem.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="No mundo real">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No mundo real
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Você raramente vai escrever um <code>da_push</code> na vida profissional — porque <strong>as linguagens já trazem o seu</strong>. O <code>std::vector</code> do C++, o <code>ArrayList</code> do Java e a <code>list</code> do Python são, por dentro, exatamente isto: um array dinâmico que dobra (ou cresce por um fator parecido) a capacidade ao encher. Quando você faz <code>lista.append(x)</code> em Python e ele “simplesmente funciona”, é o <code>da_grow</code> deste capítulo rodando lá no fundo, em C.</p>
+</div>
+</div>
+</section>
+<section id="resumo" class="level2" data-number="5.11">
+<h2 data-number="5.11" class="anchored" data-anchor-id="resumo"><span class="header-section-number">5.11</span> Resumo</h2>
+<ul>
+<li>Um array dinâmico é um <strong>bloco contíguo no heap</strong> que cresce sozinho via <code>realloc</code>, distinguindo <strong><code>size</code></strong> (o que existe) de <strong><code>capacity</code></strong> (o que cabe).</li>
+<li>A estratégia de <strong>dobrar a capacidade</strong> torna a inserção no fim <strong><span class="math inline">\(O(1)\)</span> amortizado</strong>, mesmo com realocações <span class="math inline">\(O(n)\)</span> ocasionais.</li>
+<li>O ganho central é o <strong>acesso por índice <span class="math inline">\(O(1)\)</span></strong> e a <strong>localidade de cache</strong>; o custo é o <span class="math inline">\(O(n)\)</span> para inserir/remover no meio. Esse é o <strong>trade-off contíguo × encadeado</strong> que guia o resto do livro.</li>
+<li>Disciplina de memória: cada <code>malloc</code>/<code>realloc</code> tem seu <code>free</code>; proteja o ponteiro antigo numa variável temporária ao realocar.</li>
+</ul>
+<section id="tabela-de-complexidade-do-capítulo" class="level3" data-number="5.11.1">
+<h3 data-number="5.11.1" class="anchored" data-anchor-id="tabela-de-complexidade-do-capítulo"><span class="header-section-number">5.11.1</span> Tabela de complexidade do capítulo</h3>
+<table class="caption-top table">
+<caption>Complexidades do array dinâmico.</caption>
+<colgroup>
+<col style="width: 40%">
+<col style="width: 18%">
+<col style="width: 14%">
+<col style="width: 28%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Operação</th>
+<th style="text-align: center;">Tempo</th>
+<th style="text-align: center;">Espaço</th>
+<th style="text-align: left;">Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Acesso por índice (<code>da_get</code>/<code>da_set</code>)</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: left;">aritmética de ponteiro num bloco contíguo</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Inserção no fim (<code>da_push</code>)</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span> amortizado</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: left;"><span class="math inline">\(O(n)\)</span> no pior caso quando realoca</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Remoção do fim (<code>da_pop</code>)</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: left;">só decrementa <code>size</code></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Inserção/remoção no meio</td>
+<td style="text-align: center;"><span class="math inline">\(O(n)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: left;">desloca os elementos seguintes</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Busca (coleção não ordenada)</td>
+<td style="text-align: center;"><span class="math inline">\(O(n)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: left;">varre do início ao fim</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Memória total</td>
+<td style="text-align: center;"><span class="math inline">\(O(n)\)</span></td>
+<td style="text-align: center;">—</td>
+<td style="text-align: left;">até ~2× de <code>n</code> por capacidade ociosa</td>
+</tr>
+</tbody>
+</table>
+<p>No próximo capítulo, atacamos o outro lado do trade-off: as <strong>listas encadeadas</strong>, onde inserir no meio é barato — ao custo de perder o acesso <span class="math inline">\(O(1)\)</span> e a localidade de cache que tornam o array dinâmico tão veloz.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBuX2JpZ19vID0gSW5wdXRzLnJhbmdlKFsxLCA2NF0sIHsgdmFsdWU6IDE2LCBzdGVwOiAxLCBsYWJlbDogXCJuIChlbGVtZW50b3MpXCIgfSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMiIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6ImJpZ19vX2RhdGEgPSBbXG4gIHsgY2xhc3NlOiBcIk8oMSlcIiwgICAgIG9wczogMSB9LFxuICB7IGNsYXNzZTogXCJPKGxvZyBuKVwiLCBvcHM6IE1hdGgubWF4KDEsIE1hdGguY2VpbChNYXRoLmxvZzIobl9iaWdfbykpKSB9LFxuICB7IGNsYXNzZTogXCJPKG4pXCIsICAgICBvcHM6IG5fYmlnX28gfSxcbiAgeyBjbGFzc2U6IFwiTyhuwrIpXCIsICAgIG9wczogbl9iaWdfbyAqIG5fYmlnX28gfVxuXVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0IiwiY2VsbE5hbWUiOiJvanMtY2VsbC0zIiwiaW5saW5lIjpmYWxzZSwic291cmNlIjoiUGxvdC5wbG90KHtcbiAgbWFyZ2luTGVmdDogNjAsXG4gIHg6IHsgbGFiZWw6IG51bGwgfSxcbiAgeTogeyB0eXBlOiBcImxvZ1wiLCBsYWJlbDogXCJvcGVyYcOnw7VlcyAoYXByb3guKVwiLCBncmlkOiB0cnVlIH0sXG4gIGNvbG9yOiB7IGxlZ2VuZDogZmFsc2UgfSxcbiAgbWFya3M6IFtcbiAgICBQbG90LmJhclkoYmlnX29fZGF0YSwgeyB4OiBcImNsYXNzZVwiLCB5OiBcIm9wc1wiLCBmaWxsOiBcImNsYXNzZVwiIH0pLFxuICAgIFBsb3QudGV4dChiaWdfb19kYXRhLCB7IHg6IFwiY2xhc3NlXCIsIHk6IFwib3BzXCIsIHRleHQ6IChkKSA9PiBkLm9wcywgZHk6IC04IH0pXG4gIF1cbn0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTQiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ2aWV3b2Yga19wdXNoID0gSW5wdXRzLnJhbmdlKFswLCAyMF0sIHsgdmFsdWU6IDUsIHN0ZXA6IDEsIGxhYmVsOiBcImVsZW1lbnRvcyBpbnNlcmlkb3MgKHB1c2gpXCIgfSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtNSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3Qgc2l6ZSA9IGtfcHVzaDtcbiAgY29uc3QgY2FwYWNpdHkgPSBzaXplID09PSAwID8gMCA6IE1hdGgucG93KDIsIE1hdGguY2VpbChNYXRoLmxvZzIoc2l6ZSkpKTtcbiAgY29uc3QgY2VsbHMgPSBBcnJheS5mcm9tKHsgbGVuZ3RoOiBjYXBhY2l0eSB9LCAoXywgaSkgPT4gaSA8IHNpemUpO1xuICByZXR1cm4gaHRtbGA8ZGl2IHN0eWxlPVwiZGlzcGxheTpmbGV4O2dhcDo2cHg7ZmxleC13cmFwOndyYXA7YWxpZ24taXRlbXM6Y2VudGVyXCI+XG4gICAgJHtjZWxscy5tYXAoXG4gICAgICAoZmlsbGVkLCBpKSA9PiBodG1sYDxkaXYgc3R5bGU9XCJ3aWR0aDozNnB4O2hlaWdodDozNnB4O2Rpc3BsYXk6ZmxleDtcbiAgICAgICAgYWxpZ24taXRlbXM6Y2VudGVyO2p1c3RpZnktY29udGVudDpjZW50ZXI7Ym9yZGVyLXJhZGl1czo2cHg7XG4gICAgICAgIGZvbnQ6NjAwIDEzcHggc2Fucy1zZXJpZjtiYWNrZ3JvdW5kOiR7ZmlsbGVkID8gXCIjRjU3OTNCXCIgOiBcIiNFOUU0RENcIn07XG4gICAgICAgIGNvbG9yOiR7ZmlsbGVkID8gXCIjZmZmXCIgOiBcIiM5OTlcIn1cIj4ke2ZpbGxlZCA/IGkgOiBcIsK3XCJ9PC9kaXY+YFxuICAgICl9XG4gICAgPGRpdiBzdHlsZT1cIm1hcmdpbi1sZWZ0OjEycHg7Zm9udDoxNHB4LzEuNCBzYW5zLXNlcmlmXCI+XG4gICAgICA8Yj5zaXplPC9iPiA9ICR7c2l6ZX0gJm5ic3A7IDxiPmNhcGFjaXR5PC9iPiA9ICR7Y2FwYWNpdHl9XG4gICAgPC9kaXY+XG4gIDwvZGl2PmA7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ25fYmlnX28nKSJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgna19wdXNoJykifV19
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../part-1-practice";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../part-2-foundations/04-modularization.html" class="pagination-link" aria-label="[Modularização: interface e implementação]{.typing-effect}">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../part-1-practice/06-linked-lists.html" class="pagination-link" aria-label="[Listas encadeadas: quando o vizinho mora longe]{.typing-effect}">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

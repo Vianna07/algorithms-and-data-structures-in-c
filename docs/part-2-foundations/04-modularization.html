@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt" xml:lang="pt"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>4&nbsp; Modularização: interface e implementação – Estruturas de Dados e Algoritmos em C</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../part-1-practice/05-dynamic-array.html" rel="next">
+<link href="../part-2-foundations/03-structs-unions.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9bfc61b20ce54e18ae6b25bf56d136e1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-2-foundations/01-pointers.html">Parte I — Fundamentos do C</a></li><li class="breadcrumb-item"><a href="../part-2-foundations/04-modularization.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Estruturas de Dados e Algoritmos em C</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="typing-effect">Estruturas de Dados e Algoritmos em C</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte I — Fundamentos do C</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/01-pointers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Ponteiros: o endereço é o dado</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/02-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/03-structs-unions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/04-modularization.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte II — A prática do projetista</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/05-dynamic-array.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/06-linked-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/07-shadow-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/08-stacks-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/09-bst.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/10-heaps.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/11-huffman.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Páginas interativas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/pointers-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/huffman-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Montagem da árvore de Huffman (scrollytelling)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a1-big-o-table.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Tabela-resumo de complexidade Big-O</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a2-horizon.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Horizonte: o que estudar depois</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-analogia-o-cardápio-e-a-cozinha" id="toc-a-analogia-o-cardápio-e-a-cozinha" class="nav-link active" data-scroll-target="#a-analogia-o-cardápio-e-a-cozinha"><span class="header-section-number">4.1</span> A analogia: o cardápio e a cozinha</a></li>
+  <li><a href="#interface-vs.-implementação" id="toc-interface-vs.-implementação" class="nav-link" data-scroll-target="#interface-vs.-implementação"><span class="header-section-number">4.2</span> Interface vs.&nbsp;implementação</a></li>
+  <li><a href="#o-header-guard" id="toc-o-header-guard" class="nav-link" data-scroll-target="#o-header-guard"><span class="header-section-number">4.3</span> O header guard</a></li>
+  <li><a href="#static-o-privado-do-módulo" id="toc-static-o-privado-do-módulo" class="nav-link" data-scroll-target="#static-o-privado-do-módulo"><span class="header-section-number">4.4</span> <code>static</code>: o privado do módulo</a></li>
+  <li><a href="#compilação-separada" id="toc-compilação-separada" class="nav-link" data-scroll-target="#compilação-separada"><span class="header-section-number">4.5</span> Compilação separada</a></li>
+  <li><a href="#vendo-funcionar" id="toc-vendo-funcionar" class="nav-link" data-scroll-target="#vendo-funcionar"><span class="header-section-number">4.6</span> Vendo funcionar</a></li>
+  <li><a href="#pense-como-projetista" id="toc-pense-como-projetista" class="nav-link" data-scroll-target="#pense-como-projetista"><span class="header-section-number">4.7</span> Pense como projetista</a></li>
+  <li><a href="#fim-dos-fundamentos" id="toc-fim-dos-fundamentos" class="nav-link" data-scroll-target="#fim-dos-fundamentos"><span class="header-section-number">4.8</span> Fim dos fundamentos</a>
+  <ul class="collapse">
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">4.8.1</span> Resumo</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-2-foundations/01-pointers.html">Parte I — Fundamentos do C</a></li><li class="breadcrumb-item"><a href="../part-2-foundations/04-modularization.html"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Este é o último dos fundamentos — e o que você mais viu. Cada capítulo de código deste livro chegou em três peças: um <code>.h</code>, um <code>.c</code> e um <code>Makefile</code>. Não foi acaso: é assim que se organiza um programa C real. Em vez de um arquivo gigante e impossível de manter, dividimos o programa em <strong>módulos</strong>, cada um com uma <strong>interface</strong> pública (o <code>.h</code>) e uma <strong>implementação</strong> escondida (o <code>.c</code>), compilados em separado e ligados no fim. Este capítulo explica esse esqueleto.</p>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>🎨 <strong>Placeholder de ilustração — analogia de abertura.</strong> <em>Brief:</em> um restaurante visto em corte. No salão, um cliente lê o <strong>cardápio</strong> (a interface: o que dá para pedir). Atrás, a <strong>cozinha</strong> fechada (a implementação: como o prato é feito) — invisível ao cliente. Uma porta de vaivém separa os dois. Legenda: “você pede pelo cardápio sem conhecer as receitas”. Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.</p>
+</div>
+</div>
+</div>
+<section id="a-analogia-o-cardápio-e-a-cozinha" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="a-analogia-o-cardápio-e-a-cozinha"><span class="header-section-number">4.1</span> A analogia: o cardápio e a cozinha</h2>
+<p>Num restaurante, o <strong>cardápio</strong> lista o que você pode pedir — nomes e descrições, nada de receitas. A <strong>cozinha</strong> sabe <em>como</em> preparar cada prato, mas fica fechada ao cliente. Você pede pelo cardápio sem saber (nem precisar saber) o que acontece lá dentro; e o chef pode trocar a receita sem mudar o cardápio.</p>
+<p>Um módulo C funciona igual. O cabeçalho <strong><code>.h</code></strong> é o cardápio: declara os tipos e as funções que o módulo oferece. O <strong><code>.c</code></strong> é a cozinha: contém o corpo das funções e os ajudantes privados. Quem usa o módulo lê só o <code>.h</code> — e o autor do <code>.c</code> pode reescrever as entranhas à vontade, desde que respeite o cardápio.</p>
+</section>
+<section id="interface-vs.-implementação" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="interface-vs.-implementação"><span class="header-section-number">4.2</span> Interface vs.&nbsp;implementação</h2>
+<p>Veja um módulo de conta bancária. O cabeçalho declara <strong>o quê</strong> — os tipos e as operações públicas:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"> * account.h — INTERFACE de um módulo de conta (o "o quê").</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"> *</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"> * Projeto:  PIESC — Estruturas de Dados e Algoritmos em C</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"> * Capítulo: 4 — Modularização (.h/.c)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"> * Padrão:   C17 (ISO/IEC 9899:2018)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="pp">#ifndef ACCOUNT_H </span><span class="co">// header guard: impede incluir este arquivo duas vezes</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="pp">#define ACCOUNT_H</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="pp">#include </span><span class="im">&lt;stdbool.h&gt;</span><span class="pp"> </span><span class="co">// bool</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Tipo público: saldo em CENTAVOS (inteiro) — nunca use float para dinheiro.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">long</span> balance_cents<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Account<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co">// O contrato que o módulo oferece. Só isto o resto do programa enxerga.</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> account_init<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> initial_cents<span class="op">);</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> account_deposit<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> cents<span class="op">);</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> account_withdraw<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> cents<span class="op">);</span> <span class="co">// false se saldo insuficiente</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> account_balance<span class="op">(</span><span class="dt">const</span> Account <span class="op">*</span>a<span class="op">);</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="pp">#endif </span><span class="co">// ACCOUNT_H</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A implementação fornece o <strong>como</strong> — os corpos das funções, num arquivo separado:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-snippet="impl" data-startfrom="11"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 10;"><span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Helper PRIVADO do módulo: 'static' o torna invisível fora deste .c.</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> can_afford<span class="op">(</span><span class="dt">const</span> Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> cents<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a<span class="op">-&gt;</span>balance_cents <span class="op">&gt;=</span> cents<span class="op">;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> account_init<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> initial_cents<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    a<span class="op">-&gt;</span>balance_cents <span class="op">=</span> initial_cents<span class="op">;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> account_deposit<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> cents<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    a<span class="op">-&gt;</span>balance_cents <span class="op">+=</span> cents<span class="op">;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> account_withdraw<span class="op">(</span>Account <span class="op">*</span>a<span class="op">,</span> <span class="dt">long</span> cents<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(!</span>can_afford<span class="op">(</span>a<span class="op">,</span> cents<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// saldo insuficiente</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    a<span class="op">-&gt;</span>balance_cents <span class="op">-=</span> cents<span class="op">;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="dt">long</span> account_balance<span class="op">(</span><span class="dt">const</span> Account <span class="op">*</span>a<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a<span class="op">-&gt;</span>balance_cents<span class="op">;</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>E quem usa o módulo inclui só a interface; <strong>não sabe nada</strong> do <code>.c</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-snippet="main" data-startfrom="13"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 12;"><span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    Account a<span class="op">;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    account_init<span class="op">(&amp;</span>a<span class="op">,</span> <span class="dv">10000</span><span class="op">);</span>   <span class="co">// abre com R$ 100,00 (em centavos)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    account_deposit<span class="op">(&amp;</span>a<span class="op">,</span> <span class="dv">5000</span><span class="op">);</span> <span class="co">// + R$ 50,00  -&gt; 15000</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> ok1 <span class="op">=</span> account_withdraw<span class="op">(&amp;</span>a<span class="op">,</span> <span class="dv">12000</span><span class="op">);</span> <span class="co">// R$ 120,00 -&gt; ok, sobra 3000</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> ok2 <span class="op">=</span> account_withdraw<span class="op">(&amp;</span>a<span class="op">,</span> <span class="dv">99999</span><span class="op">);</span> <span class="co">// saldo insuficiente -&gt; negado</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"saldo: </span><span class="sc">%ld</span><span class="st"> centavos</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> account_balance<span class="op">(&amp;</span>a<span class="op">));</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"saque 120,00: </span><span class="sc">%s</span><span class="st"> | saque 999,99: </span><span class="sc">%s\n</span><span class="st">"</span><span class="op">,</span> ok1 <span class="op">?</span> <span class="st">"ok"</span> <span class="op">:</span> <span class="st">"negado"</span><span class="op">,</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>           ok2 <span class="op">?</span> <span class="st">"ok"</span> <span class="op">:</span> <span class="st">"negado"</span><span class="op">);</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">// can_afford(&amp;a, 100); // ERRO de link: é static, invisível aqui</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Essa separação é o que mantém um projeto sustentável. Enquanto o cardápio (<code>.h</code>) não muda, você reescreve a cozinha (<code>.c</code>) sem tocar em quem usa.</p>
+<table class="caption-top table">
+<caption>O que mora em cada arquivo.</caption>
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Vai no <code>.h</code> (interface)</th>
+<th style="text-align: left;">Vai no <code>.c</code> (implementação)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Tipos públicos (<code>struct Account</code>)</td>
+<td style="text-align: left;">Corpos das funções</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Assinaturas das funções</td>
+<td style="text-align: left;">Helpers privados (<code>static</code>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Constantes/macros públicas</td>
+<td style="text-align: left;">Variáveis internas do módulo</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Header guard</td>
+<td style="text-align: left;"><code>#include</code> dos detalhes que só ele usa</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="o-header-guard" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="o-header-guard"><span class="header-section-number">4.3</span> O header guard</h2>
+<p>Repare nas três linhas que cercam o <code>account.h</code>: <code>#ifndef ACCOUNT_H</code>, <code>#define ACCOUNT_H</code> e <code>#endif</code>. É o <strong>header guard</strong>, e ele resolve um problema real: um mesmo <code>.h</code> acaba sendo incluído <strong>mais de uma vez</strong> (porque vários arquivos o incluem, e uns incluem os outros). Sem proteção, o tipo <code>Account</code> seria <strong>redefinido</strong>, e o compilador recusaria. O guard diz: “se este símbolo já foi definido, pule todo o conteúdo”.</p>
+<p><strong>Veja o guard agir.</strong> Imagine que <code>main.c</code> inclui <code>account.h</code> direta e indiretamente (via outro cabeçalho). Ligue e desligue o guard:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb4" data-startfrom="79" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 78;"><span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>viewof guard <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">toggle</span>({ <span class="dt">value</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"header guard ativo"</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb5" data-startfrom="84" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 83;"><span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> inc1 <span class="op">=</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">'#include "account.h"   (1ª vez)'</span><span class="op">,</span> <span class="dt">ok</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">note</span><span class="op">:</span> <span class="st">"define Account ✓"</span> }<span class="op">;</span></span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> inc2 <span class="op">=</span> guard</span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>    <span class="op">?</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">'#include "account.h"   (2ª vez)'</span><span class="op">,</span> <span class="dt">ok</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">note</span><span class="op">:</span> <span class="st">"ACCOUNT_H já definido → conteúdo PULADO ✓"</span> }</span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>    <span class="op">:</span> { <span class="dt">text</span><span class="op">:</span> <span class="st">'#include "account.h"   (2ª vez)'</span><span class="op">,</span> <span class="dt">ok</span><span class="op">:</span> <span class="kw">false</span><span class="op">,</span> <span class="dt">note</span><span class="op">:</span> <span class="st">"redefine Account → ❌ erro de compilação"</span> }<span class="op">;</span></span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> row <span class="op">=</span> (r) <span class="kw">=&gt;</span> <span class="vs">`&lt;div style="display:flex;align-items:center;gap:10px;margin:4px 0;flex-wrap:wrap"&gt;</span></span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;code style="font:12px monospace;color:#264653;background:#f4efe9;padding:2px 6px;border-radius:4px"&gt;</span><span class="sc">${</span>r<span class="op">.</span><span class="at">text</span><span class="sc">}</span><span class="vs">&lt;/code&gt;</span></span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;span style="font:12px sans-serif;color:</span><span class="sc">${</span>r<span class="op">.</span><span class="at">ok</span> <span class="op">?</span> <span class="st">"#2A9D8F"</span> <span class="op">:</span> <span class="st">"#E2725B"</span><span class="sc">}</span><span class="vs">"&gt;</span><span class="sc">${</span>r<span class="op">.</span><span class="at">note</span><span class="sc">}</span><span class="vs">&lt;/span&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span><span class="sc">${</span><span class="fu">row</span>(inc1)<span class="sc">}${</span><span class="fu">row</span>(inc2)<span class="sc">}</span></span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="margin-top:8px;font:13px sans-serif;font-weight:600;color:</span><span class="sc">${</span>guard <span class="op">?</span> <span class="st">"#2A9D8F"</span> <span class="op">:</span> <span class="st">"#E2725B"</span><span class="sc">}</span><span class="vs">"&gt;</span></span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a><span class="vs">      </span><span class="sc">${</span>guard <span class="op">?</span> <span class="st">"✅ compila: cada cabeçalho entra uma vez só"</span> <span class="op">:</span> <span class="st">"❌ não compila: «redefinição de Account»"</span><span class="sc">}</span><span class="vs">&lt;/div&gt;&lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="static-o-privado-do-módulo" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="static-o-privado-do-módulo"><span class="header-section-number">4.4</span> <code>static</code>: o privado do módulo</h2>
+<p>No <code>account.c</code>, a função <code>can_afford</code> é declarada <code>static</code>. Isso lhe dá <strong>ligação interna</strong>: ela existe só dentro daquele <code>.c</code>, invisível para o resto do programa. É o “privado” do C — um detalhe de implementação que o módulo usa, mas não expõe. Tentar chamá-la do <code>main.c</code> daria um <strong>erro de link</strong>: o <code>main.o</code> não encontra esse símbolo, porque ele não saiu do <code>account.o</code>. Manter privado o que é privado é o que deixa a interface pequena e o módulo fácil de evoluir.</p>
+</section>
+<section id="compilação-separada" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="compilação-separada"><span class="header-section-number">4.5</span> Compilação separada</h2>
+<p>Por que <code>.o</code>? Porque cada <code>.c</code> é compilado <strong>independentemente</strong> para um arquivo objeto (<code>.o</code>), e só no fim o <strong>ligador</strong> (<em>linker</em>) junta os <code>.o</code>s num executável. A <a href="#fig-compilation" class="quarto-xref">Figura&nbsp;<span>4.1</span></a> mostra o fluxo:</p>
+<div class="cell" data-fig-width="5" data-fig-height="1.1" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-compilation" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-compilation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="480" height="106" viewbox="0.00 0.00 450.55 98.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 94)">
+<title>build</title>
+<!-- h -->
+<g id="node1" class="node">
+<title>h</title>
+<path fill="#eaf4f2" stroke="#2a9d8f" d="M45.45,-63C45.45,-63 12.18,-63 12.18,-63 6.18,-63 0.18,-57 0.18,-51 0.18,-51 0.18,-39 0.18,-39 0.18,-33 6.18,-27 12.18,-27 12.18,-27 45.45,-27 45.45,-27 51.45,-27 57.45,-33 57.45,-39 57.45,-39 57.45,-51 57.45,-51 57.45,-57 51.45,-63 45.45,-63"></path>
+<text text-anchor="middle" x="28.82" y="-48" font-family="Inter" font-size="10.00">account.h</text>
+<text text-anchor="middle" x="28.82" y="-36" font-family="Inter" font-size="10.00">(interface)</text>
+</g>
+<!-- ac -->
+<g id="node2" class="node">
+<title>ac</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M183.89,-90C183.89,-90 153.82,-90 153.82,-90 147.82,-90 141.82,-84 141.82,-78 141.82,-78 141.82,-66 141.82,-66 141.82,-60 147.82,-54 153.82,-54 153.82,-54 183.89,-54 183.89,-54 189.89,-54 195.89,-60 195.89,-66 195.89,-66 195.89,-78 195.89,-78 195.89,-84 189.89,-90 183.89,-90"></path>
+<text text-anchor="middle" x="168.85" y="-69" font-family="Inter" font-size="10.00">account.c</text>
+</g>
+<!-- h&#45;&gt;ac -->
+<g id="edge1" class="edge">
+<title>h-&gt;ac</title>
+<path fill="none" stroke="#2a9d8f" stroke-dasharray="5,2" d="M57.75,-50.46C79.06,-54.63 108.6,-60.41 131.71,-64.93"></path>
+<polygon fill="#2a9d8f" stroke="#2a9d8f" points="131.34,-68.42 141.83,-66.91 132.69,-61.56 131.34,-68.42"></polygon>
+<text text-anchor="middle" x="99.73" y="-67.2" font-family="Times,serif" font-size="14.00">#include</text>
+</g>
+<!-- mc -->
+<g id="node3" class="node">
+<title>mc</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M183.85,-36C183.85,-36 153.85,-36 153.85,-36 147.85,-36 141.85,-30 141.85,-24 141.85,-24 141.85,-12 141.85,-12 141.85,-6 147.85,0 153.85,0 153.85,0 183.85,0 183.85,0 189.85,0 195.85,-6 195.85,-12 195.85,-12 195.85,-24 195.85,-24 195.85,-30 189.85,-36 183.85,-36"></path>
+<text text-anchor="middle" x="168.85" y="-15" font-family="Inter" font-size="10.00">main.c</text>
+</g>
+<!-- h&#45;&gt;mc -->
+<g id="edge2" class="edge">
+<title>h-&gt;mc</title>
+<path fill="none" stroke="#2a9d8f" stroke-dasharray="5,2" d="M57.86,-38.12C63.72,-36.76 69.87,-35.38 75.63,-34.2 93.96,-30.43 114.45,-26.78 131.46,-23.9"></path>
+<polygon fill="#2a9d8f" stroke="#2a9d8f" points="132.26,-27.31 141.54,-22.21 131.1,-20.41 132.26,-27.31"></polygon>
+<text text-anchor="middle" x="99.73" y="-39.2" font-family="Times,serif" font-size="14.00">#include</text>
+</g>
+<!-- ao -->
+<g id="node4" class="node">
+<title>ao</title>
+<polygon fill="none" stroke="#000000" points="331.36,-90 277.17,-90 277.17,-54 331.36,-54 331.36,-90"></polygon>
+<text text-anchor="middle" x="304.26" y="-69" font-family="Inter" font-size="10.00">account.o</text>
+</g>
+<!-- ac&#45;&gt;ao -->
+<g id="edge3" class="edge">
+<title>ac-&gt;ao</title>
+<path fill="none" stroke="black" d="M195.89,-72C216.06,-72 244.23,-72 266.66,-72"></path>
+<polygon fill="black" stroke="black" points="266.83,-75.5 276.83,-72 266.83,-68.5 266.83,-75.5"></polygon>
+<text text-anchor="middle" x="236.42" y="-76.2" font-family="Times,serif" font-size="14.00">compila</text>
+</g>
+<!-- mo -->
+<g id="node5" class="node">
+<title>mo</title>
+<polygon fill="none" stroke="#000000" points="331.26,-36 277.26,-36 277.26,0 331.26,0 331.26,-36"></polygon>
+<text text-anchor="middle" x="304.26" y="-15" font-family="Inter" font-size="10.00">main.o</text>
+</g>
+<!-- mc&#45;&gt;mo -->
+<g id="edge4" class="edge">
+<title>mc-&gt;mo</title>
+<path fill="none" stroke="black" d="M195.89,-18C216.06,-18 244.23,-18 266.66,-18"></path>
+<polygon fill="black" stroke="black" points="266.83,-21.5 276.83,-18 266.83,-14.5 266.83,-21.5"></polygon>
+<text text-anchor="middle" x="236.42" y="-22.2" font-family="Times,serif" font-size="14.00">compila</text>
+</g>
+<!-- exe -->
+<g id="node6" class="node">
+<title>exe</title>
+<path fill="#f5793b" stroke="black" d="M430.55,-63C430.55,-63 400.55,-63 400.55,-63 394.55,-63 388.55,-57 388.55,-51 388.55,-51 388.55,-39 388.55,-39 388.55,-33 394.55,-27 400.55,-27 400.55,-27 430.55,-27 430.55,-27 436.55,-27 442.55,-33 442.55,-39 442.55,-39 442.55,-51 442.55,-51 442.55,-57 436.55,-63 430.55,-63"></path>
+<text text-anchor="middle" x="415.55" y="-42" font-family="Inter" font-size="10.00" fill="white">demo</text>
+</g>
+<!-- ao&#45;&gt;exe -->
+<g id="edge5" class="edge">
+<title>ao-&gt;exe</title>
+<path fill="none" stroke="black" d="M331.44,-65.53C345.53,-62.05 363.13,-57.71 378.49,-53.91"></path>
+<polygon fill="black" stroke="black" points="379.34,-57.3 388.21,-51.51 377.66,-50.51 379.34,-57.3"></polygon>
+<text text-anchor="middle" x="360.06" y="-64.2" font-family="Times,serif" font-size="14.00">liga</text>
+</g>
+<!-- mo&#45;&gt;exe -->
+<g id="edge6" class="edge">
+<title>mo-&gt;exe</title>
+<path fill="none" stroke="black" d="M331.44,-24.47C345.53,-27.95 363.13,-32.29 378.49,-36.09"></path>
+<polygon fill="black" stroke="black" points="377.66,-39.49 388.21,-38.49 379.34,-32.7 377.66,-39.49"></polygon>
+<text text-anchor="middle" x="360.06" y="-38.2" font-family="Times,serif" font-size="14.00">liga</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-compilation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;4.1: Compilação separada: o <code>.h</code> é incluído por ambos os <code>.c</code>; cada <code>.c</code> compila para um <code>.o</code> sozinho; o ligador junta os <code>.o</code>s no executável. Mudou um só <code>.c</code>? Recompila só ele.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>O <code>Makefile</code> codifica exatamente esse grafo de dependências:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode makefile code-with-copy"><code class="sourceCode makefile"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Makefile — Capítulo 4: compilação separada de um projeto modular.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Cada .c vira um .o independente; o link junta os .o num executável.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">CC</span>     <span class="ch">?=</span><span class="st"> gcc</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="dt">CFLAGS</span> <span class="ch">:=</span><span class="st"> -std=c17 -Wall -Wextra -Wpedantic -O2</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) Link: junta os objetos no executável final.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="dv">demo:</span><span class="dt"> account.o main.o</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -o demo account.o main.o</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) Compila cada .c em um .o, separadamente. Recompila se o .c OU o .h mudar.</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="dv">account.o:</span><span class="dt"> account.c account.h</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -c account.c</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="dv">main.o:</span><span class="dt"> main.c account.h</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CFLAGS</span><span class="ch">)</span> -c main.c</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="dv">run:</span><span class="dt"> demo</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>	./demo</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="dv">format:</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>	clang-format -i account.h account.c main.c</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="dv">clean:</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>	rm -f demo account.o main.o</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="ot">.PHONY:</span><span class="dt"> run format clean</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Ideia central">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Ideia central
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A grande vantagem da compilação separada: ao mudar <strong>um</strong> arquivo, você recompila <strong>só ele</strong> (e religa). Num projeto com 200 arquivos, isso é a diferença entre esperar segundos e esperar minutos a cada alteração. O <code>Makefile</code> rastreia as dependências (note como cada <code>.o</code> depende do seu <code>.c</code> <strong>e</strong> do <code>.h</code>) e refaz só o necessário.</p>
+</div>
+</div>
+</section>
+<section id="vendo-funcionar" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="vendo-funcionar"><span class="header-section-number">4.6</span> Vendo funcionar</h2>
+<pre class="text"><code>saldo: 3000 centavos
+saque 120,00: ok | saque 999,99: negado</code></pre>
+</section>
+<section id="pense-como-projetista" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="pense-como-projetista"><span class="header-section-number">4.7</span> Pense como projetista</h2>
+<div class="callout callout-style-default callout-tip callout-titled" title="Pense como projetista">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Pense como projetista
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Projete a <strong>interface primeiro</strong>, e deixe-a <strong>mínima</strong>: exponha só o que o cliente precisa, e esconda todo o resto no <code>.c</code> com <code>static</code>. Uma interface pequena é uma promessa pequena — mais fácil de manter estável enquanto a implementação evolui. Agrupe num módulo as coisas que mudam juntas (alta coesão) e minimize o que um módulo precisa saber do outro (baixo acoplamento). Os pares <code>da_init</code>/<code>da_free</code>, <code>bst_insert</code>/<code>bst_inorder</code> de todo o livro são exatamente isto: módulos com uma interface enxuta sobre uma implementação que você pôde ler sem medo.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="No mundo real">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No mundo real
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Toda biblioteca C que você já usou é um módulo desses em escala: <code>stdio.h</code> é a <strong>interface</strong> (você inclui e chama <code>printf</code>), e a implementação vem pré-compilada numa biblioteca (<code>.a</code> estática ou <code>.so</code>/<code>.dll</code> dinâmica) — você nunca vê o <code>.c</code>. É por isso que software comercial distribui <strong>cabeçalhos + biblioteca compilada</strong>: você programa contra o cardápio sem nunca entrar na cozinha. Linguagens mais novas trocam os cabeçalhos por <strong>módulos</strong> de primeira classe (os <code>module</code> do C++20, os <em>crates</em> do Rust, os pacotes de Go), mas resolvendo o mesmo problema: separar o que um componente <strong>oferece</strong> do como ele <strong>funciona</strong>.</p>
+</div>
+</div>
+</section>
+<section id="fim-dos-fundamentos" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="fim-dos-fundamentos"><span class="header-section-number">4.8</span> Fim dos fundamentos</h2>
+<p>Com isto, você tem o chão completo: <strong>ponteiros</strong> (o endereço é o dado), a <strong>memória</strong> (pilha e heap, e seus fantasmas), os <strong>tipos compostos</strong> (structs e uniões) e a <strong>modularização</strong> (interface e implementação). É exatamente o ferramental que a Parte da prática usa o tempo todo — cada <code>malloc</code> com seu <code>free</code>, cada nó com seu ponteiro, cada estrutura num par <code>.h</code>/<code>.c</code>.</p>
+<p>Se você leu os fundamentos primeiro, está pronto: vá para a <strong>Parte da prática</strong> e construa, do array dinâmico ao compactador de Huffman, as estruturas que fazem o software real funcionar — agora entendendo cada byte que elas movem.</p>
+<section id="resumo" class="level3" data-number="4.8.1">
+<h3 data-number="4.8.1" class="anchored" data-anchor-id="resumo"><span class="header-section-number">4.8.1</span> Resumo</h3>
+<ul>
+<li>Um <strong>módulo</strong> separa <strong>interface</strong> (<code>.h</code>: o quê — tipos e assinaturas públicas) de <strong>implementação</strong> (<code>.c</code>: o como — corpos e helpers privados).</li>
+<li>O <strong>header guard</strong> (<code>#ifndef</code>/<code>#define</code>/<code>#endif</code>) impede que um cabeçalho seja incluído duas vezes e cause redefinições.</li>
+<li><strong><code>static</code></strong> dá ligação interna: torna uma função ou variável privada ao seu <code>.c</code> — o “privado” do módulo.</li>
+<li>Na <strong>compilação separada</strong>, cada <code>.c</code> vira um <code>.o</code> independente, e o <strong>ligador</strong> junta tudo. Mudou um arquivo? Recompila só ele.</li>
+<li>Interface <strong>mínima</strong>, implementação <strong>escondida</strong>: alta coesão, baixo acoplamento. É o esqueleto de todo projeto C — e de todo capítulo deste livro.</li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBndWFyZCA9IElucHV0cy50b2dnbGUoeyB2YWx1ZTogdHJ1ZSwgbGFiZWw6IFwiaGVhZGVyIGd1YXJkIGF0aXZvXCIgfSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMiIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3QgaW5jMSA9IHsgdGV4dDogJyNpbmNsdWRlIFwiYWNjb3VudC5oXCIgICAoMcKqIHZleiknLCBvazogdHJ1ZSwgbm90ZTogXCJkZWZpbmUgQWNjb3VudCDinJNcIiB9O1xuICBjb25zdCBpbmMyID0gZ3VhcmRcbiAgICA/IHsgdGV4dDogJyNpbmNsdWRlIFwiYWNjb3VudC5oXCIgICAoMsKqIHZleiknLCBvazogdHJ1ZSwgbm90ZTogXCJBQ0NPVU5UX0ggasOhIGRlZmluaWRvIOKGkiBjb250ZcO6ZG8gUFVMQURPIOKck1wiIH1cbiAgICA6IHsgdGV4dDogJyNpbmNsdWRlIFwiYWNjb3VudC5oXCIgICAoMsKqIHZleiknLCBvazogZmFsc2UsIG5vdGU6IFwicmVkZWZpbmUgQWNjb3VudCDihpIg4p2MIGVycm8gZGUgY29tcGlsYcOnw6NvXCIgfTtcbiAgY29uc3Qgcm93ID0gKHIpID0+IGA8ZGl2IHN0eWxlPVwiZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6MTBweDttYXJnaW46NHB4IDA7ZmxleC13cmFwOndyYXBcIj5cbiAgICAgIDxjb2RlIHN0eWxlPVwiZm9udDoxMnB4IG1vbm9zcGFjZTtjb2xvcjojMjY0NjUzO2JhY2tncm91bmQ6I2Y0ZWZlOTtwYWRkaW5nOjJweCA2cHg7Ym9yZGVyLXJhZGl1czo0cHhcIj4ke3IudGV4dH08L2NvZGU+XG4gICAgICA8c3BhbiBzdHlsZT1cImZvbnQ6MTJweCBzYW5zLXNlcmlmO2NvbG9yOiR7ci5vayA/IFwiIzJBOUQ4RlwiIDogXCIjRTI3MjVCXCJ9XCI+JHtyLm5vdGV9PC9zcGFuPjwvZGl2PmA7XG4gIHJldHVybiBodG1sYDxkaXY+JHtyb3coaW5jMSl9JHtyb3coaW5jMil9XG4gICAgPGRpdiBzdHlsZT1cIm1hcmdpbi10b3A6OHB4O2ZvbnQ6MTNweCBzYW5zLXNlcmlmO2ZvbnQtd2VpZ2h0OjYwMDtjb2xvcjoke2d1YXJkID8gXCIjMkE5RDhGXCIgOiBcIiNFMjcyNUJcIn1cIj5cbiAgICAgICR7Z3VhcmQgPyBcIuKchSBjb21waWxhOiBjYWRhIGNhYmXDp2FsaG8gZW50cmEgdW1hIHZleiBzw7NcIiA6IFwi4p2MIG7Do28gY29tcGlsYTogwqtyZWRlZmluacOnw6NvIGRlIEFjY291bnTCu1wifTwvZGl2PjwvZGl2PmA7XG59XG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXRRdWlldCIsInNvdXJjZSI6InNoaW55SW5wdXQoJ2d1YXJkJykifV19
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../part-2-foundations";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../part-2-foundations/03-structs-unions.html" class="pagination-link" aria-label="[Structs e uniões: compondo tipos]{.typing-effect}">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../part-1-practice/05-dynamic-array.html" class="pagination-link" aria-label="[Array dinâmico: o vetor que cresce sozinho]{.typing-effect}">
+        <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

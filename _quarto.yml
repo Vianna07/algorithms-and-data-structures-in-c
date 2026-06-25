@@ -15,6 +15,7 @@
 
 project:
   type: book
+  output-dir: docs
 
 book:
   title: "Estruturas de Dados e Algoritmos em C"

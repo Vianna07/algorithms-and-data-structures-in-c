@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt" xml:lang="pt"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>11&nbsp; O desafio final: compactando com Huffman – Estruturas de Dados e Algoritmos em C</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../interactive/pointers-scroll.html" rel="next">
+<link href="../part-1-practice/10-heaps.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9bfc61b20ce54e18ae6b25bf56d136e1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/11-huffman.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Estruturas de Dados e Algoritmos em C</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="typing-effect">Estruturas de Dados e Algoritmos em C</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte I — Fundamentos do C</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/01-pointers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Ponteiros: o endereço é o dado</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/02-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/03-structs-unions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/04-modularization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte II — A prática do projetista</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/05-dynamic-array.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/06-linked-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/07-shadow-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/08-stacks-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/09-bst.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/10-heaps.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/11-huffman.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Páginas interativas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/pointers-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/huffman-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Montagem da árvore de Huffman (scrollytelling)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a1-big-o-table.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Tabela-resumo de complexidade Big-O</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a2-horizon.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Horizonte: o que estudar depois</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-analogia-o-código-morse" id="toc-a-analogia-o-código-morse" class="nav-link active" data-scroll-target="#a-analogia-o-código-morse"><span class="header-section-number">11.1</span> A analogia: o código Morse</a></li>
+  <li><a href="#o-problema-dos-prefixos" id="toc-o-problema-dos-prefixos" class="nav-link" data-scroll-target="#o-problema-dos-prefixos"><span class="header-section-number">11.2</span> O problema dos prefixos</a></li>
+  <li><a href="#etapa-a-o-histograma" id="toc-etapa-a-o-histograma" class="nav-link" data-scroll-target="#etapa-a-o-histograma"><span class="header-section-number">11.3</span> Etapa (a): o histograma</a></li>
+  <li><a href="#etapa-b-a-árvore-de-huffman" id="toc-etapa-b-a-árvore-de-huffman" class="nav-link" data-scroll-target="#etapa-b-a-árvore-de-huffman"><span class="header-section-number">11.4</span> Etapa (b): a árvore de Huffman</a></li>
+  <li><a href="#etapa-c-o-dicionário-de-códigos" id="toc-etapa-c-o-dicionário-de-códigos" class="nav-link" data-scroll-target="#etapa-c-o-dicionário-de-códigos"><span class="header-section-number">11.5</span> Etapa (c): o dicionário de códigos</a></li>
+  <li><a href="#etapa-d-a-manipulação-de-bits" id="toc-etapa-d-a-manipulação-de-bits" class="nav-link" data-scroll-target="#etapa-d-a-manipulação-de-bits"><span class="header-section-number">11.6</span> Etapa (d): a manipulação de bits</a></li>
+  <li><a href="#etapa-e-juntando-tudo" id="toc-etapa-e-juntando-tudo" class="nav-link" data-scroll-target="#etapa-e-juntando-tudo"><span class="header-section-number">11.7</span> Etapa (e): juntando tudo</a></li>
+  <li><a href="#vendo-funcionar" id="toc-vendo-funcionar" class="nav-link" data-scroll-target="#vendo-funcionar"><span class="header-section-number">11.8</span> Vendo funcionar</a></li>
+  <li><a href="#veja-acontecer" id="toc-veja-acontecer" class="nav-link" data-scroll-target="#veja-acontecer"><span class="header-section-number">11.9</span> Veja acontecer</a></li>
+  <li><a href="#pense-como-projetista" id="toc-pense-como-projetista" class="nav-link" data-scroll-target="#pense-como-projetista"><span class="header-section-number">11.10</span> Pense como projetista</a></li>
+  <li><a href="#fim-da-travessia" id="toc-fim-da-travessia" class="nav-link" data-scroll-target="#fim-da-travessia"><span class="header-section-number">11.11</span> Fim da travessia</a>
+  <ul class="collapse">
+  <li><a href="#tabela-de-complexidade-do-capítulo" id="toc-tabela-de-complexidade-do-capítulo" class="nav-link" data-scroll-target="#tabela-de-complexidade-do-capítulo"><span class="header-section-number">11.11.1</span> Tabela de complexidade do capítulo</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/11-huffman.html"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Chegamos ao topo. Este capítulo não apresenta uma estrutura nova — ele <strong>junta quase todas</strong>. Vamos construir um compactador de arquivos de verdade, com o algoritmo de <strong>Huffman</strong>, e no caminho usar o histograma (arrays), o <strong>heap do capítulo 10</strong>, uma <strong>árvore</strong> binária, recursão para gerar códigos e a manipulação de <strong>bits</strong> que vem lá dos fundamentos. É o livro inteiro trabalhando junto para resolver um problema real: <strong>gastar menos espaço</strong>.</p>
+<p>A ideia central é desconfiar do óbvio. Um arquivo de texto gasta <strong>8 bits fixos</strong> para cada byte — o <code>'a'</code> e o <code>'z'</code> custam o mesmo, embora o <code>'a'</code> apareça muito mais. E se déssemos códigos <strong>curtos</strong> aos bytes frequentes e <strong>longos</strong> aos raros? Em média, o arquivo encolhe. Isso é Huffman.</p>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>🎨 <strong>Placeholder de ilustração — analogia de abertura.</strong> <em>Brief:</em> uma tabela de <strong>código Morse</strong> ao lado de uma tabela Huffman. No Morse, <code>E</code> é um ponto, <code>T</code> um traço (curtos, porque são comuns); <code>Q</code> e <code>Z</code> são longos. Setas mostram “frequente → curto, raro → longo”. Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.</p>
+</div>
+</div>
+</div>
+<section id="a-analogia-o-código-morse" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="a-analogia-o-código-morse"><span class="header-section-number">11.1</span> A analogia: o código Morse</h2>
+<p>O código Morse já fazia isso em 1840. As letras mais comuns do inglês recebem os sinais mais curtos: <code>E</code> é um único ponto (<code>·</code>), <code>T</code> um único traço (<code>–</code>). As raras ficam longas: <code>Q</code> é <code>– – · –</code>. Quem projetou o Morse contou (na mão) a frequência das letras e deu códigos curtos às campeãs. Huffman faz exatamente isso, mas de forma <strong>automática e comprovadamente ótima</strong> — nenhum outro código de tamanho variável que respeite as frequências bate o de Huffman.</p>
+</section>
+<section id="o-problema-dos-prefixos" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="o-problema-dos-prefixos"><span class="header-section-number">11.2</span> O problema dos prefixos</h2>
+<p>Códigos de tamanho variável têm uma armadilha. Se <code>a = 0</code> e <code>b = 01</code>, ao ler <code>0...</code> o decodificador não sabe se já viu um <code>a</code> ou se é o começo de um <code>b</code>. A solução é usar um <strong>código livre de prefixo</strong>: nenhum código pode ser o <strong>começo</strong> de outro. Aí a leitura é sempre sem ambiguidade.</p>
+<p>E como garantir isso? Com uma <strong>árvore</strong>. Se cada símbolo mora numa <strong>folha</strong>, e o código é o caminho da raiz até ela (0 = esquerda, 1 = direita), então nenhum código é prefixo de outro — porque nenhuma folha está no caminho de outra. A árvore <em>é</em> o código. Todo o algoritmo gira em torno de construir a melhor árvore possível.</p>
+<p>O pipeline tem cinco etapas, e a <a href="#fig-pipeline" class="quarto-xref">Figura&nbsp;<span>11.1</span></a> mostra como elas se encadeiam:</p>
+<div class="cell" data-fig-width="5.2" data-fig-height="0.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-pipeline" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="499" height="48" viewbox="0.00 0.00 486.58 44.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 40)">
+<title>pipe</title>
+<!-- h -->
+<g id="node1" class="node">
+<title>h</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M57.48,-36C57.48,-36 12.17,-36 12.17,-36 6.17,-36 0.17,-30 0.17,-24 0.17,-24 0.17,-12 0.17,-12 0.17,-6 6.17,0 12.17,0 12.17,0 57.48,0 57.48,0 63.48,0 69.48,-6 69.48,-12 69.48,-12 69.48,-24 69.48,-24 69.48,-30 63.48,-36 57.48,-36"></path>
+<text text-anchor="middle" x="34.83" y="-20.85" font-family="Inter" font-size="9.50">(a) histograma</text>
+<text text-anchor="middle" x="34.83" y="-9.45" font-family="Inter" font-size="9.50">de frequências</text>
+</g>
+<!-- t -->
+<g id="node2" class="node">
+<title>t</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M168.55,-36C168.55,-36 117.69,-36 117.69,-36 111.69,-36 105.69,-30 105.69,-24 105.69,-24 105.69,-12 105.69,-12 105.69,-6 111.69,0 117.69,0 117.69,0 168.55,0 168.55,0 174.55,0 180.55,-6 180.55,-12 180.55,-12 180.55,-24 180.55,-24 180.55,-30 174.55,-36 168.55,-36"></path>
+<text text-anchor="middle" x="143.12" y="-20.85" font-family="Inter" font-size="9.50">(b) árvore de</text>
+<text text-anchor="middle" x="143.12" y="-9.45" font-family="Inter" font-size="9.50">Huffman (heap)</text>
+</g>
+<!-- h&#45;&gt;t -->
+<g id="edge1" class="edge">
+<title>h-&gt;t</title>
+<path fill="none" stroke="#264653" d="M69.75,-18C79.21,-18 89.61,-18 99.5,-18"></path>
+<polygon fill="#264653" stroke="#264653" points="99.58,-20.1 105.58,-18 99.58,-15.9 99.58,-20.1"></polygon>
+</g>
+<!-- c -->
+<g id="node3" class="node">
+<title>c</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M270.53,-36C270.53,-36 228.6,-36 228.6,-36 222.6,-36 216.6,-30 216.6,-24 216.6,-24 216.6,-12 216.6,-12 216.6,-6 222.6,0 228.6,0 228.6,0 270.53,0 270.53,0 276.53,0 282.53,-6 282.53,-12 282.53,-12 282.53,-24 282.53,-24 282.53,-30 276.53,-36 270.53,-36"></path>
+<text text-anchor="middle" x="249.57" y="-20.85" font-family="Inter" font-size="9.50">(c) dicionário</text>
+<text text-anchor="middle" x="249.57" y="-9.45" font-family="Inter" font-size="9.50">de códigos</text>
+</g>
+<!-- t&#45;&gt;c -->
+<g id="edge2" class="edge">
+<title>t-&gt;c</title>
+<path fill="none" stroke="#264653" d="M180.65,-18C190.21,-18 200.53,-18 210.18,-18"></path>
+<polygon fill="#264653" stroke="#264653" points="210.41,-20.1 216.41,-18 210.41,-15.9 210.41,-20.1"></polygon>
+</g>
+<!-- b -->
+<g id="node4" class="node">
+<title>b</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M369.94,-36C369.94,-36 330.75,-36 330.75,-36 324.75,-36 318.75,-30 318.75,-24 318.75,-24 318.75,-12 318.75,-12 318.75,-6 324.75,0 330.75,0 330.75,0 369.94,0 369.94,0 375.94,0 381.94,-6 381.94,-12 381.94,-12 381.94,-24 381.94,-24 381.94,-30 375.94,-36 369.94,-36"></path>
+<text text-anchor="middle" x="350.35" y="-20.85" font-family="Inter" font-size="9.50">(d) bits</text>
+<text text-anchor="middle" x="350.35" y="-9.45" font-family="Inter" font-size="9.50">empacotados</text>
+</g>
+<!-- c&#45;&gt;b -->
+<g id="edge3" class="edge">
+<title>c-&gt;b</title>
+<path fill="none" stroke="#264653" d="M282.64,-18C292.07,-18 302.46,-18 312.17,-18"></path>
+<polygon fill="#264653" stroke="#264653" points="312.45,-20.1 318.45,-18 312.45,-15.9 312.45,-20.1"></polygon>
+</g>
+<!-- o -->
+<g id="node5" class="node">
+<title>o</title>
+<path fill="#fbe3d3" stroke="#f5793b" d="M466.8,-36C466.8,-36 429.92,-36 429.92,-36 423.92,-36 417.92,-30 417.92,-24 417.92,-24 417.92,-12 417.92,-12 417.92,-6 423.92,0 429.92,0 429.92,0 466.8,0 466.8,0 472.8,0 478.8,-6 478.8,-12 478.8,-12 478.8,-24 478.8,-24 478.8,-30 472.8,-36 466.8,-36"></path>
+<text text-anchor="middle" x="448.36" y="-20.85" font-family="Inter" font-size="9.50">(e) arquivo</text>
+<text text-anchor="middle" x="448.36" y="-9.45" font-family="Inter" font-size="9.50">comprimido</text>
+</g>
+<!-- b&#45;&gt;o -->
+<g id="edge4" class="edge">
+<title>b-&gt;o</title>
+<path fill="none" stroke="#264653" d="M381.99,-18C391.53,-18 402.14,-18 411.98,-18"></path>
+<polygon fill="#264653" stroke="#264653" points="411.99,-20.1 417.99,-18 411.99,-15.9 411.99,-20.1"></polygon>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pipeline-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.1: As cinco etapas do compactador. Cada uma reaproveita uma estrutura do livro — o destaque é a árvore montada com o heap do capítulo 10.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="etapa-a-o-histograma" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="etapa-a-o-histograma"><span class="header-section-number">11.3</span> Etapa (a): o histograma</h2>
+<p>Tudo começa contando. Percorremos os dados uma vez e contamos quantas vezes cada um dos 256 valores de byte aparece — um array de 256 contadores:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-snippet="histogram" data-startfrom="130"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 129;"><span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="co">// (a) Histograma: conta quantas vezes cada um dos 256 bytes aparece.</span></span>
+<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> count_freq<span class="op">(</span><span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>data<span class="op">,</span> <span class="dt">size_t</span> n<span class="op">,</span> <span class="dt">size_t</span> freq<span class="op">[</span><span class="dv">256</span><span class="op">])</span> <span class="op">{</span></span>
+<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> <span class="dv">256</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a>        freq<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">size_t</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a>        freq<span class="op">[</span>data<span class="op">[</span>i<span class="op">]]++;</span></span>
+<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="etapa-b-a-árvore-de-huffman" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="etapa-b-a-árvore-de-huffman"><span class="header-section-number">11.4</span> Etapa (b): a árvore de Huffman</h2>
+<p>Agora a sacada genial. Pegamos os <strong>dois símbolos menos frequentes</strong> e os juntamos sob um nó-pai, cuja frequência é a soma dos dois. Esse pai volta para o monte, e repetimos: sempre unindo os dois nós de menor frequência. Os raros, unidos cedo, afundam para longe da raiz (códigos longos); os frequentes ficam rasos (códigos curtos). “Retirar sempre os dois menores” é, literalmente, dois <code>pop</code> da <strong>fila de prioridade</strong> — o <strong>heap do capítulo 10</strong>, agora guardando nós de árvore:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-snippet="buildtree" data-startfrom="142"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 141;"><span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a><span class="co">// (b) Árvore de Huffman: enquanto houver mais de um nó, retire os DOIS de menor</span></span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a><span class="co">// frequência (o heap entrega isso) e junte-os sob um pai cuja frequência é a</span></span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a><span class="co">// soma. O último nó que sobra é a raiz. Os mais frequentes ficam mais rasos.</span></span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> HuffNode <span class="op">*</span>build_tree<span class="op">(</span><span class="dt">const</span> <span class="dt">size_t</span> freq<span class="op">[</span><span class="dv">256</span><span class="op">])</span> <span class="op">{</span></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>    NodeHeap heap <span class="op">=</span> <span class="op">{</span><span class="dv">0</span><span class="op">};</span></span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> b <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> b <span class="op">&lt;</span> <span class="dv">256</span><span class="op">;</span> b<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>freq<span class="op">[</span>b<span class="op">]</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>            nh_push<span class="op">(&amp;</span>heap<span class="op">,</span> leaf_new<span class="op">((</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">)</span>b<span class="op">,</span> freq<span class="op">[</span>b<span class="op">]));</span></span>
+<span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>heap<span class="op">.</span>size <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>        free<span class="op">(</span>heap<span class="op">.</span>data<span class="op">);</span></span>
+<span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> NULL<span class="op">;</span> <span class="co">// entrada vazia</span></span>
+<span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>heap<span class="op">.</span>size <span class="op">==</span> <span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Um único símbolo distinto: garante um código de 1 bit com uma folha</span></span>
+<span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a>        <span class="co">// "fantasma" (que nunca é codificada, mas dá forma à árvore).</span></span>
+<span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>        HuffNode <span class="op">*</span>only <span class="op">=</span> nh_pop<span class="op">(&amp;</span>heap<span class="op">);</span></span>
+<span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a>        nh_push<span class="op">(&amp;</span>heap<span class="op">,</span> only<span class="op">);</span></span>
+<span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>        nh_push<span class="op">(&amp;</span>heap<span class="op">,</span> leaf_new<span class="op">(</span>only<span class="op">-&gt;</span>byte<span class="op">,</span> <span class="dv">0</span><span class="op">));</span></span>
+<span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>heap<span class="op">.</span>size <span class="op">&gt;</span> <span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-164"><a href="#cb2-164" aria-hidden="true" tabindex="-1"></a>        HuffNode <span class="op">*</span>a <span class="op">=</span> nh_pop<span class="op">(&amp;</span>heap<span class="op">);</span></span>
+<span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>        HuffNode <span class="op">*</span>b <span class="op">=</span> nh_pop<span class="op">(&amp;</span>heap<span class="op">);</span></span>
+<span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>        nh_push<span class="op">(&amp;</span>heap<span class="op">,</span> internal_new<span class="op">(</span>a<span class="op">,</span> b<span class="op">));</span></span>
+<span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>    HuffNode <span class="op">*</span>root <span class="op">=</span> nh_pop<span class="op">(&amp;</span>heap<span class="op">);</span></span>
+<span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>heap<span class="op">.</span>data<span class="op">);</span></span>
+<span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> root<span class="op">;</span></span>
+<span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <a href="#fig-huffman-tree" class="quarto-xref">Figura&nbsp;<span>11.2</span></a> mostra a árvore para a palavra <strong><code>abracadabra</code></strong> (a:5, b:2, r:2, c:1, d:1). Siga os caminhos: o <code>a</code>, frequentíssimo, fica a um passo da raiz (código <code>0</code>); os raros <code>c</code> e <code>d</code> ficam a três passos (<code>100</code>, <code>101</code>).</p>
+<div class="cell" data-fig-width="3.2" data-fig-height="3.3" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-huffman-tree" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-huffman-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="307" height="317" viewbox="0.00 0.00 278.00 284.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 280)">
+<title>huff</title>
+<!-- root -->
+<g id="node1" class="node">
+<title>root</title>
+<ellipse fill="#264653" stroke="black" cx="95" cy="-261" rx="15" ry="15"></ellipse>
+<text text-anchor="middle" x="95" y="-258" font-family="Inter" font-size="10.00" fill="white">11</text>
+</g>
+<!-- z6 -->
+<g id="node2" class="node">
+<title>z6</title>
+<ellipse fill="#264653" stroke="black" cx="141" cy="-180" rx="15" ry="15"></ellipse>
+<text text-anchor="middle" x="141" y="-177" font-family="Inter" font-size="10.00" fill="white">6</text>
+</g>
+<!-- root&#45;&gt;z6 -->
+<g id="edge2" class="edge">
+<title>root-&gt;z6</title>
+<path fill="none" stroke="#264653" d="M102.19,-247.66C109.88,-234.44 122.16,-213.36 130.84,-198.45"></path>
+<polygon fill="#264653" stroke="#264653" points="132.66,-199.5 133.86,-193.26 129.03,-197.39 132.66,-199.5"></polygon>
+<text text-anchor="middle" x="121.5" y="-219" font-family="Inter" font-size="10.00" fill="#2a9d8f">1</text>
+</g>
+<!-- la -->
+<g id="node5" class="node">
+<title>la</title>
+<polygon fill="#f5793b" stroke="black" points="108,-198 54,-198 54,-162 108,-162 108,-198"></polygon>
+<text text-anchor="middle" x="81" y="-177" font-family="Inter" font-size="10.00" fill="white">a:5</text>
+</g>
+<!-- root&#45;&gt;la -->
+<g id="edge1" class="edge">
+<title>root-&gt;la</title>
+<path fill="none" stroke="#264653" d="M92.5,-245.88C90.44,-234.25 87.48,-217.55 85.08,-204"></path>
+<polygon fill="#264653" stroke="#264653" points="87.13,-203.57 84.02,-198.02 83,-204.3 87.13,-203.57"></polygon>
+<text text-anchor="middle" x="92.5" y="-219" font-family="Inter" font-size="10.00" fill="#2a9d8f">0</text>
+</g>
+<!-- x2 -->
+<g id="node3" class="node">
+<title>x2</title>
+<ellipse fill="#264653" stroke="black" cx="99" cy="-99" rx="15" ry="15"></ellipse>
+<text text-anchor="middle" x="99" y="-96" font-family="Inter" font-size="10.00" fill="white">2</text>
+</g>
+<!-- z6&#45;&gt;x2 -->
+<g id="edge3" class="edge">
+<title>z6-&gt;x2</title>
+<path fill="none" stroke="#264653" d="M134.25,-166.31C127.33,-153.29 116.51,-132.93 108.67,-118.2"></path>
+<polygon fill="#264653" stroke="#264653" points="110.4,-116.97 105.73,-112.66 106.69,-118.94 110.4,-116.97"></polygon>
+<text text-anchor="middle" x="123.5" y="-135" font-family="Inter" font-size="10.00" fill="#2a9d8f">0</text>
+</g>
+<!-- y4 -->
+<g id="node4" class="node">
+<title>y4</title>
+<ellipse fill="#264653" stroke="black" cx="171" cy="-99" rx="15" ry="15"></ellipse>
+<text text-anchor="middle" x="171" y="-96" font-family="Inter" font-size="10.00" fill="white">4</text>
+</g>
+<!-- z6&#45;&gt;y4 -->
+<g id="edge4" class="edge">
+<title>z6-&gt;y4</title>
+<path fill="none" stroke="#264653" d="M146.09,-165.6C150.95,-152.81 158.31,-133.42 163.77,-119.03"></path>
+<polygon fill="#264653" stroke="#264653" points="165.82,-119.56 165.99,-113.2 161.89,-118.07 165.82,-119.56"></polygon>
+<text text-anchor="middle" x="160.5" y="-135" font-family="Inter" font-size="10.00" fill="#2a9d8f">1</text>
+</g>
+<!-- lc -->
+<g id="node6" class="node">
+<title>lc</title>
+<polygon fill="#f5793b" stroke="black" points="54,-36 0,-36 0,0 54,0 54,-36"></polygon>
+<text text-anchor="middle" x="27" y="-15" font-family="Inter" font-size="10.00" fill="white">c:1</text>
+</g>
+<!-- x2&#45;&gt;lc -->
+<g id="edge5" class="edge">
+<title>x2-&gt;lc</title>
+<path fill="none" stroke="#264653" d="M89.29,-87.35C78.44,-75.44 60.57,-55.84 46.75,-40.67"></path>
+<polygon fill="#264653" stroke="#264653" points="48.2,-39.14 42.61,-36.12 45.1,-41.97 48.2,-39.14"></polygon>
+<text text-anchor="middle" x="72.5" y="-57" font-family="Inter" font-size="10.00" fill="#2a9d8f">0</text>
+</g>
+<!-- ld -->
+<g id="node7" class="node">
+<title>ld</title>
+<polygon fill="#f5793b" stroke="black" points="126,-36 72,-36 72,0 126,0 126,-36"></polygon>
+<text text-anchor="middle" x="99" y="-15" font-family="Inter" font-size="10.00" fill="white">d:1</text>
+</g>
+<!-- x2&#45;&gt;ld -->
+<g id="edge6" class="edge">
+<title>x2-&gt;ld</title>
+<path fill="none" stroke="#264653" d="M99,-83.88C99,-72.36 99,-55.85 99,-42.36"></path>
+<polygon fill="#264653" stroke="#264653" points="101.1,-42.02 99,-36.02 96.9,-42.02 101.1,-42.02"></polygon>
+<text text-anchor="middle" x="101.5" y="-57" font-family="Inter" font-size="10.00" fill="#2a9d8f">1</text>
+</g>
+<!-- lb -->
+<g id="node8" class="node">
+<title>lb</title>
+<polygon fill="#f5793b" stroke="black" points="198,-36 144,-36 144,0 198,0 198,-36"></polygon>
+<text text-anchor="middle" x="171" y="-15" font-family="Inter" font-size="10.00" fill="white">b:2</text>
+</g>
+<!-- y4&#45;&gt;lb -->
+<g id="edge7" class="edge">
+<title>y4-&gt;lb</title>
+<path fill="none" stroke="#264653" d="M171,-83.88C171,-72.36 171,-55.85 171,-42.36"></path>
+<polygon fill="#264653" stroke="#264653" points="173.1,-42.02 171,-36.02 168.9,-42.02 173.1,-42.02"></polygon>
+<text text-anchor="middle" x="173.5" y="-57" font-family="Inter" font-size="10.00" fill="#2a9d8f">0</text>
+</g>
+<!-- lr -->
+<g id="node9" class="node">
+<title>lr</title>
+<polygon fill="#f5793b" stroke="black" points="270,-36 216,-36 216,0 270,0 270,-36"></polygon>
+<text text-anchor="middle" x="243" y="-15" font-family="Inter" font-size="10.00" fill="white">r:2</text>
+</g>
+<!-- y4&#45;&gt;lr -->
+<g id="edge8" class="edge">
+<title>y4-&gt;lr</title>
+<path fill="none" stroke="#264653" d="M180.71,-87.35C191.56,-75.44 209.43,-55.84 223.25,-40.67"></path>
+<polygon fill="#264653" stroke="#264653" points="224.9,-41.97 227.39,-36.12 221.8,-39.14 224.9,-41.97"></polygon>
+<text text-anchor="middle" x="211.5" y="-57" font-family="Inter" font-size="10.00" fill="#2a9d8f">1</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-huffman-tree-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;11.2: Árvore de Huffman para <code>abracadabra</code>. Círculos escuros = nós internos (com a frequência somada); caixas laranja = folhas (símbolo:frequência). Lendo 0 à esquerda e 1 à direita: a=<code>0</code>, b=<code>110</code>, r=<code>111</code>, c=<code>100</code>, d=<code>101</code>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="etapa-c-o-dicionário-de-códigos" class="level2" data-number="11.5">
+<h2 data-number="11.5" class="anchored" data-anchor-id="etapa-c-o-dicionário-de-códigos"><span class="header-section-number">11.5</span> Etapa (c): o dicionário de códigos</h2>
+<p>Com a árvore pronta, geramos a tabela de códigos descendo recursivamente: a cada passo à esquerda anexamos um <code>0</code>, à direita um <code>1</code>, e ao chegar numa folha registramos o código acumulado para aquele byte.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-snippet="gencodes" data-startfrom="175"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 174;"><span id="cb3-175"><a href="#cb3-175" aria-hidden="true" tabindex="-1"></a><span class="co">// (c) Dicionário: desce a árvore acumulando bits (0 = esquerda, 1 = direita).</span></span>
+<span id="cb3-176"><a href="#cb3-176" aria-hidden="true" tabindex="-1"></a><span class="co">// Cada folha recebe seu código — guardado como os `len` bits baixos de `bits`.</span></span>
+<span id="cb3-177"><a href="#cb3-177" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb3-178"><a href="#cb3-178" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint32_t</span> bits<span class="op">;</span></span>
+<span id="cb3-179"><a href="#cb3-179" aria-hidden="true" tabindex="-1"></a>    <span class="dt">uint8_t</span> len<span class="op">;</span></span>
+<span id="cb3-180"><a href="#cb3-180" aria-hidden="true" tabindex="-1"></a><span class="op">}</span> Code<span class="op">;</span></span>
+<span id="cb3-181"><a href="#cb3-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-182"><a href="#cb3-182" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> gen_codes<span class="op">(</span><span class="dt">const</span> HuffNode <span class="op">*</span>node<span class="op">,</span> <span class="dt">uint32_t</span> bits<span class="op">,</span> <span class="dt">uint8_t</span> len<span class="op">,</span></span>
+<span id="cb3-183"><a href="#cb3-183" aria-hidden="true" tabindex="-1"></a>                      Code table<span class="op">[</span><span class="dv">256</span><span class="op">])</span> <span class="op">{</span></span>
+<span id="cb3-184"><a href="#cb3-184" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node<span class="op">-&gt;</span>left <span class="op">==</span> NULL <span class="op">&amp;&amp;</span> node<span class="op">-&gt;</span>right <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span> <span class="co">// folha</span></span>
+<span id="cb3-185"><a href="#cb3-185" aria-hidden="true" tabindex="-1"></a>        table<span class="op">[</span>node<span class="op">-&gt;</span>byte<span class="op">].</span>bits <span class="op">=</span> bits<span class="op">;</span></span>
+<span id="cb3-186"><a href="#cb3-186" aria-hidden="true" tabindex="-1"></a>        table<span class="op">[</span>node<span class="op">-&gt;</span>byte<span class="op">].</span>len <span class="op">=</span> <span class="op">(</span>len <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">?</span> <span class="dv">1</span> <span class="op">:</span> len<span class="op">;</span> <span class="co">// raiz-folha → 1 bit</span></span>
+<span id="cb3-187"><a href="#cb3-187" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span><span class="op">;</span></span>
+<span id="cb3-188"><a href="#cb3-188" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-189"><a href="#cb3-189" aria-hidden="true" tabindex="-1"></a>    gen_codes<span class="op">(</span>node<span class="op">-&gt;</span>left<span class="op">,</span> <span class="op">(</span>bits <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">)</span> <span class="op">|</span> <span class="dv">0</span><span class="bu">u</span><span class="op">,</span> <span class="op">(</span><span class="dt">uint8_t</span><span class="op">)(</span>len <span class="op">+</span> <span class="dv">1</span><span class="op">),</span> table<span class="op">);</span></span>
+<span id="cb3-190"><a href="#cb3-190" aria-hidden="true" tabindex="-1"></a>    gen_codes<span class="op">(</span>node<span class="op">-&gt;</span>right<span class="op">,</span> <span class="op">(</span>bits <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">)</span> <span class="op">|</span> <span class="dv">1</span><span class="bu">u</span><span class="op">,</span> <span class="op">(</span><span class="dt">uint8_t</span><span class="op">)(</span>len <span class="op">+</span> <span class="dv">1</span><span class="op">),</span> table<span class="op">);</span></span>
+<span id="cb3-191"><a href="#cb3-191" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="etapa-d-a-manipulação-de-bits" class="level2" data-number="11.6">
+<h2 data-number="11.6" class="anchored" data-anchor-id="etapa-d-a-manipulação-de-bits"><span class="header-section-number">11.6</span> Etapa (d): a manipulação de bits</h2>
+<p>Aqui está a parte que mais assusta e mais ensina. Os códigos têm tamanhos <strong>quaisquer</strong> — 1 bit, 3 bits, 7 bits — mas a memória só endereça <strong>bytes</strong> (8 bits). Precisamos juntar bits soltos num acumulador e, a cada 8, cuspir um byte — e fazer o inverso na leitura. É a essência de qualquer formato binário:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-snippet="bitwriter" data-startfrom="223"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 222;"><span id="cb4-223"><a href="#cb4-223" aria-hidden="true" tabindex="-1"></a><span class="co">// Escreve UM bit. Acumula 8 bits e só então grava um byte (MSB primeiro).</span></span>
+<span id="cb4-224"><a href="#cb4-224" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> bw_put_bit<span class="op">(</span>BitWriter <span class="op">*</span>w<span class="op">,</span> <span class="dt">int</span> bit<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-225"><a href="#cb4-225" aria-hidden="true" tabindex="-1"></a>    w<span class="op">-&gt;</span>acc <span class="op">=</span> <span class="op">(</span>w<span class="op">-&gt;</span>acc <span class="op">&lt;&lt;</span> <span class="dv">1</span><span class="op">)</span> <span class="op">|</span> <span class="op">(</span><span class="dt">unsigned</span><span class="op">)(</span>bit <span class="op">&amp;</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb4-226"><a href="#cb4-226" aria-hidden="true" tabindex="-1"></a>    w<span class="op">-&gt;</span>nbits<span class="op">++;</span></span>
+<span id="cb4-227"><a href="#cb4-227" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>w<span class="op">-&gt;</span>nbits <span class="op">==</span> <span class="dv">8</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-228"><a href="#cb4-228" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>bw_reserve<span class="op">(</span>w<span class="op">,</span> w<span class="op">-&gt;</span>size <span class="op">+</span> <span class="dv">1</span><span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-229"><a href="#cb4-229" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb4-230"><a href="#cb4-230" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-231"><a href="#cb4-231" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>bytes<span class="op">[</span>w<span class="op">-&gt;</span>size<span class="op">++]</span> <span class="op">=</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">)</span>w<span class="op">-&gt;</span>acc<span class="op">;</span></span>
+<span id="cb4-232"><a href="#cb4-232" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>acc <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-233"><a href="#cb4-233" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>nbits <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-234"><a href="#cb4-234" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-235"><a href="#cb4-235" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-236"><a href="#cb4-236" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-237"><a href="#cb4-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-238"><a href="#cb4-238" aria-hidden="true" tabindex="-1"></a><span class="co">// No fim, grava o byte parcial preenchendo o resto com zeros (padding).</span></span>
+<span id="cb4-239"><a href="#cb4-239" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> bw_flush<span class="op">(</span>BitWriter <span class="op">*</span>w<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-240"><a href="#cb4-240" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>w<span class="op">-&gt;</span>nbits <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-241"><a href="#cb4-241" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>acc <span class="op">&lt;&lt;=</span> <span class="op">(</span><span class="dv">8</span> <span class="op">-</span> w<span class="op">-&gt;</span>nbits<span class="op">);</span></span>
+<span id="cb4-242"><a href="#cb4-242" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(!</span>bw_reserve<span class="op">(</span>w<span class="op">,</span> w<span class="op">-&gt;</span>size <span class="op">+</span> <span class="dv">1</span><span class="op">))</span> <span class="op">{</span></span>
+<span id="cb4-243"><a href="#cb4-243" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb4-244"><a href="#cb4-244" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-245"><a href="#cb4-245" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>bytes<span class="op">[</span>w<span class="op">-&gt;</span>size<span class="op">++]</span> <span class="op">=</span> <span class="op">(</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">)</span>w<span class="op">-&gt;</span>acc<span class="op">;</span></span>
+<span id="cb4-246"><a href="#cb4-246" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>acc <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-247"><a href="#cb4-247" aria-hidden="true" tabindex="-1"></a>        w<span class="op">-&gt;</span>nbits <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb4-248"><a href="#cb4-248" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-249"><a href="#cb4-249" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-250"><a href="#cb4-250" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A leitura é o espelho: um deslocamento e uma máscara extraem o bit na posição certa do byte atual, devolvendo <code>-1</code> quando os dados terminam.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-snippet="bitreader" data-startfrom="270"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 269;"><span id="cb5-270"><a href="#cb5-270" aria-hidden="true" tabindex="-1"></a><span class="co">// Lê UM bit (MSB primeiro). Devolve 0/1, ou -1 quando os dados acabam.</span></span>
+<span id="cb5-271"><a href="#cb5-271" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">int</span> br_get_bit<span class="op">(</span>BitReader <span class="op">*</span>r<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-272"><a href="#cb5-272" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>r<span class="op">-&gt;</span>pos <span class="op">&gt;=</span> r<span class="op">-&gt;</span>size<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-273"><a href="#cb5-273" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">-</span><span class="dv">1</span><span class="op">;</span></span>
+<span id="cb5-274"><a href="#cb5-274" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-275"><a href="#cb5-275" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> bit <span class="op">=</span> <span class="op">(</span>r<span class="op">-&gt;</span>bytes<span class="op">[</span>r<span class="op">-&gt;</span>pos<span class="op">]</span> <span class="op">&gt;&gt;</span> <span class="op">(</span><span class="dv">7</span> <span class="op">-</span> r<span class="op">-&gt;</span>nbits<span class="op">))</span> <span class="op">&amp;</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb5-276"><a href="#cb5-276" aria-hidden="true" tabindex="-1"></a>    r<span class="op">-&gt;</span>nbits<span class="op">++;</span></span>
+<span id="cb5-277"><a href="#cb5-277" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>r<span class="op">-&gt;</span>nbits <span class="op">==</span> <span class="dv">8</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-278"><a href="#cb5-278" aria-hidden="true" tabindex="-1"></a>        r<span class="op">-&gt;</span>pos<span class="op">++;</span></span>
+<span id="cb5-279"><a href="#cb5-279" aria-hidden="true" tabindex="-1"></a>        r<span class="op">-&gt;</span>nbits <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-280"><a href="#cb5-280" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-281"><a href="#cb5-281" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bit<span class="op">;</span></span>
+<span id="cb5-282"><a href="#cb5-282" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="etapa-e-juntando-tudo" class="level2" data-number="11.7">
+<h2 data-number="11.7" class="anchored" data-anchor-id="etapa-e-juntando-tudo"><span class="header-section-number">11.7</span> Etapa (e): juntando tudo</h2>
+<p>Falta um detalhe crucial: o descompactador precisa da <strong>mesma árvore</strong> para decodificar. Em vez de recalcular frequências (e arriscar uma árvore diferente), <strong>gravamos a árvore no início</strong> do arquivo, em pré-ordem — um bit por nó:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-snippet="serialize" data-startfrom="298"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 297;"><span id="cb6-298"><a href="#cb6-298" aria-hidden="true" tabindex="-1"></a><span class="co">// A árvore vai no cabeçalho, em pré-ordem: '1' + byte para folha, '0' para</span></span>
+<span id="cb6-299"><a href="#cb6-299" aria-hidden="true" tabindex="-1"></a><span class="co">// nó interno (e então recursão). É assim que a descompressão a reconstrói.</span></span>
+<span id="cb6-300"><a href="#cb6-300" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">bool</span> write_tree<span class="op">(</span>BitWriter <span class="op">*</span>w<span class="op">,</span> <span class="dt">const</span> HuffNode <span class="op">*</span>node<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-301"><a href="#cb6-301" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node<span class="op">-&gt;</span>left <span class="op">==</span> NULL <span class="op">&amp;&amp;</span> node<span class="op">-&gt;</span>right <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-302"><a href="#cb6-302" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> bw_put_bit<span class="op">(</span>w<span class="op">,</span> <span class="dv">1</span><span class="op">)</span> <span class="op">&amp;&amp;</span> bw_put_byte<span class="op">(</span>w<span class="op">,</span> node<span class="op">-&gt;</span>byte<span class="op">);</span></span>
+<span id="cb6-303"><a href="#cb6-303" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-304"><a href="#cb6-304" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bw_put_bit<span class="op">(</span>w<span class="op">,</span> <span class="dv">0</span><span class="op">)</span> <span class="op">&amp;&amp;</span> write_tree<span class="op">(</span>w<span class="op">,</span> node<span class="op">-&gt;</span>left<span class="op">)</span> <span class="op">&amp;&amp;</span></span>
+<span id="cb6-305"><a href="#cb6-305" aria-hidden="true" tabindex="-1"></a>           write_tree<span class="op">(</span>w<span class="op">,</span> node<span class="op">-&gt;</span>right<span class="op">);</span></span>
+<span id="cb6-306"><a href="#cb6-306" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-307"><a href="#cb6-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-308"><a href="#cb6-308" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> HuffNode <span class="op">*</span>read_tree<span class="op">(</span>BitReader <span class="op">*</span>r<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-309"><a href="#cb6-309" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> tag <span class="op">=</span> br_get_bit<span class="op">(</span>r<span class="op">);</span></span>
+<span id="cb6-310"><a href="#cb6-310" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>tag <span class="op">==</span> <span class="dv">1</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-311"><a href="#cb6-311" aria-hidden="true" tabindex="-1"></a>        <span class="dt">int</span> byte <span class="op">=</span> br_get_byte<span class="op">(</span>r<span class="op">);</span></span>
+<span id="cb6-312"><a href="#cb6-312" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">(</span>byte <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">?</span> NULL <span class="op">:</span> leaf_new<span class="op">((</span><span class="dt">unsigned</span> <span class="dt">char</span><span class="op">)</span>byte<span class="op">,</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb6-313"><a href="#cb6-313" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-314"><a href="#cb6-314" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>tag <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-315"><a href="#cb6-315" aria-hidden="true" tabindex="-1"></a>        HuffNode <span class="op">*</span>left <span class="op">=</span> read_tree<span class="op">(</span>r<span class="op">);</span></span>
+<span id="cb6-316"><a href="#cb6-316" aria-hidden="true" tabindex="-1"></a>        HuffNode <span class="op">*</span>right <span class="op">=</span> read_tree<span class="op">(</span>r<span class="op">);</span></span>
+<span id="cb6-317"><a href="#cb6-317" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>left <span class="op">==</span> NULL <span class="op">||</span> right <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-318"><a href="#cb6-318" aria-hidden="true" tabindex="-1"></a>            free_tree<span class="op">(</span>left<span class="op">);</span></span>
+<span id="cb6-319"><a href="#cb6-319" aria-hidden="true" tabindex="-1"></a>            free_tree<span class="op">(</span>right<span class="op">);</span></span>
+<span id="cb6-320"><a href="#cb6-320" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb6-321"><a href="#cb6-321" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-322"><a href="#cb6-322" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> internal_new<span class="op">(</span>left<span class="op">,</span> right<span class="op">);</span></span>
+<span id="cb6-323"><a href="#cb6-323" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-324"><a href="#cb6-324" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> NULL<span class="op">;</span> <span class="co">// bits acabaram</span></span>
+<span id="cb6-325"><a href="#cb6-325" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Com isso, comprimir é: montar a árvore, gerar os códigos, <strong>escrever a árvore</strong> no cabeçalho e então <strong>escrever o código</strong> de cada byte do original, bit a bit:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-snippet="compress" data-startfrom="329"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 328;"><span id="cb7-329"><a href="#cb7-329" aria-hidden="true" tabindex="-1"></a>Compressed huff_compress<span class="op">(</span><span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>data<span class="op">,</span> <span class="dt">size_t</span> n<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-330"><a href="#cb7-330" aria-hidden="true" tabindex="-1"></a>    Compressed result <span class="op">=</span> <span class="op">{</span><span class="dv">0</span><span class="op">};</span></span>
+<span id="cb7-331"><a href="#cb7-331" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>original_len <span class="op">=</span> n<span class="op">;</span></span>
+<span id="cb7-332"><a href="#cb7-332" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-333"><a href="#cb7-333" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> freq<span class="op">[</span><span class="dv">256</span><span class="op">];</span></span>
+<span id="cb7-334"><a href="#cb7-334" aria-hidden="true" tabindex="-1"></a>    count_freq<span class="op">(</span>data<span class="op">,</span> n<span class="op">,</span> freq<span class="op">);</span></span>
+<span id="cb7-335"><a href="#cb7-335" aria-hidden="true" tabindex="-1"></a>    HuffNode <span class="op">*</span>root <span class="op">=</span> build_tree<span class="op">(</span>freq<span class="op">);</span></span>
+<span id="cb7-336"><a href="#cb7-336" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>root <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-337"><a href="#cb7-337" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> result<span class="op">;</span> <span class="co">// entrada vazia: comprimido vazio</span></span>
+<span id="cb7-338"><a href="#cb7-338" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-339"><a href="#cb7-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-340"><a href="#cb7-340" aria-hidden="true" tabindex="-1"></a>    Code table<span class="op">[</span><span class="dv">256</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span><span class="dv">0</span><span class="op">};</span></span>
+<span id="cb7-341"><a href="#cb7-341" aria-hidden="true" tabindex="-1"></a>    gen_codes<span class="op">(</span>root<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">,</span> table<span class="op">);</span></span>
+<span id="cb7-342"><a href="#cb7-342" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-343"><a href="#cb7-343" aria-hidden="true" tabindex="-1"></a>    BitWriter w <span class="op">=</span> <span class="op">{</span><span class="dv">0</span><span class="op">};</span></span>
+<span id="cb7-344"><a href="#cb7-344" aria-hidden="true" tabindex="-1"></a>    write_tree<span class="op">(&amp;</span>w<span class="op">,</span> root<span class="op">);</span>            <span class="co">// (cabeçalho) a árvore</span></span>
+<span id="cb7-345"><a href="#cb7-345" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">size_t</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span> <span class="co">// (payload) o código de cada byte</span></span>
+<span id="cb7-346"><a href="#cb7-346" aria-hidden="true" tabindex="-1"></a>        Code code <span class="op">=</span> table<span class="op">[</span>data<span class="op">[</span>i<span class="op">]];</span></span>
+<span id="cb7-347"><a href="#cb7-347" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> b <span class="op">=</span> code<span class="op">.</span>len <span class="op">-</span> <span class="dv">1</span><span class="op">;</span> b <span class="op">&gt;=</span> <span class="dv">0</span><span class="op">;</span> b<span class="op">--)</span> <span class="op">{</span></span>
+<span id="cb7-348"><a href="#cb7-348" aria-hidden="true" tabindex="-1"></a>            bw_put_bit<span class="op">(&amp;</span>w<span class="op">,</span> <span class="op">(</span><span class="dt">int</span><span class="op">)((</span>code<span class="op">.</span>bits <span class="op">&gt;&gt;</span> b<span class="op">)</span> <span class="op">&amp;</span> <span class="dv">1</span><span class="bu">u</span><span class="op">));</span></span>
+<span id="cb7-349"><a href="#cb7-349" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb7-350"><a href="#cb7-350" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-351"><a href="#cb7-351" aria-hidden="true" tabindex="-1"></a>    bw_flush<span class="op">(&amp;</span>w<span class="op">);</span></span>
+<span id="cb7-352"><a href="#cb7-352" aria-hidden="true" tabindex="-1"></a>    free_tree<span class="op">(</span>root<span class="op">);</span></span>
+<span id="cb7-353"><a href="#cb7-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-354"><a href="#cb7-354" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>bytes <span class="op">=</span> w<span class="op">.</span>bytes<span class="op">;</span></span>
+<span id="cb7-355"><a href="#cb7-355" aria-hidden="true" tabindex="-1"></a>    result<span class="op">.</span>size <span class="op">=</span> w<span class="op">.</span>size<span class="op">;</span></span>
+<span id="cb7-356"><a href="#cb7-356" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb7-357"><a href="#cb7-357" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>E descomprimir é o caminho de volta: <strong>reconstruir a árvore</strong> do cabeçalho e, para cada byte do original, <strong>descer a árvore</strong> seguindo os bits lidos até cair numa folha — que revela o byte:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-snippet="decompress" data-startfrom="361"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 360;"><span id="cb8-361"><a href="#cb8-361" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>huff_decompress<span class="op">(</span><span class="dt">const</span> Compressed <span class="op">*</span>c<span class="op">,</span> <span class="dt">size_t</span> <span class="op">*</span>out_len<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-362"><a href="#cb8-362" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>out_len <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-363"><a href="#cb8-363" aria-hidden="true" tabindex="-1"></a>        <span class="op">*</span>out_len <span class="op">=</span> c<span class="op">-&gt;</span>original_len<span class="op">;</span></span>
+<span id="cb8-364"><a href="#cb8-364" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-365"><a href="#cb8-365" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>c<span class="op">-&gt;</span>original_len <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-366"><a href="#cb8-366" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> calloc<span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">1</span><span class="op">);</span> <span class="co">// vazio, mas não-nulo</span></span>
+<span id="cb8-367"><a href="#cb8-367" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-368"><a href="#cb8-368" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-369"><a href="#cb8-369" aria-hidden="true" tabindex="-1"></a>    BitReader r <span class="op">=</span> <span class="op">{</span>c<span class="op">-&gt;</span>bytes<span class="op">,</span> c<span class="op">-&gt;</span>size<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">0</span><span class="op">};</span></span>
+<span id="cb8-370"><a href="#cb8-370" aria-hidden="true" tabindex="-1"></a>    HuffNode <span class="op">*</span>root <span class="op">=</span> read_tree<span class="op">(&amp;</span>r<span class="op">);</span> <span class="co">// reconstrói a árvore do cabeçalho</span></span>
+<span id="cb8-371"><a href="#cb8-371" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>root <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-372"><a href="#cb8-372" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb8-373"><a href="#cb8-373" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-374"><a href="#cb8-374" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-375"><a href="#cb8-375" aria-hidden="true" tabindex="-1"></a>    <span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>out <span class="op">=</span> malloc<span class="op">(</span>c<span class="op">-&gt;</span>original_len<span class="op">);</span></span>
+<span id="cb8-376"><a href="#cb8-376" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>out <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-377"><a href="#cb8-377" aria-hidden="true" tabindex="-1"></a>        free_tree<span class="op">(</span>root<span class="op">);</span></span>
+<span id="cb8-378"><a href="#cb8-378" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb8-379"><a href="#cb8-379" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-380"><a href="#cb8-380" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">size_t</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> c<span class="op">-&gt;</span>original_len<span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb8-381"><a href="#cb8-381" aria-hidden="true" tabindex="-1"></a>        <span class="dt">const</span> HuffNode <span class="op">*</span>node <span class="op">=</span> root<span class="op">;</span></span>
+<span id="cb8-382"><a href="#cb8-382" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> <span class="op">(</span>node<span class="op">-&gt;</span>left <span class="op">!=</span> NULL <span class="op">||</span> node<span class="op">-&gt;</span>right <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span> <span class="co">// desce até a folha</span></span>
+<span id="cb8-383"><a href="#cb8-383" aria-hidden="true" tabindex="-1"></a>            <span class="dt">int</span> bit <span class="op">=</span> br_get_bit<span class="op">(&amp;</span>r<span class="op">);</span></span>
+<span id="cb8-384"><a href="#cb8-384" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="op">(</span>bit <span class="op">&lt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-385"><a href="#cb8-385" aria-hidden="true" tabindex="-1"></a>                free<span class="op">(</span>out<span class="op">);</span></span>
+<span id="cb8-386"><a href="#cb8-386" aria-hidden="true" tabindex="-1"></a>                free_tree<span class="op">(</span>root<span class="op">);</span></span>
+<span id="cb8-387"><a href="#cb8-387" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> NULL<span class="op">;</span></span>
+<span id="cb8-388"><a href="#cb8-388" aria-hidden="true" tabindex="-1"></a>            <span class="op">}</span></span>
+<span id="cb8-389"><a href="#cb8-389" aria-hidden="true" tabindex="-1"></a>            node <span class="op">=</span> <span class="op">(</span>bit <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">?</span> node<span class="op">-&gt;</span>left <span class="op">:</span> node<span class="op">-&gt;</span>right<span class="op">;</span></span>
+<span id="cb8-390"><a href="#cb8-390" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb8-391"><a href="#cb8-391" aria-hidden="true" tabindex="-1"></a>        out<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> node<span class="op">-&gt;</span>byte<span class="op">;</span></span>
+<span id="cb8-392"><a href="#cb8-392" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-393"><a href="#cb8-393" aria-hidden="true" tabindex="-1"></a>    free_tree<span class="op">(</span>root<span class="op">);</span></span>
+<span id="cb8-394"><a href="#cb8-394" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out<span class="op">;</span></span>
+<span id="cb8-395"><a href="#cb8-395" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="vendo-funcionar" class="level2" data-number="11.8">
+<h2 data-number="11.8" class="anchored" data-anchor-id="vendo-funcionar"><span class="header-section-number">11.8</span> Vendo funcionar</h2>
+<p>O programa comprime um parágrafo, descomprime de volta e confere se o resultado é <strong>idêntico</strong> ao original (o teste de <em>round-trip</em>, que prova que não perdemos nada):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-snippet="main" data-startfrom="16"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 15;"><span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="dt">const</span> <span class="dt">char</span> <span class="op">*</span>text <span class="op">=</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"a compressao de huffman da codigos curtos aos simbolos mais "</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"frequentes e codigos longos aos raros. quanto mais repetitivo "</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"o texto, melhor a taxa de compressao. letras como a, e, o e os "</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"espacos aparecem muito; outras, como z, q ou k, quase nunca. e "</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"por isso que vale a pena dar a cada uma um codigo de tamanho "</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"diferente, em vez de gastar 8 bits fixos para todas."</span><span class="op">;</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> n <span class="op">=</span> strlen<span class="op">(</span>text<span class="op">);</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Comprime e, em seguida, descomprime de volta.</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    Compressed c <span class="op">=</span> huff_compress<span class="op">((</span><span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*)</span>text<span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> out_len <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">unsigned</span> <span class="dt">char</span> <span class="op">*</span>back <span class="op">=</span> huff_decompress<span class="op">(&amp;</span>c<span class="op">,</span> <span class="op">&amp;</span>out_len<span class="op">);</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    <span class="dt">bool</span> ok <span class="op">=</span> <span class="op">(</span>back <span class="op">!=</span> NULL <span class="op">&amp;&amp;</span> out_len <span class="op">==</span> n <span class="op">&amp;&amp;</span> memcmp<span class="op">(</span>back<span class="op">,</span> text<span class="op">,</span> n<span class="op">)</span> <span class="op">==</span> <span class="dv">0</span><span class="op">);</span></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"original:   </span><span class="sc">%zu</span><span class="st"> bytes</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> n<span class="op">);</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"comprimido: </span><span class="sc">%zu</span><span class="st"> bytes (inclui a arvore no cabecalho)</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> c<span class="op">.</span>size<span class="op">);</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"taxa:       </span><span class="sc">%.1f%%</span><span class="st"> do original</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>           <span class="fl">100.0</span> <span class="op">*</span> <span class="op">(</span><span class="dt">double</span><span class="op">)</span>c<span class="op">.</span>size <span class="op">/</span> <span class="op">(</span><span class="dt">double</span><span class="op">)</span>n<span class="op">);</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"round-trip: </span><span class="sc">%s\n</span><span class="st">"</span><span class="op">,</span> ok <span class="op">?</span> <span class="st">"OK (identico ao original)"</span> <span class="op">:</span> <span class="st">"FALHOU"</span><span class="op">);</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>back<span class="op">);</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>    huff_free_compressed<span class="op">(&amp;</span>c<span class="op">);</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Saída do programa:</p>
+<pre class="text"><code>original:   361 bytes
+comprimido: 221 bytes (inclui a arvore no cabecalho)
+taxa:       61.2% do original
+round-trip: OK (identico ao original)</code></pre>
+<div class="callout callout-style-default callout-tip callout-titled" title="Complexidade (Big-O)">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Complexidade (Big-O)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Para <span class="math inline">\(n\)</span> bytes e <span class="math inline">\(k\)</span> símbolos distintos (<span class="math inline">\(k \le 256\)</span>): o histograma é <span class="math inline">\(O(n)\)</span>; montar a árvore com o heap é <span class="math inline">\(O(k \log k)\)</span>; gerar os códigos é <span class="math inline">\(O(k)\)</span>; e codificar é <span class="math inline">\(O(n)\)</span>. No total, <strong><span class="math inline">\(O(n + k \log k)\)</span></strong> — linear no tamanho do arquivo, já que <span class="math inline">\(k\)</span> é limitado a 256. A taxa de 61% acima é modesta porque o texto é curto e o cabeçalho da árvore pesa; <strong>quanto maior e mais repetitivo o arquivo, melhor a taxa</strong> — o cabeçalho se dilui e a estatística fica mais clara.</p>
+</div>
+</div>
+</section>
+<section id="veja-acontecer" class="level2" data-number="11.9">
+<h2 data-number="11.9" class="anchored" data-anchor-id="veja-acontecer"><span class="header-section-number">11.9</span> Veja acontecer</h2>
+<p><strong>Digite e veja os códigos.</strong> Escreva um texto e observe Huffman dar códigos <strong>curtos</strong> aos caracteres frequentes e <strong>longos</strong> aos raros — e quanto isso economiza sobre os 8 bits fixos por caractere (só o <em>payload</em>, sem o cabeçalho):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb11" data-startfrom="213" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 212;"><span id="cb11-213"><a href="#cb11-213" aria-hidden="true" tabindex="-1"></a>viewof txt <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">text</span>({ <span class="dt">value</span><span class="op">:</span> <span class="st">"abracadabra"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"Texto"</span><span class="op">,</span> <span class="dt">width</span><span class="op">:</span> <span class="dv">300</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb12" data-startfrom="218" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 217;"><span id="cb12-218"><a href="#cb12-218" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb12-219"><a href="#cb12-219" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> s <span class="op">=</span> txt<span class="op">.</span><span class="at">length</span> <span class="op">?</span> txt <span class="op">:</span> <span class="st">"abracadabra"</span><span class="op">;</span></span>
+<span id="cb12-220"><a href="#cb12-220" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> freq <span class="op">=</span> <span class="kw">new</span> <span class="bu">Map</span>()<span class="op">;</span></span>
+<span id="cb12-221"><a href="#cb12-221" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">const</span> ch <span class="kw">of</span> s) freq<span class="op">.</span><span class="fu">set</span>(ch<span class="op">,</span> (freq<span class="op">.</span><span class="fu">get</span>(ch) <span class="op">||</span> <span class="dv">0</span>) <span class="op">+</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb12-222"><a href="#cb12-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-223"><a href="#cb12-223" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> nodes <span class="op">=</span> [<span class="op">...</span>freq<span class="op">.</span><span class="fu">entries</span>()]<span class="op">.</span><span class="fu">map</span>(([ch<span class="op">,</span> f]) <span class="kw">=&gt;</span> ({ ch<span class="op">,</span> f<span class="op">,</span> <span class="dt">l</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="kw">null</span> }))<span class="op">;</span></span>
+<span id="cb12-224"><a href="#cb12-224" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (nodes<span class="op">.</span><span class="at">length</span> <span class="op">===</span> <span class="dv">1</span>) nodes<span class="op">.</span><span class="fu">push</span>({ <span class="dt">ch</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">f</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span> <span class="dt">l</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">r</span><span class="op">:</span> <span class="kw">null</span> })<span class="op">;</span></span>
+<span id="cb12-225"><a href="#cb12-225" aria-hidden="true" tabindex="-1"></a>  <span class="cf">while</span> (nodes<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">1</span>) {</span>
+<span id="cb12-226"><a href="#cb12-226" aria-hidden="true" tabindex="-1"></a>    nodes<span class="op">.</span><span class="fu">sort</span>((a<span class="op">,</span> b) <span class="kw">=&gt;</span> a<span class="op">.</span><span class="at">f</span> <span class="op">-</span> b<span class="op">.</span><span class="at">f</span>)<span class="op">;</span></span>
+<span id="cb12-227"><a href="#cb12-227" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> a <span class="op">=</span> nodes<span class="op">.</span><span class="fu">shift</span>()<span class="op">,</span> b <span class="op">=</span> nodes<span class="op">.</span><span class="fu">shift</span>()<span class="op">;</span></span>
+<span id="cb12-228"><a href="#cb12-228" aria-hidden="true" tabindex="-1"></a>    nodes<span class="op">.</span><span class="fu">push</span>({ <span class="dt">ch</span><span class="op">:</span> <span class="kw">null</span><span class="op">,</span> <span class="dt">f</span><span class="op">:</span> a<span class="op">.</span><span class="at">f</span> <span class="op">+</span> b<span class="op">.</span><span class="at">f</span><span class="op">,</span> <span class="dt">l</span><span class="op">:</span> a<span class="op">,</span> <span class="dt">r</span><span class="op">:</span> b })<span class="op">;</span></span>
+<span id="cb12-229"><a href="#cb12-229" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-230"><a href="#cb12-230" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> codes <span class="op">=</span> <span class="kw">new</span> <span class="bu">Map</span>()<span class="op">;</span></span>
+<span id="cb12-231"><a href="#cb12-231" aria-hidden="true" tabindex="-1"></a>  (<span class="kw">function</span> <span class="fu">walk</span>(node<span class="op">,</span> code) {</span>
+<span id="cb12-232"><a href="#cb12-232" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (node<span class="op">.</span><span class="at">l</span> <span class="op">===</span> <span class="kw">null</span> <span class="op">&amp;&amp;</span> node<span class="op">.</span><span class="at">r</span> <span class="op">===</span> <span class="kw">null</span>) { codes<span class="op">.</span><span class="fu">set</span>(node<span class="op">.</span><span class="at">ch</span><span class="op">,</span> code <span class="op">||</span> <span class="st">"0"</span>)<span class="op">;</span> <span class="cf">return</span><span class="op">;</span> }</span>
+<span id="cb12-233"><a href="#cb12-233" aria-hidden="true" tabindex="-1"></a>    <span class="fu">walk</span>(node<span class="op">.</span><span class="at">l</span><span class="op">,</span> code <span class="op">+</span> <span class="st">"0"</span>)<span class="op">;</span></span>
+<span id="cb12-234"><a href="#cb12-234" aria-hidden="true" tabindex="-1"></a>    <span class="fu">walk</span>(node<span class="op">.</span><span class="at">r</span><span class="op">,</span> code <span class="op">+</span> <span class="st">"1"</span>)<span class="op">;</span></span>
+<span id="cb12-235"><a href="#cb12-235" aria-hidden="true" tabindex="-1"></a>  })(nodes[<span class="dv">0</span>]<span class="op">,</span> <span class="st">""</span>)<span class="op">;</span></span>
+<span id="cb12-236"><a href="#cb12-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-237"><a href="#cb12-237" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> rows <span class="op">=</span> [<span class="op">...</span>freq<span class="op">.</span><span class="fu">entries</span>()]<span class="op">.</span><span class="fu">sort</span>((a<span class="op">,</span> b) <span class="kw">=&gt;</span> b[<span class="dv">1</span>] <span class="op">-</span> a[<span class="dv">1</span>])<span class="op">.</span><span class="fu">map</span>(([ch<span class="op">,</span> f]) <span class="kw">=&gt;</span> {</span>
+<span id="cb12-238"><a href="#cb12-238" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> disp <span class="op">=</span> ch <span class="op">===</span> <span class="st">" "</span> <span class="op">?</span> <span class="st">"␣"</span> <span class="op">:</span> ch<span class="op">;</span></span>
+<span id="cb12-239"><a href="#cb12-239" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> code <span class="op">=</span> codes<span class="op">.</span><span class="fu">get</span>(ch)<span class="op">;</span></span>
+<span id="cb12-240"><a href="#cb12-240" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="vs">`&lt;tr&gt;&lt;td style="padding:2px 10px"&gt;&lt;b&gt;</span><span class="sc">${</span>disp<span class="sc">}</span><span class="vs">&lt;/b&gt;&lt;/td&gt;&lt;td style="padding:2px 10px"&gt;</span><span class="sc">${</span>f<span class="sc">}</span><span class="vs">×&lt;/td&gt;</span></span>
+<span id="cb12-241"><a href="#cb12-241" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;td style="padding:2px 10px;font-family:monospace;color:#F5793B"&gt;</span><span class="sc">${</span>code<span class="sc">}</span><span class="vs">&lt;/td&gt;</span></span>
+<span id="cb12-242"><a href="#cb12-242" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;td style="padding:2px 10px"&gt;</span><span class="sc">${</span>code<span class="op">.</span><span class="at">length</span><span class="sc">}</span><span class="vs"> bit</span><span class="sc">${</span>code<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">1</span> <span class="op">?</span> <span class="st">"s"</span> <span class="op">:</span> <span class="st">""</span><span class="sc">}</span><span class="vs">&lt;/td&gt;&lt;/tr&gt;`</span><span class="op">;</span></span>
+<span id="cb12-243"><a href="#cb12-243" aria-hidden="true" tabindex="-1"></a>  })<span class="op">.</span><span class="fu">join</span>(<span class="st">""</span>)<span class="op">;</span></span>
+<span id="cb12-244"><a href="#cb12-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-245"><a href="#cb12-245" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> huff <span class="op">=</span> [<span class="op">...</span>freq<span class="op">.</span><span class="fu">entries</span>()]<span class="op">.</span><span class="fu">reduce</span>((acc<span class="op">,</span> [ch<span class="op">,</span> f]) <span class="kw">=&gt;</span> acc <span class="op">+</span> f <span class="op">*</span> codes<span class="op">.</span><span class="fu">get</span>(ch)<span class="op">.</span><span class="at">length</span><span class="op">,</span> <span class="dv">0</span>)<span class="op">;</span></span>
+<span id="cb12-246"><a href="#cb12-246" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> fixed <span class="op">=</span> s<span class="op">.</span><span class="at">length</span> <span class="op">*</span> <span class="dv">8</span><span class="op">;</span></span>
+<span id="cb12-247"><a href="#cb12-247" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span></span>
+<span id="cb12-248"><a href="#cb12-248" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;table style="font:13px sans-serif;border-collapse:collapse"&gt;</span></span>
+<span id="cb12-249"><a href="#cb12-249" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;tr style="color:#2A9D8F;text-align:left"&gt;&lt;th style="padding:2px 10px"&gt;símbolo&lt;/th&gt;&lt;th style="padding:2px 10px"&gt;freq.&lt;/th&gt;&lt;th style="padding:2px 10px"&gt;código&lt;/th&gt;&lt;th style="padding:2px 10px"&gt;tam.&lt;/th&gt;&lt;/tr&gt;</span></span>
+<span id="cb12-250"><a href="#cb12-250" aria-hidden="true" tabindex="-1"></a><span class="vs">      </span><span class="sc">${</span>rows<span class="sc">}</span></span>
+<span id="cb12-251"><a href="#cb12-251" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;/table&gt;</span></span>
+<span id="cb12-252"><a href="#cb12-252" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="margin-top:8px;font:13px sans-serif;color:#264653"&gt;</span></span>
+<span id="cb12-253"><a href="#cb12-253" aria-hidden="true" tabindex="-1"></a><span class="vs">      payload: &lt;b style="color:#F5793B"&gt;</span><span class="sc">${</span>huff<span class="sc">}</span><span class="vs"> bits&lt;/b&gt; (Huffman) vs &lt;b&gt;</span><span class="sc">${</span>fixed<span class="sc">}</span><span class="vs"> bits&lt;/b&gt; (8 fixos) =</span></span>
+<span id="cb12-254"><a href="#cb12-254" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;b&gt;</span><span class="sc">${</span>(<span class="dv">100</span> <span class="op">*</span> huff <span class="op">/</span> fixed)<span class="op">.</span><span class="fu">toFixed</span>(<span class="dv">0</span>)<span class="sc">}</span><span class="vs">%&lt;/b&gt;&lt;/div&gt;</span></span>
+<span id="cb12-255"><a href="#cb12-255" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb12-256"><a href="#cb12-256" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="pense-como-projetista" class="level2" data-number="11.10">
+<h2 data-number="11.10" class="anchored" data-anchor-id="pense-como-projetista"><span class="header-section-number">11.10</span> Pense como projetista</h2>
+<div class="callout callout-style-default callout-tip callout-titled" title="Pense como projetista">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Pense como projetista
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Huffman brilha quando há <strong>frequências desiguais</strong> e você pode pagar uma passada para contá-las. Mas conheça os limites: ele dá códigos de <strong>bits inteiros</strong>, então um símbolo com probabilidade 0,9 “deveria” custar 0,15 bit e paga 1 — desperdício que a <em>codificação aritmética</em> elimina. Ele também não capta <strong>repetições de sequências</strong> (“abc” repetido mil vezes); para isso, combina-se Huffman com um estágio de dicionário (LZ77), e é o que os compressores reais fazem. Por fim, guarde a lição estrutural: um problema grande se resolve <strong>compondo</strong> estruturas simples — array, heap, árvore, bits — cada uma fazendo bem a sua parte.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="No mundo real">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No mundo real
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Huffman está em todo lugar, quase sempre como o <strong>estágio final</strong> de algo maior. O <strong>DEFLATE</strong> (do gzip, do zip e do PNG) combina LZ77 — que substitui repetições por referências — com Huffman. O <strong>JPEG</strong> aplica Huffman depois da DCT e da quantização para comprimir imagens. Compressores modernos como o <strong>Zstandard (zstd)</strong> e o <strong>Brotli</strong> evoluem essa receita com dicionários e modelagem melhores. E a <strong>codificação aritmética</strong> (e sua prima <em>ANS</em>) é a alternativa que supera o limite de “bits inteiros” do Huffman, ao custo de mais computação.</p>
+</div>
+</div>
+</section>
+<section id="fim-da-travessia" class="level2" data-number="11.11">
+<h2 data-number="11.11" class="anchored" data-anchor-id="fim-da-travessia"><span class="header-section-number">11.11</span> Fim da travessia</h2>
+<p>Você construiu um compactador de arquivos do zero — e, com ele, fechou a Parte da prática. Olhe para trás e veja quanta coisa se encaixou neste último projeto:</p>
+<ul>
+<li>o <strong>array</strong> para o histograma e para guardar o heap (cap. 5);</li>
+<li>a noção de <strong>nó e ponteiro</strong> das listas, agora em forma de árvore (cap. 6);</li>
+<li>a generalidade do <strong><code>void*</code></strong> na disciplina de tratar bytes crus (cap. 7);</li>
+<li>a <strong>fila</strong> (FIFO) reaproveitada como ideia, e a fila de <strong>prioridade</strong> como peça central (caps. 8 e 10);</li>
+<li>a <strong>árvore</strong> e seus percursos recursivos (cap. 9);</li>
+<li>e, sob tudo, os <strong>ponteiros, a memória e os bits</strong> dos fundamentos.</li>
+</ul>
+<p>Nenhuma dessas estruturas é difícil sozinha. A maestria do projetista está em <strong>escolher a certa</strong> para cada parte e <strong>compô-las</strong> num todo que funciona — e isso, agora, você fez. As próximas páginas (a Parte de fundamentos) destrincham o C que sustentou tudo isto; leia-as quando quiser firmar o chão sob os pés.</p>
+<section id="tabela-de-complexidade-do-capítulo" class="level3" data-number="11.11.1">
+<h3 data-number="11.11.1" class="anchored" data-anchor-id="tabela-de-complexidade-do-capítulo"><span class="header-section-number">11.11.1</span> Tabela de complexidade do capítulo</h3>
+<table class="caption-top table">
+<caption>O compactador, etapa a etapa. <span class="math inline">\(n\)</span> = bytes do arquivo; <span class="math inline">\(k \le 256\)</span> = símbolos distintos.</caption>
+<colgroup>
+<col style="width: 34%">
+<col style="width: 22%">
+<col style="width: 44%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Etapa</th>
+<th style="text-align: center;">Tempo</th>
+<th style="text-align: left;">Estrutura reaproveitada</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">(a) Histograma</td>
+<td style="text-align: center;"><span class="math inline">\(O(n)\)</span></td>
+<td style="text-align: left;">array de contadores (cap. 5)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">(b) Árvore de Huffman</td>
+<td style="text-align: center;"><span class="math inline">\(O(k \log k)\)</span></td>
+<td style="text-align: left;"><strong>heap / fila de prioridade</strong> (cap. 10)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">(c) Dicionário de códigos</td>
+<td style="text-align: center;"><span class="math inline">\(O(k)\)</span></td>
+<td style="text-align: left;">árvore + recursão (cap. 9)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">(d) Codificar em bits</td>
+<td style="text-align: center;"><span class="math inline">\(O(n)\)</span></td>
+<td style="text-align: left;">buffer de bytes (cap. 5)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total</td>
+<td style="text-align: center;"><span class="math inline">\(O(n + k \log k)\)</span></td>
+<td style="text-align: left;">—</td>
+</tr>
+</tbody>
+</table>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiB0eHQgPSBJbnB1dHMudGV4dCh7IHZhbHVlOiBcImFicmFjYWRhYnJhXCIsIGxhYmVsOiBcIlRleHRvXCIsIHdpZHRoOiAzMDAgfSlcbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMiIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6IntcbiAgY29uc3QgcyA9IHR4dC5sZW5ndGggPyB0eHQgOiBcImFicmFjYWRhYnJhXCI7XG4gIGNvbnN0IGZyZXEgPSBuZXcgTWFwKCk7XG4gIGZvciAoY29uc3QgY2ggb2YgcykgZnJlcS5zZXQoY2gsIChmcmVxLmdldChjaCkgfHwgMCkgKyAxKTtcblxuICBsZXQgbm9kZXMgPSBbLi4uZnJlcS5lbnRyaWVzKCldLm1hcCgoW2NoLCBmXSkgPT4gKHsgY2gsIGYsIGw6IG51bGwsIHI6IG51bGwgfSkpO1xuICBpZiAobm9kZXMubGVuZ3RoID09PSAxKSBub2Rlcy5wdXNoKHsgY2g6IG51bGwsIGY6IDAsIGw6IG51bGwsIHI6IG51bGwgfSk7XG4gIHdoaWxlIChub2Rlcy5sZW5ndGggPiAxKSB7XG4gICAgbm9kZXMuc29ydCgoYSwgYikgPT4gYS5mIC0gYi5mKTtcbiAgICBjb25zdCBhID0gbm9kZXMuc2hpZnQoKSwgYiA9IG5vZGVzLnNoaWZ0KCk7XG4gICAgbm9kZXMucHVzaCh7IGNoOiBudWxsLCBmOiBhLmYgKyBiLmYsIGw6IGEsIHI6IGIgfSk7XG4gIH1cbiAgY29uc3QgY29kZXMgPSBuZXcgTWFwKCk7XG4gIChmdW5jdGlvbiB3YWxrKG5vZGUsIGNvZGUpIHtcbiAgICBpZiAobm9kZS5sID09PSBudWxsICYmIG5vZGUuciA9PT0gbnVsbCkgeyBjb2Rlcy5zZXQobm9kZS5jaCwgY29kZSB8fCBcIjBcIik7IHJldHVybjsgfVxuICAgIHdhbGsobm9kZS5sLCBjb2RlICsgXCIwXCIpO1xuICAgIHdhbGsobm9kZS5yLCBjb2RlICsgXCIxXCIpO1xuICB9KShub2Rlc1swXSwgXCJcIik7XG5cbiAgY29uc3Qgcm93cyA9IFsuLi5mcmVxLmVudHJpZXMoKV0uc29ydCgoYSwgYikgPT4gYlsxXSAtIGFbMV0pLm1hcCgoW2NoLCBmXSkgPT4ge1xuICAgIGNvbnN0IGRpc3AgPSBjaCA9PT0gXCIgXCIgPyBcIuKQo1wiIDogY2g7XG4gICAgY29uc3QgY29kZSA9IGNvZGVzLmdldChjaCk7XG4gICAgcmV0dXJuIGA8dHI+PHRkIHN0eWxlPVwicGFkZGluZzoycHggMTBweFwiPjxiPiR7ZGlzcH08L2I+PC90ZD48dGQgc3R5bGU9XCJwYWRkaW5nOjJweCAxMHB4XCI+JHtmfcOXPC90ZD5cbiAgICAgIDx0ZCBzdHlsZT1cInBhZGRpbmc6MnB4IDEwcHg7Zm9udC1mYW1pbHk6bW9ub3NwYWNlO2NvbG9yOiNGNTc5M0JcIj4ke2NvZGV9PC90ZD5cbiAgICAgIDx0ZCBzdHlsZT1cInBhZGRpbmc6MnB4IDEwcHhcIj4ke2NvZGUubGVuZ3RofSBiaXQke2NvZGUubGVuZ3RoID4gMSA/IFwic1wiIDogXCJcIn08L3RkPjwvdHI+YDtcbiAgfSkuam9pbihcIlwiKTtcblxuICBjb25zdCBodWZmID0gWy4uLmZyZXEuZW50cmllcygpXS5yZWR1Y2UoKGFjYywgW2NoLCBmXSkgPT4gYWNjICsgZiAqIGNvZGVzLmdldChjaCkubGVuZ3RoLCAwKTtcbiAgY29uc3QgZml4ZWQgPSBzLmxlbmd0aCAqIDg7XG4gIHJldHVybiBodG1sYDxkaXY+XG4gICAgPHRhYmxlIHN0eWxlPVwiZm9udDoxM3B4IHNhbnMtc2VyaWY7Ym9yZGVyLWNvbGxhcHNlOmNvbGxhcHNlXCI+XG4gICAgICA8dHIgc3R5bGU9XCJjb2xvcjojMkE5RDhGO3RleHQtYWxpZ246bGVmdFwiPjx0aCBzdHlsZT1cInBhZGRpbmc6MnB4IDEwcHhcIj5zw61tYm9sbzwvdGg+PHRoIHN0eWxlPVwicGFkZGluZzoycHggMTBweFwiPmZyZXEuPC90aD48dGggc3R5bGU9XCJwYWRkaW5nOjJweCAxMHB4XCI+Y8OzZGlnbzwvdGg+PHRoIHN0eWxlPVwicGFkZGluZzoycHggMTBweFwiPnRhbS48L3RoPjwvdHI+XG4gICAgICAke3Jvd3N9XG4gICAgPC90YWJsZT5cbiAgICA8ZGl2IHN0eWxlPVwibWFyZ2luLXRvcDo4cHg7Zm9udDoxM3B4IHNhbnMtc2VyaWY7Y29sb3I6IzI2NDY1M1wiPlxuICAgICAgcGF5bG9hZDogPGIgc3R5bGU9XCJjb2xvcjojRjU3OTNCXCI+JHtodWZmfSBiaXRzPC9iPiAoSHVmZm1hbikgdnMgPGI+JHtmaXhlZH0gYml0czwvYj4gKDggZml4b3MpID1cbiAgICAgIDxiPiR7KDEwMCAqIGh1ZmYgLyBmaXhlZCkudG9GaXhlZCgwKX0lPC9iPjwvZGl2PlxuICA8L2Rpdj5gO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCd0eHQnKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../part-1-practice";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../part-1-practice/10-heaps.html" class="pagination-link" aria-label="[Filas de prioridade: o heap binário]{.typing-effect}">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../interactive/pointers-scroll.html" class="pagination-link" aria-label="Travessia de ponteiros (scrollytelling)">
+        <span class="nav-page-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

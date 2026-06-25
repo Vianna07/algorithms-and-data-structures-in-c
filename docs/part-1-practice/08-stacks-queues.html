@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt" xml:lang="pt"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>8&nbsp; Pilhas e Filas: o poder de restringir o acesso – Estruturas de Dados e Algoritmos em C</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../part-1-practice/09-bst.html" rel="next">
+<link href="../part-1-practice/07-shadow-data.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9bfc61b20ce54e18ae6b25bf56d136e1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/08-stacks-queues.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Estruturas de Dados e Algoritmos em C</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="typing-effect">Estruturas de Dados e Algoritmos em C</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte I — Fundamentos do C</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/01-pointers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Ponteiros: o endereço é o dado</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/02-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/03-structs-unions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/04-modularization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte II — A prática do projetista</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/05-dynamic-array.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/06-linked-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/07-shadow-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/08-stacks-queues.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/09-bst.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/10-heaps.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/11-huffman.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Páginas interativas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/pointers-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/huffman-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Montagem da árvore de Huffman (scrollytelling)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a1-big-o-table.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Tabela-resumo de complexidade Big-O</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a2-horizon.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Horizonte: o que estudar depois</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#pilha-lifo-a-pilha-de-pratos" id="toc-pilha-lifo-a-pilha-de-pratos" class="nav-link active" data-scroll-target="#pilha-lifo-a-pilha-de-pratos"><span class="header-section-number">8.1</span> Pilha (LIFO): a pilha de pratos</a></li>
+  <li><a href="#dois-backings-para-a-mesma-pilha" id="toc-dois-backings-para-a-mesma-pilha" class="nav-link" data-scroll-target="#dois-backings-para-a-mesma-pilha"><span class="header-section-number">8.2</span> Dois backings para a mesma pilha</a></li>
+  <li><a href="#fila-fifo-a-fila-da-padaria" id="toc-fila-fifo-a-fila-da-padaria" class="nav-link" data-scroll-target="#fila-fifo-a-fila-da-padaria"><span class="header-section-number">8.3</span> Fila (FIFO): a fila da padaria</a>
+  <ul class="collapse">
+  <li><a href="#por-que-um-array-ingênuo-não-serve" id="toc-por-que-um-array-ingênuo-não-serve" class="nav-link" data-scroll-target="#por-que-um-array-ingênuo-não-serve"><span class="header-section-number">8.3.1</span> Por que um array ingênuo não serve</a></li>
+  </ul></li>
+  <li><a href="#a-fila-circular-ring-buffer" id="toc-a-fila-circular-ring-buffer" class="nav-link" data-scroll-target="#a-fila-circular-ring-buffer"><span class="header-section-number">8.4</span> A fila circular (ring buffer)</a></li>
+  <li><a href="#a-fila-sobre-lista" id="toc-a-fila-sobre-lista" class="nav-link" data-scroll-target="#a-fila-sobre-lista"><span class="header-section-number">8.5</span> A fila sobre lista</a></li>
+  <li><a href="#vendo-as-quatro-em-ação" id="toc-vendo-as-quatro-em-ação" class="nav-link" data-scroll-target="#vendo-as-quatro-em-ação"><span class="header-section-number">8.6</span> Vendo as quatro em ação</a></li>
+  <li><a href="#veja-acontecer" id="toc-veja-acontecer" class="nav-link" data-scroll-target="#veja-acontecer"><span class="header-section-number">8.7</span> Veja acontecer</a></li>
+  <li><a href="#pense-como-projetista" id="toc-pense-como-projetista" class="nav-link" data-scroll-target="#pense-como-projetista"><span class="header-section-number">8.8</span> Pense como projetista</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">8.9</span> Resumo</a>
+  <ul class="collapse">
+  <li><a href="#tabela-de-complexidade-do-capítulo" id="toc-tabela-de-complexidade-do-capítulo" class="nav-link" data-scroll-target="#tabela-de-complexidade-do-capítulo"><span class="header-section-number">8.9.1</span> Tabela de complexidade do capítulo</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-1-practice/05-dynamic-array.html">Parte II — A prática do projetista</a></li><li class="breadcrumb-item"><a href="../part-1-practice/08-stacks-queues.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>As estruturas dos capítulos anteriores eram <strong>generalistas</strong>: você insere e remove onde quiser. Agora vamos no sentido oposto — estruturas que, <strong>de propósito</strong>, só deixam você mexer nas pontas. Parece um retrocesso, mas é o contrário: ao restringir o acesso, a estrutura ganha simplicidade, garante uma <strong>ordem de saída</strong> previsível e fica difícil de usar errado. Restringir é um recurso.</p>
+<p>São duas, definidas pela ordem em que os elementos saem:</p>
+<ul>
+<li><strong>Pilha</strong> (<em>stack</em>): o último a entrar é o primeiro a sair — <strong>LIFO</strong> (<em>Last In, First Out</em>).</li>
+<li><strong>Fila</strong> (<em>queue</em>): o primeiro a entrar é o primeiro a sair — <strong>FIFO</strong> (<em>First In, First Out</em>).</li>
+</ul>
+<p>E aqui está a lição central do capítulo: pilha e fila são <strong>interfaces</strong> (um contrato de operações), não implementações. Cada uma pode ser construída sobre os dois <em>backings</em> que já dominamos — o <strong>array dinâmico</strong> (cap. 5) e a <strong>lista encadeada</strong> (cap. 6). Vamos montar as duas de cada jeito e comparar.</p>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>🎨 <strong>Placeholder de ilustração — analogia de abertura.</strong> <em>Brief:</em> lado a lado, uma <strong>pilha de pratos</strong> (você tira o de cima — o último empilhado) e uma <strong>fila de padaria</strong> (quem chegou primeiro é atendido primeiro, sai pela frente). Setas indicam onde se entra e onde se sai em cada uma. Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.</p>
+</div>
+</div>
+</div>
+<section id="pilha-lifo-a-pilha-de-pratos" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="pilha-lifo-a-pilha-de-pratos"><span class="header-section-number">8.1</span> Pilha (LIFO): a pilha de pratos</h2>
+<p>Pense numa pilha de pratos na pia. Você sempre coloca e tira <strong>do topo</strong>; o prato do fundo é o último a sair. Só existem três operações:</p>
+<ul>
+<li><strong><code>push</code></strong>: coloca um elemento no topo.</li>
+<li><strong><code>pop</code></strong>: tira o elemento do topo.</li>
+<li><strong><code>peek</code></strong>: espia o topo sem tirar.</li>
+</ul>
+<p>Repare o que <em>não</em> existe: “inserir no meio”, “acessar o terceiro”. A pilha proíbe — e é essa proibição que a torna simples e segura. A <a href="#fig-stack-queue" class="quarto-xref">Figura&nbsp;<span>8.1</span></a> ilustra as duas estruturas e por onde se entra e sai.</p>
+<div class="cell" data-fig-width="5" data-fig-height="2.15" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-stack-queue" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-stack-queue-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="480" height="206" viewbox="0.00 0.00 277.00 118.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 114)">
+<title>sq</title>
+<!-- stack -->
+<g id="node1" class="node">
+<title>stack</title>
+<text text-anchor="start" x="15.29" y="-88.7" font-family="Inter" font-weight="bold" font-size="11.00" fill="#2a9d8f">Pilha (LIFO)&nbsp;&nbsp;</text>
+<polygon fill="#fbc9a8" stroke="transparent" points="94.5,-76.5 94.5,-105.5 121.5,-105.5 121.5,-76.5 94.5,-76.5"></polygon>
+<polygon fill="none" stroke="black" points="94.5,-76.5 94.5,-105.5 121.5,-105.5 121.5,-76.5 94.5,-76.5"></polygon>
+<text text-anchor="start" x="102.5" y="-87.6" font-family="Inter" font-size="11.00">10</text>
+<polygon fill="#f8a878" stroke="transparent" points="121.5,-76.5 121.5,-105.5 148.5,-105.5 148.5,-76.5 121.5,-76.5"></polygon>
+<polygon fill="none" stroke="black" points="121.5,-76.5 121.5,-105.5 148.5,-105.5 148.5,-76.5 121.5,-76.5"></polygon>
+<text text-anchor="start" x="129.5" y="-87.6" font-family="Inter" font-size="11.00">20</text>
+<polygon fill="#f5793b" stroke="transparent" points="148.5,-76.5 148.5,-105.5 175.5,-105.5 175.5,-76.5 148.5,-76.5"></polygon>
+<polygon fill="none" stroke="black" points="148.5,-76.5 148.5,-105.5 175.5,-105.5 175.5,-76.5 148.5,-76.5"></polygon>
+<text text-anchor="start" x="156.5" y="-88.6" font-family="Inter" font-weight="bold" font-size="11.00" fill="white">30</text>
+<text text-anchor="start" x="182.12" y="-88.3" font-family="Inter" font-size="9.00" fill="#264653">&nbsp;← topo: push / pop</text>
+</g>
+<!-- queue -->
+<g id="node2" class="node">
+<title>queue</title>
+<text text-anchor="start" x="15.16" y="-15.7" font-family="Inter" font-weight="bold" font-size="11.00" fill="#2a9d8f">Fila (FIFO)&nbsp;&nbsp;&nbsp;&nbsp;</text>
+<text text-anchor="start" x="105.25" y="-15.3" font-family="Inter" font-size="9.00" fill="#264653">sai ←&nbsp;</text>
+<polygon fill="#f5793b" stroke="transparent" points="135.5,-3.5 135.5,-32.5 162.5,-32.5 162.5,-3.5 135.5,-3.5"></polygon>
+<polygon fill="none" stroke="black" points="135.5,-3.5 135.5,-32.5 162.5,-32.5 162.5,-3.5 135.5,-3.5"></polygon>
+<text text-anchor="start" x="143.5" y="-15.6" font-family="Inter" font-weight="bold" font-size="11.00" fill="white">10</text>
+<polygon fill="#f8a878" stroke="transparent" points="162.5,-3.5 162.5,-32.5 189.5,-32.5 189.5,-3.5 162.5,-3.5"></polygon>
+<polygon fill="none" stroke="black" points="162.5,-3.5 162.5,-32.5 189.5,-32.5 189.5,-3.5 162.5,-3.5"></polygon>
+<text text-anchor="start" x="170.5" y="-14.6" font-family="Inter" font-size="11.00">20</text>
+<polygon fill="#fbc9a8" stroke="transparent" points="189.5,-3.5 189.5,-32.5 216.5,-32.5 216.5,-3.5 189.5,-3.5"></polygon>
+<polygon fill="none" stroke="black" points="189.5,-3.5 189.5,-32.5 216.5,-32.5 216.5,-3.5 189.5,-3.5"></polygon>
+<text text-anchor="start" x="197.5" y="-14.6" font-family="Inter" font-size="11.00">30</text>
+<text text-anchor="start" x="223.26" y="-15.3" font-family="Inter" font-size="9.00" fill="#264653">&nbsp;← entra</text>
+</g>
+<!-- stack&#45;&gt;queue -->
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-stack-queue-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;8.1: Pilha (LIFO): entra e sai pelo mesmo lado (o topo). Fila (FIFO): entra por um lado (o fim) e sai pelo outro (a frente). A cor mais forte marca a ponta ativa.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="dois-backings-para-a-mesma-pilha" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="dois-backings-para-a-mesma-pilha"><span class="header-section-number">8.2</span> Dois backings para a mesma pilha</h2>
+<p><strong>Sobre array dinâmico</strong>, a pilha é quase de graça: <code>push</code> é o <code>append</code> do capítulo 5 (escreve no fim, dobra a capacidade se encher) e <code>pop</code> só decrementa o tamanho. As duas operações mexem no <strong>fim</strong> do array — onde tudo é <span class="math inline">\(O(1)\)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-snippet="arrops" data-startfrom="13"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 12;"><span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Pilha sobre array: empilhar é "append no fim"; desempilhar é "remove do fim".</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> as_push<span class="op">(</span>ArrayStack <span class="op">*</span>s<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>s<span class="op">-&gt;</span>size <span class="op">==</span> s<span class="op">-&gt;</span>cap<span class="op">)</span> <span class="op">{</span> <span class="co">// cheio: dobra (como no cap. 5)</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">size_t</span> nc <span class="op">=</span> s<span class="op">-&gt;</span>cap <span class="op">?</span> s<span class="op">-&gt;</span>cap <span class="op">*</span> <span class="dv">2</span> <span class="op">:</span> <span class="dv">4</span><span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="dt">int</span> <span class="op">*</span>nd <span class="op">=</span> realloc<span class="op">(</span>s<span class="op">-&gt;</span>data<span class="op">,</span> nc <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">));</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>nd <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>        s<span class="op">-&gt;</span>data <span class="op">=</span> nd<span class="op">;</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>        s<span class="op">-&gt;</span>cap <span class="op">=</span> nc<span class="op">;</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    s<span class="op">-&gt;</span>data<span class="op">[</span>s<span class="op">-&gt;</span>size<span class="op">++]</span> <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> as_pop<span class="op">(</span>ArrayStack <span class="op">*</span>s<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>s<span class="op">-&gt;</span>size <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out <span class="op">=</span> s<span class="op">-&gt;</span>data<span class="op">[--</span>s<span class="op">-&gt;</span>size<span class="op">];</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Sobre lista encadeada</strong>, o topo é a <strong>cabeça</strong> da lista: <code>push</code> insere na cabeça, <code>pop</code> remove da cabeça — exatamente o caso <span class="math inline">\(O(1)\)</span> do capítulo 6, sem deslocar nada e sem nunca realocar.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-snippet="listops" data-startfrom="60"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 59;"><span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co">// Pilha sobre lista: o topo é a cabeça — empilhar/desempilhar é O(1) e nunca</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co">// realoca, mas cada elemento custa um malloc e um ponteiro a mais.</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> ls_push<span class="op">(</span>ListStack <span class="op">*</span>s<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    LSNode <span class="op">*</span>node <span class="op">=</span> malloc<span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span>LSNode<span class="op">));</span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    node<span class="op">-&gt;</span>value <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    node<span class="op">-&gt;</span>next <span class="op">=</span> s<span class="op">-&gt;</span>top<span class="op">;</span> <span class="co">// o novo nó vira o topo</span></span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    s<span class="op">-&gt;</span>top <span class="op">=</span> node<span class="op">;</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    s<span class="op">-&gt;</span>size<span class="op">++;</span></span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> ls_pop<span class="op">(</span>ListStack <span class="op">*</span>s<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>s<span class="op">-&gt;</span>top <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>    LSNode <span class="op">*</span>top <span class="op">=</span> s<span class="op">-&gt;</span>top<span class="op">;</span></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out <span class="op">=</span> top<span class="op">-&gt;</span>value<span class="op">;</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>    s<span class="op">-&gt;</span>top <span class="op">=</span> top<span class="op">-&gt;</span>next<span class="op">;</span> <span class="co">// o topo desce um</span></span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>top<span class="op">);</span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>    s<span class="op">-&gt;</span>size<span class="op">--;</span></span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-important callout-titled" title="Trade-off: array × lista como backing">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Trade-off: array × lista como backing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As duas pilhas têm operações <span class="math inline">\(O(1)\)</span>, mas o caráter difere:</p>
+<ul>
+<li><strong>Array:</strong> memória contígua (ótima localidade de cache), sem ponteiro por elemento. Em troca, há realocações ocasionais <span class="math inline">\(O(n)\)</span> (amortizadas) e pode sobrar capacidade ociosa.</li>
+<li><strong>Lista:</strong> nunca realoca e cresce de um em um, sem capacidade ociosa. Em troca, cada elemento custa um <code>malloc</code> e um ponteiro extra, e os nós ficam espalhados pela RAM (pior cache).</li>
+</ul>
+<p>Para a maioria dos usos, <strong>a pilha sobre array vence</strong> — pela cache e por evitar um <code>malloc</code> por elemento. Prefira a lista quando não puder tolerar a pausa ocasional de uma realocação grande, ou quando os elementos já vivem em nós encadeados.</p>
+</div>
+</div>
+</section>
+<section id="fila-fifo-a-fila-da-padaria" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="fila-fifo-a-fila-da-padaria"><span class="header-section-number">8.3</span> Fila (FIFO): a fila da padaria</h2>
+<p>Na fila da padaria, quem chega entra <strong>no fim</strong>; quem é atendido sai <strong>pela frente</strong>. As operações:</p>
+<ul>
+<li><strong><code>enqueue</code></strong>: põe um elemento no fim.</li>
+<li><strong><code>dequeue</code></strong>: tira o elemento da frente.</li>
+</ul>
+<p>O detalhe que torna a fila mais interessante que a pilha: ela mexe nas <strong>duas pontas</strong> — entra numa, sai na outra. E é justamente isso que cria um problema quando tentamos usar um array comum.</p>
+<section id="por-que-um-array-ingênuo-não-serve" class="level3" data-number="8.3.1">
+<h3 data-number="8.3.1" class="anchored" data-anchor-id="por-que-um-array-ingênuo-não-serve"><span class="header-section-number">8.3.1</span> Por que um array ingênuo não serve</h3>
+<p>Imagine uma fila sobre um array, com a frente no índice 0. Cada <code>dequeue</code> tira o elemento 0 e… precisa <strong>deslocar todos os outros</strong> uma casa para a esquerda — <span class="math inline">\(O(n)\)</span> por remoção. Inaceitável. A saída elegante é não deslocar nada: deixar a frente “andar” pelo array e <strong>dar a volta</strong> quando chega ao fim. É o <strong>buffer circular</strong> (<em>ring buffer</em>).</p>
+</section>
+</section>
+<section id="a-fila-circular-ring-buffer" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="a-fila-circular-ring-buffer"><span class="header-section-number">8.4</span> A fila circular (ring buffer)</h2>
+<p>A ideia: um array de capacidade fixa e dois números — <code>head</code> (índice da frente) e <code>count</code> (quantos elementos há). O fim fica em <code>(head + count) % cap</code>. Quando um índice passaria do fim do array, o <strong>módulo</strong> o traz de volta ao começo. Nada se desloca; os índices é que circulam.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-snippet="ringops" data-startfrom="31"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 30;"><span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co">// O segredo do ring buffer: os índices "dão a volta" com o módulo (% cap).</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co">// Guardamos head + count (não head + tail) p/ distinguir cheia de vazia.</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> rq_enqueue<span class="op">(</span>RingQueue <span class="op">*</span>q<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>q<span class="op">-&gt;</span>count <span class="op">==</span> q<span class="op">-&gt;</span>cap<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// cheia</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="dt">size_t</span> tail <span class="op">=</span> <span class="op">(</span>q<span class="op">-&gt;</span>head <span class="op">+</span> q<span class="op">-&gt;</span>count<span class="op">)</span> <span class="op">%</span> q<span class="op">-&gt;</span>cap<span class="op">;</span> <span class="co">// 1º slot livre, com wrap</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>data<span class="op">[</span>tail<span class="op">]</span> <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>count<span class="op">++;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> rq_dequeue<span class="op">(</span>RingQueue <span class="op">*</span>q<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>q<span class="op">-&gt;</span>count <span class="op">==</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> <span class="co">// vazia</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out <span class="op">=</span> q<span class="op">-&gt;</span>data<span class="op">[</span>q<span class="op">-&gt;</span>head<span class="op">];</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>head <span class="op">=</span> <span class="op">(</span>q<span class="op">-&gt;</span>head <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">%</span> q<span class="op">-&gt;</span>cap<span class="op">;</span> <span class="co">// a frente avança, com wrap</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>count<span class="op">--;</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <a href="#fig-ring" class="quarto-xref">Figura&nbsp;<span>8.2</span></a> mostra um buffer de capacidade 5 com a frente em <code>[1]</code>: ao avançar além de <code>[4]</code>, o índice volta a <code>[0]</code>.</p>
+<div class="cell" data-fig-width="5" data-fig-height="2.5" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-ring" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ring-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="480" height="240" viewbox="0.00 0.00 214.90 106.80" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 102.8)">
+<title>ring</title>
+<!-- buf -->
+<g id="node1" class="node">
+<title>buf</title>
+<polygon fill="#e9e4dc" stroke="transparent" points="17.01,-33 17.01,-66 46.01,-66 46.01,-33 17.01,-33"></polygon>
+<polygon fill="none" stroke="black" points="17.01,-33 17.01,-66 46.01,-66 46.01,-33 17.01,-33"></polygon>
+<text text-anchor="start" x="28.76" y="-46.1" font-family="Inter" font-size="11.00">·</text>
+<polygon fill="#f5793b" stroke="transparent" points="46.01,-33 46.01,-66 93.01,-66 93.01,-33 46.01,-33"></polygon>
+<polygon fill="none" stroke="black" points="46.01,-33 46.01,-66 93.01,-66 93.01,-33 46.01,-33"></polygon>
+<text text-anchor="start" x="64.01" y="-47.1" font-family="Inter" font-weight="bold" font-size="11.00" fill="white">20</text>
+<polygon fill="#f5793b" stroke="transparent" points="93.01,-33 93.01,-66 124.01,-66 124.01,-33 93.01,-33"></polygon>
+<polygon fill="none" stroke="black" points="93.01,-33 93.01,-66 124.01,-66 124.01,-33 93.01,-33"></polygon>
+<text text-anchor="start" x="103.01" y="-47.1" font-family="Inter" font-weight="bold" font-size="11.00" fill="white">30</text>
+<polygon fill="#f5793b" stroke="transparent" points="124.01,-33 124.01,-66 155.01,-66 155.01,-33 124.01,-33"></polygon>
+<polygon fill="none" stroke="black" points="124.01,-33 124.01,-66 155.01,-66 155.01,-33 124.01,-33"></polygon>
+<text text-anchor="start" x="134.01" y="-47.1" font-family="Inter" font-weight="bold" font-size="11.00" fill="white">40</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="155.01,-33 155.01,-66 197.01,-66 197.01,-33 155.01,-33"></polygon>
+<polygon fill="none" stroke="black" points="155.01,-33 155.01,-66 197.01,-66 197.01,-33 155.01,-33"></polygon>
+<text text-anchor="start" x="173.26" y="-46.1" font-family="Inter" font-size="11.00">·</text>
+<polygon fill="none" stroke="black" points="17.01,-4 17.01,-33 46.01,-33 46.01,-4 17.01,-4"></polygon>
+<text text-anchor="start" x="26.84" y="-15.8" font-family="Inter" font-size="8.00">[0]</text>
+<polygon fill="none" stroke="black" points="46.01,-4 46.01,-33 93.01,-33 93.01,-4 46.01,-4"></polygon>
+<text text-anchor="start" x="55.62" y="-16.8" font-family="Inter" font-weight="bold" font-size="8.00" fill="#2a9d8f">[1] head</text>
+<polygon fill="none" stroke="black" points="93.01,-4 93.01,-33 124.01,-33 124.01,-4 93.01,-4"></polygon>
+<text text-anchor="start" x="103.84" y="-15.8" font-family="Inter" font-size="8.00">[2]</text>
+<polygon fill="none" stroke="black" points="124.01,-4 124.01,-33 155.01,-33 155.01,-4 124.01,-4"></polygon>
+<text text-anchor="start" x="134.84" y="-15.8" font-family="Inter" font-size="8.00">[3]</text>
+<polygon fill="none" stroke="black" points="155.01,-4 155.01,-33 197.01,-33 197.01,-4 155.01,-4"></polygon>
+<text text-anchor="start" x="164.57" y="-16.8" font-family="Inter" font-weight="bold" font-size="8.00" fill="#e2725b">[4] fim</text>
+</g>
+<!-- buf&#45;&gt;buf -->
+<g id="edge1" class="edge">
+<title>buf:s-&gt;buf:s</title>
+<path fill="none" stroke="#2a9d8f" stroke-width="1.4" d="M176.01,-33C225.01,-50.67 225.01,-88 103.51,-88 -9.45,-88 -17.39,-55.73 21.42,-37"></path>
+<polygon fill="#2a9d8f" stroke="#2a9d8f" stroke-width="1.4" points="23.13,-40.08 31.01,-33 20.43,-33.62 23.13,-40.08"></polygon>
+<text text-anchor="start" x="83.48" y="-90.7" font-family="Times,serif" font-size="9.00" fill="#2a9d8f"> &nbsp;(i+1) % cap</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ring-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;8.2: Buffer circular: os elementos não se movem; os índices <code>head</code> e o fim é que circulam pelo array com <code>% cap</code>. O slot após <code>[4]</code> é o <code>[0]</code>.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Ideia central">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Ideia central
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Por que guardar <code>head</code> + <code>count</code> em vez de <code>head</code> + <code>tail</code> (frente e fim)? Porque só com dois índices a condição <code>head == tail</code> é ambígua: vale tanto para fila <strong>vazia</strong> quanto <strong>cheia</strong>. Rastrear o <code>count</code> desfaz a ambiguidade de imediato. (A alternativa clássica é manter um slot sempre vazio para distinguir os dois casos — funciona, mas desperdiça uma posição.)</p>
+</div>
+</div>
+</section>
+<section id="a-fila-sobre-lista" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="a-fila-sobre-lista"><span class="header-section-number">8.5</span> A fila sobre lista</h2>
+<p>Sobre lista encadeada, a fila é direta: guarde ponteiros para a <strong>frente</strong> (<code>head</code>) e o <strong>fim</strong> (<code>tail</code>). <code>enqueue</code> costura no <code>tail</code>, <code>dequeue</code> remove do <code>head</code> — ambos <span class="math inline">\(O(1)\)</span>, e a fila cresce sem limite de capacidade.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-snippet="listqops" data-startfrom="62"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 61;"><span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="co">// Fila sobre lista: entra no fim (tail), sai pela frente (head). Os dois</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co">// ponteiros tornam enqueue e dequeue O(1), sem limite de capacidade.</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> lq_enqueue<span class="op">(</span>ListQueue <span class="op">*</span>q<span class="op">,</span> <span class="dt">int</span> value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>    LQNode <span class="op">*</span>node <span class="op">=</span> malloc<span class="op">(</span><span class="kw">sizeof</span><span class="op">(</span>LQNode<span class="op">));</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>node <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>    node<span class="op">-&gt;</span>value <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>    node<span class="op">-&gt;</span>next <span class="op">=</span> NULL<span class="op">;</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>q<span class="op">-&gt;</span>tail <span class="op">!=</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>        q<span class="op">-&gt;</span>tail<span class="op">-&gt;</span>next <span class="op">=</span> node<span class="op">;</span> <span class="co">// costura no fim</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>        q<span class="op">-&gt;</span>head <span class="op">=</span> node<span class="op">;</span> <span class="co">// fila estava vazia: node é frente e fim</span></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>tail <span class="op">=</span> node<span class="op">;</span></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>size<span class="op">++;</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> lq_dequeue<span class="op">(</span>ListQueue <span class="op">*</span>q<span class="op">,</span> <span class="dt">int</span> <span class="op">*</span>out<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>q<span class="op">-&gt;</span>head <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>    LQNode <span class="op">*</span>front <span class="op">=</span> q<span class="op">-&gt;</span>head<span class="op">;</span></span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>out <span class="op">=</span> front<span class="op">-&gt;</span>value<span class="op">;</span></span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>head <span class="op">=</span> front<span class="op">-&gt;</span>next<span class="op">;</span> <span class="co">// a frente avança</span></span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>q<span class="op">-&gt;</span>head <span class="op">==</span> NULL<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>        q<span class="op">-&gt;</span>tail <span class="op">=</span> NULL<span class="op">;</span> <span class="co">// ficou vazia: zera a cauda também</span></span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>front<span class="op">);</span></span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>    q<span class="op">-&gt;</span>size<span class="op">--;</span></span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A diferença de projeto em relação ao ring buffer: a fila sobre lista <strong>nunca enche</strong> (cresce sob demanda), mas paga um <code>malloc</code>/<code>free</code> por elemento e perde a localidade de cache. O ring buffer tem <strong>capacidade fixa</strong>, mas zero alocações após a criação e memória contígua — por isso é o queridinho de sistemas de tempo real.</p>
+</section>
+<section id="vendo-as-quatro-em-ação" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="vendo-as-quatro-em-ação"><span class="header-section-number">8.6</span> Vendo as quatro em ação</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-snippet="main" data-startfrom="14"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 13;"><span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> main<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> v<span class="op">;</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Pilha sobre array (LIFO): sai na ordem INVERSA da entrada.</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    ArrayStack as<span class="op">;</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    as_init<span class="op">(&amp;</span>as<span class="op">);</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">3</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        as_push<span class="op">(&amp;</span>as<span class="op">,</span> i <span class="op">*</span> <span class="dv">10</span><span class="op">);</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"pilha/array (LIFO):"</span><span class="op">);</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>as_pop<span class="op">(&amp;</span>as<span class="op">,</span> <span class="op">&amp;</span>v<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">" </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> v<span class="op">);</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    as_free<span class="op">(&amp;</span>as<span class="op">);</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Pilha sobre lista (LIFO): MESMO comportamento, outro backing.</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    ListStack ls<span class="op">;</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    ls_init<span class="op">(&amp;</span>ls<span class="op">);</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">3</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>        ls_push<span class="op">(&amp;</span>ls<span class="op">,</span> i <span class="op">*</span> <span class="dv">10</span><span class="op">);</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"</span><span class="sc">\n</span><span class="st">pilha/lista (LIFO):"</span><span class="op">);</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>ls_pop<span class="op">(&amp;</span>ls<span class="op">,</span> <span class="op">&amp;</span>v<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">" </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> v<span class="op">);</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>    ls_free<span class="op">(&amp;</span>ls<span class="op">);</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Fila sobre lista (FIFO): sai na ordem de CHEGADA.</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    ListQueue lq<span class="op">;</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    lq_init<span class="op">(&amp;</span>lq<span class="op">);</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> i <span class="op">&lt;=</span> <span class="dv">3</span><span class="op">;</span> i<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>        lq_enqueue<span class="op">(&amp;</span>lq<span class="op">,</span> i <span class="op">*</span> <span class="dv">10</span><span class="op">);</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"</span><span class="sc">\n</span><span class="st">fila/lista  (FIFO):"</span><span class="op">);</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>lq_dequeue<span class="op">(&amp;</span>lq<span class="op">,</span> <span class="op">&amp;</span>v<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">" </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> v<span class="op">);</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>    lq_free<span class="op">(&amp;</span>lq<span class="op">);</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Fila circular (cap 3): o 40 "dá a volta" e ocupa o slot que o 10 deixou.</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>    RingQueue rq<span class="op">;</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>    rq_init<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>    rq_enqueue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="dv">10</span><span class="op">);</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>    rq_enqueue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="dv">20</span><span class="op">);</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a>    rq_enqueue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="dv">30</span><span class="op">);</span> <span class="co">// cheia</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>    rq_dequeue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="op">&amp;</span>v<span class="op">);</span> <span class="co">// sai o 10, libera um slot</span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>    rq_enqueue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="dv">40</span><span class="op">);</span> <span class="co">// 40 entra no slot do 10 (wrap)</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"</span><span class="sc">\n</span><span class="st">fila circular     :"</span><span class="op">);</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="op">(</span>rq_dequeue<span class="op">(&amp;</span>rq<span class="op">,</span> <span class="op">&amp;</span>v<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>        printf<span class="op">(</span><span class="st">" </span><span class="sc">%d</span><span class="st">"</span><span class="op">,</span> v<span class="op">);</span> <span class="co">// 20 30 40</span></span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>    rq_free<span class="op">(&amp;</span>rq<span class="op">);</span></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"</span><span class="sc">\n</span><span class="st">"</span><span class="op">);</span></span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Saída do programa:</p>
+<pre class="text"><code>pilha/array (LIFO): 30 20 10
+pilha/lista (LIFO): 30 20 10
+fila/lista  (FIFO): 10 20 30
+fila circular     : 20 30 40</code></pre>
+<p>As duas pilhas saem invertidas (LIFO); a fila sai na ordem de chegada (FIFO). Na fila circular, o <code>40</code> enfileirado após um <code>dequeue</code> ocupa o slot que o <code>10</code> liberou — o <strong>wrap</strong> em ação.</p>
+</section>
+<section id="veja-acontecer" class="level2" data-number="8.7">
+<h2 data-number="8.7" class="anchored" data-anchor-id="veja-acontecer"><span class="header-section-number">8.7</span> Veja acontecer</h2>
+<p><strong>O buffer circular, passo a passo.</strong> Arraste para aplicar operações a um ring de capacidade 3. Veja <code>head</code> e o fim circularem e os slots serem <strong>reaproveitados</strong> quando os índices dão a volta (laranja = ocupado, cinza = livre):</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb7" data-startfrom="228" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 227;"><span id="cb7-228"><a href="#cb7-228" aria-hidden="true" tabindex="-1"></a>viewof passo <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">range</span>([<span class="dv">0</span><span class="op">,</span> <span class="dv">9</span>]<span class="op">,</span> { <span class="dt">value</span><span class="op">:</span> <span class="dv">3</span><span class="op">,</span> <span class="dt">step</span><span class="op">:</span> <span class="dv">1</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"operações aplicadas"</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb8" data-startfrom="233" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 232;"><span id="cb8-233"><a href="#cb8-233" aria-hidden="true" tabindex="-1"></a>ring_ops <span class="op">=</span> [</span>
+<span id="cb8-234"><a href="#cb8-234" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">op</span><span class="op">:</span> <span class="st">"enqueue"</span><span class="op">,</span> <span class="dt">v</span><span class="op">:</span> <span class="dv">10</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"enqueue"</span><span class="op">,</span> <span class="dt">v</span><span class="op">:</span> <span class="dv">20</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"enqueue"</span><span class="op">,</span> <span class="dt">v</span><span class="op">:</span> <span class="dv">30</span> }<span class="op">,</span></span>
+<span id="cb8-235"><a href="#cb8-235" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">op</span><span class="op">:</span> <span class="st">"dequeue"</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"enqueue"</span><span class="op">,</span> <span class="dt">v</span><span class="op">:</span> <span class="dv">40</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"dequeue"</span> }<span class="op">,</span></span>
+<span id="cb8-236"><a href="#cb8-236" aria-hidden="true" tabindex="-1"></a>  { <span class="dt">op</span><span class="op">:</span> <span class="st">"enqueue"</span><span class="op">,</span> <span class="dt">v</span><span class="op">:</span> <span class="dv">50</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"dequeue"</span> }<span class="op">,</span> { <span class="dt">op</span><span class="op">:</span> <span class="st">"dequeue"</span> }</span>
+<span id="cb8-237"><a href="#cb8-237" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb9" data-startfrom="242" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 241;"><span id="cb9-242"><a href="#cb9-242" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb9-243"><a href="#cb9-243" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> cap <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb9-244"><a href="#cb9-244" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> buf <span class="op">=</span> <span class="kw">new</span> <span class="bu">Array</span>(cap)<span class="op">.</span><span class="fu">fill</span>(<span class="kw">null</span>)<span class="op">;</span></span>
+<span id="cb9-245"><a href="#cb9-245" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> head <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> count <span class="op">=</span> <span class="dv">0</span><span class="op">,</span> last <span class="op">=</span> <span class="st">"—"</span><span class="op">;</span></span>
+<span id="cb9-246"><a href="#cb9-246" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> passo<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb9-247"><a href="#cb9-247" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> o <span class="op">=</span> ring_ops[i]<span class="op">;</span></span>
+<span id="cb9-248"><a href="#cb9-248" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (o<span class="op">.</span><span class="at">op</span> <span class="op">===</span> <span class="st">"enqueue"</span>) {</span>
+<span id="cb9-249"><a href="#cb9-249" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (count <span class="op">&lt;</span> cap) { buf[(head <span class="op">+</span> count) <span class="op">%</span> cap] <span class="op">=</span> o<span class="op">.</span><span class="at">v</span><span class="op">;</span> count<span class="op">++;</span> last <span class="op">=</span> <span class="vs">`enqueue(</span><span class="sc">${</span>o<span class="op">.</span><span class="at">v</span><span class="sc">}</span><span class="vs">)`</span><span class="op">;</span> }</span>
+<span id="cb9-250"><a href="#cb9-250" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span> last <span class="op">=</span> <span class="vs">`enqueue(</span><span class="sc">${</span>o<span class="op">.</span><span class="at">v</span><span class="sc">}</span><span class="vs">) — cheia, rejeitada`</span><span class="op">;</span></span>
+<span id="cb9-251"><a href="#cb9-251" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb9-252"><a href="#cb9-252" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (count <span class="op">&gt;</span> <span class="dv">0</span>) { last <span class="op">=</span> <span class="vs">`dequeue() → </span><span class="sc">${</span>buf[head]<span class="sc">}</span><span class="vs">`</span><span class="op">;</span> head <span class="op">=</span> (head <span class="op">+</span> <span class="dv">1</span>) <span class="op">%</span> cap<span class="op">;</span> count<span class="op">--;</span> }</span>
+<span id="cb9-253"><a href="#cb9-253" aria-hidden="true" tabindex="-1"></a>      <span class="cf">else</span> last <span class="op">=</span> <span class="st">"dequeue() — vazia"</span><span class="op">;</span></span>
+<span id="cb9-254"><a href="#cb9-254" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb9-255"><a href="#cb9-255" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-256"><a href="#cb9-256" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> tail <span class="op">=</span> (head <span class="op">+</span> count) <span class="op">%</span> cap<span class="op">;</span></span>
+<span id="cb9-257"><a href="#cb9-257" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> occupied <span class="op">=</span> (s) <span class="kw">=&gt;</span> { <span class="cf">for</span> (<span class="kw">let</span> j <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> j <span class="op">&lt;</span> count<span class="op">;</span> j<span class="op">++</span>) <span class="cf">if</span> ((head <span class="op">+</span> j) <span class="op">%</span> cap <span class="op">===</span> s) <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span> <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span> }<span class="op">;</span></span>
+<span id="cb9-258"><a href="#cb9-258" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> cell <span class="op">=</span> (s) <span class="kw">=&gt;</span> {</span>
+<span id="cb9-259"><a href="#cb9-259" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> occ <span class="op">=</span> <span class="fu">occupied</span>(s)<span class="op">;</span></span>
+<span id="cb9-260"><a href="#cb9-260" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> marks <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb9-261"><a href="#cb9-261" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (count <span class="op">&gt;</span> <span class="dv">0</span> <span class="op">&amp;&amp;</span> s <span class="op">===</span> head) marks<span class="op">.</span><span class="fu">push</span>(<span class="st">"head"</span>)<span class="op">;</span></span>
+<span id="cb9-262"><a href="#cb9-262" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (count <span class="op">&lt;</span> cap <span class="op">&amp;&amp;</span> s <span class="op">===</span> tail) marks<span class="op">.</span><span class="fu">push</span>(<span class="st">"fim"</span>)<span class="op">;</span></span>
+<span id="cb9-263"><a href="#cb9-263" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div style="display:flex;flex-direction:column;align-items:center;gap:3px"&gt;</span></span>
+<span id="cb9-264"><a href="#cb9-264" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;font:600 15px sans-serif;background:</span><span class="sc">${</span>occ <span class="op">?</span> <span class="st">"#F5793B"</span> <span class="op">:</span> <span class="st">"#E9E4DC"</span><span class="sc">}</span><span class="vs">;color:</span><span class="sc">${</span>occ <span class="op">?</span> <span class="st">"#fff"</span> <span class="op">:</span> <span class="st">"#999"</span><span class="sc">}</span><span class="vs">"&gt;</span><span class="sc">${</span>occ <span class="op">?</span> buf[s] <span class="op">:</span> <span class="st">"·"</span><span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb9-265"><a href="#cb9-265" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;div style="font:10px sans-serif;color:#777"&gt;[</span><span class="sc">${</span>s<span class="sc">}</span><span class="vs">]&lt;/div&gt;</span></span>
+<span id="cb9-266"><a href="#cb9-266" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;div style="font:10px sans-serif;color:#2A9D8F;height:12px"&gt;</span><span class="sc">${</span>marks<span class="op">.</span><span class="fu">join</span>(<span class="st">" · "</span>)<span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb9-267"><a href="#cb9-267" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb9-268"><a href="#cb9-268" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
+<span id="cb9-269"><a href="#cb9-269" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span></span>
+<span id="cb9-270"><a href="#cb9-270" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="display:flex;gap:12px;align-items:flex-start"&gt;</span><span class="sc">${</span><span class="bu">Array</span><span class="op">.</span><span class="fu">from</span>({ <span class="dt">length</span><span class="op">:</span> cap }<span class="op">,</span> (_<span class="op">,</span> s) <span class="kw">=&gt;</span> <span class="fu">cell</span>(s))<span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb9-271"><a href="#cb9-271" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="margin-top:8px;font:13px sans-serif;color:#264653"&gt;última operação: &lt;b&gt;</span><span class="sc">${</span>last<span class="sc">}</span><span class="vs">&lt;/b&gt; &amp;nbsp;·&amp;nbsp; count = </span><span class="sc">${</span>count<span class="sc">}</span><span class="vs">/</span><span class="sc">${</span>cap<span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb9-272"><a href="#cb9-272" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb9-273"><a href="#cb9-273" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-3" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="pense-como-projetista" class="level2" data-number="8.8">
+<h2 data-number="8.8" class="anchored" data-anchor-id="pense-como-projetista"><span class="header-section-number">8.8</span> Pense como projetista</h2>
+<div class="callout callout-style-default callout-tip callout-titled" title="Pense como projetista">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Pense como projetista
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Escolha <strong>pilha</strong> quando a ordem natural do problema é “desfazer o mais recente primeiro”: histórico de <em>undo</em>, avaliação de expressões, a própria pilha de chamadas, backtracking. Escolha <strong>fila</strong> quando é “atender por ordem de chegada”: tarefas a processar, eventos, mensagens, busca em largura. Para o <em>backing</em>: array (ou ring buffer) é o padrão — rápido e cache-friendly; vá para a lista quando precisar crescer sem limite e sem pausas de realocação, ou quando os elementos já moram em nós. E não esqueça: ao restringir a interface a <code>push</code>/<code>pop</code> ou <code>enqueue</code>/<code>dequeue</code>, você documenta a intenção e blinda o código contra usos indevidos.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="No mundo real">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No mundo real
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <strong>pilha de chamadas</strong> (<em>call stack</em>) do seu programa é literalmente uma pilha: cada função chamada empilha um quadro com suas variáveis locais, que é desempilhado no <code>return</code> — e o <em>stack overflow</em> é ela estourando. <strong>Ring buffers</strong> estão em todo sistema que processa um fluxo contínuo: placas de <strong>áudio</strong> (o buffer entre o programa e o alto-falante), pilhas de <strong>rede</strong> (pacotes que chegam mais rápido do que são processados), <em>logs</em> de alta velocidade. E há a <strong>deque</strong> (<em>double-ended queue</em>): uma fila que aceita inserir e remover <strong>nas duas pontas</strong>, generalizando pilha e fila — é o que está por trás do <code>deque</code> do Python e do <code>std::deque</code> do C++.</p>
+</div>
+</div>
+</section>
+<section id="resumo" class="level2" data-number="8.9">
+<h2 data-number="8.9" class="anchored" data-anchor-id="resumo"><span class="header-section-number">8.9</span> Resumo</h2>
+<ul>
+<li>Pilha (<strong>LIFO</strong>) e fila (<strong>FIFO</strong>) são <strong>interfaces restritas</strong>: só se mexe nas pontas. A restrição é proposital — traz simplicidade, ordem previsível e segurança.</li>
+<li>A mesma interface roda sobre <strong>dois backings</strong>: array dinâmico (cap. 5) ou lista encadeada (cap. 6). Todas as operações essenciais são <span class="math inline">\(O(1)\)</span>.</li>
+<li>A <strong>fila sobre array</strong> exige o truque do <strong>buffer circular</strong> (<code>% cap</code>) para não pagar <span class="math inline">\(O(n)\)</span> deslocando elementos a cada <code>dequeue</code>.</li>
+<li><strong>Array/ring</strong>: contíguo, cache-friendly, sem <code>malloc</code> por item, mas com capacidade (fixa ou amortizada). <strong>Lista</strong>: cresce sem limite e sem realocar, mas com ponteiro e alocação por elemento e pior cache.</li>
+</ul>
+<section id="tabela-de-complexidade-do-capítulo" class="level3" data-number="8.9.1">
+<h3 data-number="8.9.1" class="anchored" data-anchor-id="tabela-de-complexidade-do-capítulo"><span class="header-section-number">8.9.1</span> Tabela de complexidade do capítulo</h3>
+<table class="caption-top table">
+<caption>As quatro implementações deste capítulo.</caption>
+<colgroup>
+<col style="width: 28%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Operação</th>
+<th style="text-align: center;">Pilha/array</th>
+<th style="text-align: center;">Pilha/lista</th>
+<th style="text-align: center;">Fila/ring</th>
+<th style="text-align: center;">Fila/lista</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Inserir (<code>push</code>/<code>enqueue</code>)</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span> amort.</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Remover (<code>pop</code>/<code>dequeue</code>)</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Espiar a ponta ativa</td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(O(1)\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Memória por elemento</td>
+<td style="text-align: center;">~nenhuma</td>
+<td style="text-align: center;">+1 ponteiro</td>
+<td style="text-align: center;">~nenhuma</td>
+<td style="text-align: center;">+1 ponteiro</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Capacidade</td>
+<td style="text-align: center;">cresce (realoca)</td>
+<td style="text-align: center;">ilimitada</td>
+<td style="text-align: center;"><strong>fixa</strong></td>
+<td style="text-align: center;">ilimitada</td>
+</tr>
+</tbody>
+</table>
+<p>No próximo capítulo, saímos das estruturas lineares e entramos nas <strong>árvores binárias de busca</strong> — onde, pela primeira vez, a busca pode ser melhor que <span class="math inline">\(O(n)\)</span>.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBwYXNzbyA9IElucHV0cy5yYW5nZShbMCwgOV0sIHsgdmFsdWU6IDMsIHN0ZXA6IDEsIGxhYmVsOiBcIm9wZXJhw6fDtWVzIGFwbGljYWRhc1wiIH0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJyaW5nX29wcyA9IFtcbiAgeyBvcDogXCJlbnF1ZXVlXCIsIHY6IDEwIH0sIHsgb3A6IFwiZW5xdWV1ZVwiLCB2OiAyMCB9LCB7IG9wOiBcImVucXVldWVcIiwgdjogMzAgfSxcbiAgeyBvcDogXCJkZXF1ZXVlXCIgfSwgeyBvcDogXCJlbnF1ZXVlXCIsIHY6IDQwIH0sIHsgb3A6IFwiZGVxdWV1ZVwiIH0sXG4gIHsgb3A6IFwiZW5xdWV1ZVwiLCB2OiA1MCB9LCB7IG9wOiBcImRlcXVldWVcIiB9LCB7IG9wOiBcImRlcXVldWVcIiB9XG5dXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTMiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ7XG4gIGNvbnN0IGNhcCA9IDM7XG4gIGNvbnN0IGJ1ZiA9IG5ldyBBcnJheShjYXApLmZpbGwobnVsbCk7XG4gIGxldCBoZWFkID0gMCwgY291bnQgPSAwLCBsYXN0ID0gXCLigJRcIjtcbiAgZm9yIChsZXQgaSA9IDA7IGkgPCBwYXNzbzsgaSsrKSB7XG4gICAgY29uc3QgbyA9IHJpbmdfb3BzW2ldO1xuICAgIGlmIChvLm9wID09PSBcImVucXVldWVcIikge1xuICAgICAgaWYgKGNvdW50IDwgY2FwKSB7IGJ1ZlsoaGVhZCArIGNvdW50KSAlIGNhcF0gPSBvLnY7IGNvdW50Kys7IGxhc3QgPSBgZW5xdWV1ZSgke28udn0pYDsgfVxuICAgICAgZWxzZSBsYXN0ID0gYGVucXVldWUoJHtvLnZ9KSDigJQgY2hlaWEsIHJlamVpdGFkYWA7XG4gICAgfSBlbHNlIHtcbiAgICAgIGlmIChjb3VudCA+IDApIHsgbGFzdCA9IGBkZXF1ZXVlKCkg4oaSICR7YnVmW2hlYWRdfWA7IGhlYWQgPSAoaGVhZCArIDEpICUgY2FwOyBjb3VudC0tOyB9XG4gICAgICBlbHNlIGxhc3QgPSBcImRlcXVldWUoKSDigJQgdmF6aWFcIjtcbiAgICB9XG4gIH1cbiAgY29uc3QgdGFpbCA9IChoZWFkICsgY291bnQpICUgY2FwO1xuICBjb25zdCBvY2N1cGllZCA9IChzKSA9PiB7IGZvciAobGV0IGogPSAwOyBqIDwgY291bnQ7IGorKykgaWYgKChoZWFkICsgaikgJSBjYXAgPT09IHMpIHJldHVybiB0cnVlOyByZXR1cm4gZmFsc2U7IH07XG4gIGNvbnN0IGNlbGwgPSAocykgPT4ge1xuICAgIGNvbnN0IG9jYyA9IG9jY3VwaWVkKHMpO1xuICAgIGNvbnN0IG1hcmtzID0gW107XG4gICAgaWYgKGNvdW50ID4gMCAmJiBzID09PSBoZWFkKSBtYXJrcy5wdXNoKFwiaGVhZFwiKTtcbiAgICBpZiAoY291bnQgPCBjYXAgJiYgcyA9PT0gdGFpbCkgbWFya3MucHVzaChcImZpbVwiKTtcbiAgICByZXR1cm4gaHRtbGA8ZGl2IHN0eWxlPVwiZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjNweFwiPlxuICAgICAgPGRpdiBzdHlsZT1cIndpZHRoOjQ4cHg7aGVpZ2h0OjQ4cHg7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyO2JvcmRlci1yYWRpdXM6OHB4O2ZvbnQ6NjAwIDE1cHggc2Fucy1zZXJpZjtiYWNrZ3JvdW5kOiR7b2NjID8gXCIjRjU3OTNCXCIgOiBcIiNFOUU0RENcIn07Y29sb3I6JHtvY2MgPyBcIiNmZmZcIiA6IFwiIzk5OVwifVwiPiR7b2NjID8gYnVmW3NdIDogXCLCt1wifTwvZGl2PlxuICAgICAgPGRpdiBzdHlsZT1cImZvbnQ6MTBweCBzYW5zLXNlcmlmO2NvbG9yOiM3NzdcIj5bJHtzfV08L2Rpdj5cbiAgICAgIDxkaXYgc3R5bGU9XCJmb250OjEwcHggc2Fucy1zZXJpZjtjb2xvcjojMkE5RDhGO2hlaWdodDoxMnB4XCI+JHttYXJrcy5qb2luKFwiIMK3IFwiKX08L2Rpdj5cbiAgICA8L2Rpdj5gO1xuICB9O1xuICByZXR1cm4gaHRtbGA8ZGl2PlxuICAgIDxkaXYgc3R5bGU9XCJkaXNwbGF5OmZsZXg7Z2FwOjEycHg7YWxpZ24taXRlbXM6ZmxleC1zdGFydFwiPiR7QXJyYXkuZnJvbSh7IGxlbmd0aDogY2FwIH0sIChfLCBzKSA9PiBjZWxsKHMpKX08L2Rpdj5cbiAgICA8ZGl2IHN0eWxlPVwibWFyZ2luLXRvcDo4cHg7Zm9udDoxM3B4IHNhbnMtc2VyaWY7Y29sb3I6IzI2NDY1M1wiPsO6bHRpbWEgb3BlcmHDp8OjbzogPGI+JHtsYXN0fTwvYj4gJm5ic3A7wrcmbmJzcDsgY291bnQgPSAke2NvdW50fS8ke2NhcH08L2Rpdj5cbiAgPC9kaXY+YDtcbn1cbiJ9LHsibWV0aG9kTmFtZSI6ImludGVycHJldFF1aWV0Iiwic291cmNlIjoic2hpbnlJbnB1dCgncGFzc28nKSJ9XX0=
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../part-1-practice";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../part-1-practice/07-shadow-data.html" class="pagination-link" aria-label="[Shadow Data: um contêiner para qualquer tipo]{.typing-effect}">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../part-1-practice/09-bst.html" class="pagination-link" aria-label="[Árvores de busca: organizando para achar rápido]{.typing-effect}">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt" xml:lang="pt"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>3&nbsp; Structs e uniões: compondo tipos – Estruturas de Dados e Algoritmos em C</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../part-2-foundations/04-modularization.html" rel="next">
+<link href="../part-2-foundations/02-memory.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dark-9bfc61b20ce54e18ae6b25bf56d136e1.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-6a50bd621f08fdc5c26e43d254df0a90.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-dark-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-f42ec7cdba8177e175657a9c20f9b545.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-2-foundations/01-pointers.html">Parte I — Fundamentos do C</a></li><li class="breadcrumb-item"><a href="../part-2-foundations/03-structs-unions.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Estruturas de Dados e Algoritmos em C</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="typing-effect">Estruturas de Dados e Algoritmos em C</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte I — Fundamentos do C</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/01-pointers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Ponteiros: o endereço é o dado</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/02-memory.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/03-structs-unions.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-2-foundations/04-modularization.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Parte II — A prática do projetista</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/05-dynamic-array.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Array dinâmico: o vetor que cresce sozinho</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/06-linked-lists.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Listas encadeadas: quando o vizinho mora longe</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/07-shadow-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Shadow Data: um contêiner para qualquer tipo</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/08-stacks-queues.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Pilhas e Filas: o poder de restringir o acesso</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/09-bst.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Árvores de busca: organizando para achar rápido</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/10-heaps.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Filas de prioridade: o heap binário</span></span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../part-1-practice/11-huffman.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title"><span class="typing-effect">O desafio final: compactando com Huffman</span></span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Páginas interativas</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/pointers-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Travessia de ponteiros (scrollytelling)</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../interactive/huffman-scroll.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Montagem da árvore de Huffman (scrollytelling)</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a1-big-o-table.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">A</span>&nbsp; <span class="chapter-title">Tabela-resumo de complexidade Big-O</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../appendices/a2-horizon.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">B</span>&nbsp; <span class="chapter-title">Horizonte: o que estudar depois</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../references.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Referências</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Índice</h2>
+   
+  <ul>
+  <li><a href="#a-struct-agrupar-campos" id="toc-a-struct-agrupar-campos" class="nav-link active" data-scroll-target="#a-struct-agrupar-campos"><span class="header-section-number">3.1</span> A struct: agrupar campos</a></li>
+  <li><a href="#o-custo-escondido-alinhamento-e-padding" id="toc-o-custo-escondido-alinhamento-e-padding" class="nav-link" data-scroll-target="#o-custo-escondido-alinhamento-e-padding"><span class="header-section-number">3.2</span> O custo escondido: alinhamento e padding</a></li>
+  <li><a href="#a-união-campos-que-se-sobrepõem" id="toc-a-união-campos-que-se-sobrepõem" class="nav-link" data-scroll-target="#a-união-campos-que-se-sobrepõem"><span class="header-section-number">3.3</span> A união: campos que se sobrepõem</a></li>
+  <li><a href="#quando-uniões-fazem-sentido" id="toc-quando-uniões-fazem-sentido" class="nav-link" data-scroll-target="#quando-uniões-fazem-sentido"><span class="header-section-number">3.4</span> Quando uniões fazem sentido</a></li>
+  <li><a href="#vendo-funcionar" id="toc-vendo-funcionar" class="nav-link" data-scroll-target="#vendo-funcionar"><span class="header-section-number">3.5</span> Vendo funcionar</a></li>
+  <li><a href="#pense-como-projetista" id="toc-pense-como-projetista" class="nav-link" data-scroll-target="#pense-como-projetista"><span class="header-section-number">3.6</span> Pense como projetista</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo"><span class="header-section-number">3.7</span> Resumo</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../part-2-foundations/01-pointers.html">Parte I — Fundamentos do C</a></li><li class="breadcrumb-item"><a href="../part-2-foundations/03-structs-unions.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Structs e uniões: compondo tipos</span></span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Até aqui, cada variável guardava <strong>um</strong> valor: um <code>int</code>, um endereço. Mas o mundo é feito de coisas com várias partes — um ponto tem <code>x</code> e <code>y</code>, um nó tem um valor e um ponteiro. Para modelá-las, agrupamos campos num só tipo: a <strong>struct</strong>. Ela é o tijolo de <strong>todas</strong> as estruturas da Parte da prática — cada nó, cada container era uma struct. Aqui entendemos como o compilador a organiza na memória (com um custo escondido, o <strong>alinhamento</strong>) e conhecemos sua imagem espelhada, a <strong>união</strong>.</p>
+<div class="callout callout-style-simple callout-note no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<p>🎨 <strong>Placeholder de ilustração — analogia de abertura.</strong> <em>Brief:</em> uma <strong>ficha de cadastro</strong> com campos rotulados (nome, idade, cidade) representando a struct; ao lado, um <strong>camaleão</strong> sobre uma única poltrona que muda de cor (ora é um número, ora um texto) representando a união — uma poltrona, vários “tipos”, um de cada vez. Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.</p>
+</div>
+</div>
+</div>
+<section id="a-struct-agrupar-campos" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="a-struct-agrupar-campos"><span class="header-section-number">3.1</span> A struct: agrupar campos</h2>
+<p>Uma <code>struct</code> junta campos de tipos quaisquer sob um único nome de tipo. Você acessa os campos com <code>.</code> (numa variável) ou <code>-&gt;</code> (por um ponteiro):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-snippet="struct" data-startfrom="13"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 12;"><span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co">// Uma struct AGRUPA campos (de tipos quaisquer) sob um único tipo.</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Point <span class="op">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> x<span class="op">;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> y<span class="op">;</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> struct_basics<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> Point p <span class="op">=</span> <span class="op">{</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">};</span> <span class="co">// inicialização por ordem</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    p<span class="op">.</span>y <span class="op">=</span> <span class="dv">10</span><span class="op">;</span>                <span class="co">// acesso a campo por '.'</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> Point <span class="op">*</span>pp <span class="op">=</span> <span class="op">&amp;</span>p<span class="op">;</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    pp<span class="op">-&gt;</span>x <span class="op">=</span> <span class="dv">7</span><span class="op">;</span> <span class="co">// por ponteiro, '-&gt;' é açúcar para (*pp).x</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"Point = (</span><span class="sc">%d</span><span class="st">, </span><span class="sc">%d</span><span class="st">)</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> p<span class="op">.</span>x<span class="op">,</span> p<span class="op">.</span>y<span class="op">);</span>                <span class="co">// (7, 10)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"sizeof(Point) = </span><span class="sc">%zu\n</span><span class="st">"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span><span class="kw">struct</span> Point<span class="op">));</span> <span class="co">// 8</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Na memória, os campos de uma struct ficam <strong>lado a lado</strong>, na ordem em que você os declarou. Foi assim que cada <code>Node</code>, cada <code>DynamicArray</code>, cada <code>MinHeap</code> do livro existiu: um punhado de campos arrumados em sequência num bloco. Mas “em sequência” esconde uma sutileza.</p>
+</section>
+<section id="o-custo-escondido-alinhamento-e-padding" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="o-custo-escondido-alinhamento-e-padding"><span class="header-section-number">3.2</span> O custo escondido: alinhamento e padding</h2>
+<p>A CPU lê a memória mais rápido quando cada tipo está num endereço <strong>alinhado</strong> ao seu tamanho — um <code>int</code> de 4 bytes prefere começar num endereço múltiplo de 4. Para garantir isso, o compilador insere <strong>bytes de enchimento</strong> (<em>padding</em>) entre os campos. O resultado surpreende: o tamanho de uma struct pode ser <strong>maior</strong> que a soma dos seus campos.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-snippet="padding" data-startfrom="32"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 31;"><span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="co">// A ORDEM dos campos importa: o alinhamento insere "buracos" (padding).</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Padded <span class="op">{</span> <span class="co">// má ordem</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> a<span class="op">;</span>     <span class="co">// offset 0</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> b<span class="op">;</span>      <span class="co">// precisa de offset múltiplo de 4 → 3 bytes de padding antes</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> c<span class="op">;</span>     <span class="co">// offset 8; mais 3 bytes de padding no fim</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="op">};</span> <span class="co">// sizeof = 12</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Packed <span class="op">{</span> <span class="co">// boa ordem: do maior para o menor</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> b<span class="op">;</span>      <span class="co">// offset 0</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> a<span class="op">;</span>     <span class="co">// offset 4</span></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>    <span class="dt">char</span> c<span class="op">;</span>     <span class="co">// offset 5; mais 2 bytes de padding no fim</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a><span class="op">};</span> <span class="co">// sizeof = 8</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> padding_demo<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"Padded: sizeof=</span><span class="sc">%zu</span><span class="st">  (a@</span><span class="sc">%zu</span><span class="st"> b@</span><span class="sc">%zu</span><span class="st"> c@</span><span class="sc">%zu</span><span class="st">)</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span><span class="kw">struct</span> Padded<span class="op">),</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>           offsetof<span class="op">(</span><span class="kw">struct</span> Padded<span class="op">,</span> a<span class="op">),</span> offsetof<span class="op">(</span><span class="kw">struct</span> Padded<span class="op">,</span> b<span class="op">),</span></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>           offsetof<span class="op">(</span><span class="kw">struct</span> Padded<span class="op">,</span> c<span class="op">));</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"Packed: sizeof=</span><span class="sc">%zu</span><span class="st">   (b@</span><span class="sc">%zu</span><span class="st"> a@</span><span class="sc">%zu</span><span class="st"> c@</span><span class="sc">%zu</span><span class="st">)</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span> <span class="kw">sizeof</span><span class="op">(</span><span class="kw">struct</span> Packed<span class="op">),</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>           offsetof<span class="op">(</span><span class="kw">struct</span> Packed<span class="op">,</span> b<span class="op">),</span> offsetof<span class="op">(</span><span class="kw">struct</span> Packed<span class="op">,</span> a<span class="op">),</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>           offsetof<span class="op">(</span><span class="kw">struct</span> Packed<span class="op">,</span> c<span class="op">));</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>As duas structs têm os <strong>mesmos</strong> campos (um <code>int</code> e dois <code>char</code> = 6 bytes de dados), mas tamanhos diferentes. A <a href="#fig-layout" class="quarto-xref">Figura&nbsp;<span>3.1</span></a> mostra por quê: na ordem ruim, o <code>int</code> força 3 bytes de buraco depois do primeiro <code>char</code>; reordenando do <strong>maior para o menor</strong>, os buracos quase somem.</p>
+<div class="cell" data-fig-width="4.6" data-fig-height="2.9" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-layout" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-layout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="442" height="278" viewbox="0.00 0.00 250.00 160.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 156)">
+<title>layout</title>
+<!-- padded -->
+<g id="node1" class="node">
+<title>padded</title>
+<text text-anchor="start" x="14" y="-134" font-family="Inter" font-weight="bold" font-size="10.00">struct Padded</text>
+<text text-anchor="start" x="73.72" y="-134" font-family="Inter" font-size="10.00"> — 12 bytes (má ordem)</text>
+<polygon fill="#f5793b" stroke="transparent" points="8,-98 8,-124 26,-124 26,-98 8,-98"></polygon>
+<polygon fill="none" stroke="black" points="8,-98 8,-124 26,-124 26,-98 8,-98"></polygon>
+<text text-anchor="start" x="14.78" y="-108" font-family="Inter" font-size="10.00" fill="white">a</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="26,-98 26,-124 45,-124 45,-98 26,-98"></polygon>
+<polygon fill="none" stroke="black" points="26,-98 26,-124 45,-124 45,-98 26,-98"></polygon>
+<text text-anchor="start" x="33" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="45,-98 45,-124 64,-124 64,-98 45,-98"></polygon>
+<polygon fill="none" stroke="black" points="45,-98 45,-124 64,-124 64,-98 45,-98"></polygon>
+<text text-anchor="start" x="52" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="64,-98 64,-124 83,-124 83,-98 64,-98"></polygon>
+<polygon fill="none" stroke="black" points="64,-98 64,-124 83,-124 83,-98 64,-98"></polygon>
+<text text-anchor="start" x="71" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="83,-98 83,-124 102,-124 102,-98 83,-98"></polygon>
+<polygon fill="none" stroke="black" points="83,-98 83,-124 102,-124 102,-98 83,-98"></polygon>
+<text text-anchor="start" x="90" y="-108" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="102,-98 102,-124 121,-124 121,-98 102,-98"></polygon>
+<polygon fill="none" stroke="black" points="102,-98 102,-124 121,-124 121,-98 102,-98"></polygon>
+<text text-anchor="start" x="109" y="-108" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="121,-98 121,-124 140,-124 140,-98 121,-98"></polygon>
+<polygon fill="none" stroke="black" points="121,-98 121,-124 140,-124 140,-98 121,-98"></polygon>
+<text text-anchor="start" x="128" y="-108" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="140,-98 140,-124 159,-124 159,-98 140,-98"></polygon>
+<polygon fill="none" stroke="black" points="140,-98 140,-124 159,-124 159,-98 140,-98"></polygon>
+<text text-anchor="start" x="147" y="-108" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#f2a65a" stroke="transparent" points="159,-98 159,-124 177,-124 177,-98 159,-98"></polygon>
+<polygon fill="none" stroke="black" points="159,-98 159,-124 177,-124 177,-98 159,-98"></polygon>
+<text text-anchor="start" x="165.78" y="-108" font-family="Inter" font-size="10.00" fill="white">c</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="177,-98 177,-124 196,-124 196,-98 177,-98"></polygon>
+<polygon fill="none" stroke="black" points="177,-98 177,-124 196,-124 196,-98 177,-98"></polygon>
+<text text-anchor="start" x="184" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="196,-98 196,-124 215,-124 215,-98 196,-98"></polygon>
+<polygon fill="none" stroke="black" points="196,-98 196,-124 215,-124 215,-98 196,-98"></polygon>
+<text text-anchor="start" x="203" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="215,-98 215,-124 234,-124 234,-98 215,-98"></polygon>
+<polygon fill="none" stroke="black" points="215,-98 215,-124 234,-124 234,-98 215,-98"></polygon>
+<text text-anchor="start" x="222" y="-108" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+</g>
+<!-- packed -->
+<g id="node2" class="node">
+<title>packed</title>
+<text text-anchor="start" x="45.82" y="-40" font-family="Inter" font-weight="bold" font-size="10.00">struct Packed</text>
+<text text-anchor="start" x="104.42" y="-40" font-family="Inter" font-size="10.00"> — 8 bytes (boa ordem)</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="40,-4 40,-30 65,-30 65,-4 40,-4"></polygon>
+<polygon fill="none" stroke="black" points="40,-4 40,-30 65,-30 65,-4 40,-4"></polygon>
+<text text-anchor="start" x="50" y="-14" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="65,-4 65,-30 87,-30 87,-4 65,-4"></polygon>
+<polygon fill="none" stroke="black" points="65,-4 65,-30 87,-30 87,-4 65,-4"></polygon>
+<text text-anchor="start" x="73.5" y="-14" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="87,-4 87,-30 108,-30 108,-4 87,-4"></polygon>
+<polygon fill="none" stroke="black" points="87,-4 87,-30 108,-30 108,-4 87,-4"></polygon>
+<text text-anchor="start" x="95" y="-14" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="108,-4 108,-30 128,-30 128,-4 108,-4"></polygon>
+<polygon fill="none" stroke="black" points="108,-4 108,-30 128,-30 128,-4 108,-4"></polygon>
+<text text-anchor="start" x="115.5" y="-14" font-family="Inter" font-size="10.00" fill="white">b</text>
+<polygon fill="#f5793b" stroke="transparent" points="128,-4 128,-30 146,-30 146,-4 128,-4"></polygon>
+<polygon fill="none" stroke="black" points="128,-4 128,-30 146,-30 146,-4 128,-4"></polygon>
+<text text-anchor="start" x="134.78" y="-14" font-family="Inter" font-size="10.00" fill="white">a</text>
+<polygon fill="#f2a65a" stroke="transparent" points="146,-4 146,-30 164,-30 164,-4 146,-4"></polygon>
+<polygon fill="none" stroke="black" points="146,-4 146,-30 164,-30 164,-4 146,-4"></polygon>
+<text text-anchor="start" x="152.78" y="-14" font-family="Inter" font-size="10.00" fill="white">c</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="164,-4 164,-30 183,-30 183,-4 164,-4"></polygon>
+<polygon fill="none" stroke="black" points="164,-4 164,-30 183,-30 183,-4 164,-4"></polygon>
+<text text-anchor="start" x="171" y="-14" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+<polygon fill="#e9e4dc" stroke="transparent" points="183,-4 183,-30 203,-30 203,-4 183,-4"></polygon>
+<polygon fill="none" stroke="black" points="183,-4 183,-30 203,-30 203,-4 183,-4"></polygon>
+<text text-anchor="start" x="190.5" y="-14" font-family="Inter" font-size="10.00" fill="#000000">·</text>
+</g>
+<!-- padded&#45;&gt;packed -->
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-layout-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.1: O mesmo conteúdo (1 <code>int</code> + 2 <code>char</code>), duas ordens. Laranja/teal/âmbar = campos; cinza = padding (buracos de alinhamento). Declarar do maior para o menor leva <code>Padded</code> de 12 a <code>Packed</code> de 8 bytes.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Trade-off: ordem dos campos × memória">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Trade-off: ordem dos campos × memória
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Declarar os campos do maior para o menor</strong> costuma minimizar o padding — de graça, sem mudar o código que usa a struct. Para um ponto isolado, 4 bytes a mais não importam. Mas multiplique por um <strong>milhão</strong> de nós numa estrutura, e o padding vira megabytes desperdiçados (e menos elementos por linha de cache, deixando tudo mais lento). É o tipo de detalhe que separa o código que “funciona” do código que <strong>escala</strong>.</p>
+</div>
+</div>
+</section>
+<section id="a-união-campos-que-se-sobrepõem" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="a-união-campos-que-se-sobrepõem"><span class="header-section-number">3.3</span> A união: campos que se sobrepõem</h2>
+<p>A <code>union</code> é a imagem espelhada da struct. Numa struct, os campos ficam <strong>lado a lado</strong> (a memória é a soma deles). Numa union, os campos ficam <strong>sobrepostos</strong> — todos começam no mesmo endereço e <strong>compartilham os mesmos bytes</strong>. Por isso seu tamanho é o do <strong>maior</strong> membro, e só <strong>um</strong> membro é válido por vez.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-snippet="union" data-startfrom="56"><pre class="sourceCode c code-with-copy"><code class="sourceCode c" style="counter-reset: source-line 55;"><span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a><span class="co">// Uma union SOBREPÕE os campos: todos compartilham os mesmos bytes.</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="kw">union</span> Value <span class="op">{</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> i<span class="op">;</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> f<span class="op">;</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="dt">unsigned</span> <span class="dt">char</span> bytes<span class="op">[</span><span class="dv">4</span><span class="op">];</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="dt">static</span> <span class="dt">void</span> union_demo<span class="op">(</span><span class="dt">void</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="kw">union</span> Value v<span class="op">;</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    v<span class="op">.</span>i <span class="op">=</span> <span class="dv">1</span><span class="op">;</span> <span class="co">// escrevemos como int...</span></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ...e lemos os bytes crus (little-endian em x86-64: 1 vira [1 0 0 0]).</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    printf<span class="op">(</span><span class="st">"union: sizeof=</span><span class="sc">%zu</span><span class="st">  i=</span><span class="sc">%d</span><span class="st">  bytes=[</span><span class="sc">%u</span><span class="st"> </span><span class="sc">%u</span><span class="st"> </span><span class="sc">%u</span><span class="st"> </span><span class="sc">%u</span><span class="st">]</span><span class="sc">\n</span><span class="st">"</span><span class="op">,</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>           <span class="kw">sizeof</span><span class="op">(</span><span class="kw">union</span> Value<span class="op">),</span> v<span class="op">.</span>i<span class="op">,</span> v<span class="op">.</span>bytes<span class="op">[</span><span class="dv">0</span><span class="op">],</span> v<span class="op">.</span>bytes<span class="op">[</span><span class="dv">1</span><span class="op">],</span> v<span class="op">.</span>bytes<span class="op">[</span><span class="dv">2</span><span class="op">],</span></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>           v<span class="op">.</span>bytes<span class="op">[</span><span class="dv">3</span><span class="op">]);</span></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Só UM membro é válido por vez: ler 'f' aqui reinterpretaria esses bits.</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A <a href="#fig-union" class="quarto-xref">Figura&nbsp;<span>3.2</span></a> mostra os três membros ocupando exatamente os mesmos 4 bytes:</p>
+<div class="cell" data-fig-width="3.4" data-fig-height="2.4" data-layout-align="default">
+<div class="cell-output-display">
+<div id="fig-union" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-union-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div>
+<svg width="326" height="230" viewbox="0.00 0.00 165.00 115.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 111)">
+<title>un</title>
+<!-- u -->
+<g id="node1" class="node">
+<title>u</title>
+<polygon fill="#f5793b" stroke="transparent" points="8.5,-76.5 8.5,-102.5 149.5,-102.5 149.5,-76.5 8.5,-76.5"></polygon>
+<polygon fill="none" stroke="black" points="8.5,-76.5 8.5,-102.5 149.5,-102.5 149.5,-76.5 8.5,-76.5"></polygon>
+<text text-anchor="start" x="37.61" y="-87.5" font-family="Inter" font-weight="bold" font-size="10.00" fill="white">int i</text>
+<text text-anchor="start" x="54.56" y="-87.5" font-family="Inter" font-size="10.00" fill="white"> · usa os 4 bytes</text>
+<polygon fill="#2a9d8f" stroke="transparent" points="8.5,-50.5 8.5,-76.5 149.5,-76.5 149.5,-50.5 8.5,-50.5"></polygon>
+<polygon fill="none" stroke="black" points="8.5,-50.5 8.5,-76.5 149.5,-76.5 149.5,-50.5 8.5,-50.5"></polygon>
+<text text-anchor="start" x="33.45" y="-61.5" font-family="Inter" font-weight="bold" font-size="10.00" fill="white">float f</text>
+<text text-anchor="start" x="58.72" y="-61.5" font-family="Inter" font-size="10.00" fill="white"> · usa os 4 bytes</text>
+<polygon fill="#f2a65a" stroke="transparent" points="8.5,-24.5 8.5,-50.5 48.5,-50.5 48.5,-24.5 8.5,-24.5"></polygon>
+<polygon fill="none" stroke="black" points="8.5,-24.5 8.5,-50.5 48.5,-50.5 48.5,-24.5 8.5,-24.5"></polygon>
+<text text-anchor="start" x="20.17" y="-34.5" font-family="Inter" font-size="10.00" fill="white">b[0]</text>
+<polygon fill="#f2a65a" stroke="transparent" points="48.5,-24.5 48.5,-50.5 83.5,-50.5 83.5,-24.5 48.5,-24.5"></polygon>
+<polygon fill="none" stroke="black" points="48.5,-24.5 48.5,-50.5 83.5,-50.5 83.5,-24.5 48.5,-24.5"></polygon>
+<text text-anchor="start" x="57.67" y="-34.5" font-family="Inter" font-size="10.00" fill="white">b[1]</text>
+<polygon fill="#f2a65a" stroke="transparent" points="83.5,-24.5 83.5,-50.5 116.5,-50.5 116.5,-24.5 83.5,-24.5"></polygon>
+<polygon fill="none" stroke="black" points="83.5,-24.5 83.5,-50.5 116.5,-50.5 116.5,-24.5 83.5,-24.5"></polygon>
+<text text-anchor="start" x="91.67" y="-34.5" font-family="Inter" font-size="10.00" fill="white">b[2]</text>
+<polygon fill="#f2a65a" stroke="transparent" points="116.5,-24.5 116.5,-50.5 149.5,-50.5 149.5,-24.5 116.5,-24.5"></polygon>
+<polygon fill="none" stroke="black" points="116.5,-24.5 116.5,-50.5 149.5,-50.5 149.5,-24.5 116.5,-24.5"></polygon>
+<text text-anchor="start" x="124.67" y="-34.5" font-family="Inter" font-size="10.00" fill="white">b[3]</text>
+<text text-anchor="start" x="14.41" y="-11.3" font-family="Inter" font-size="8.00" fill="#000000">os três membros = os MESMOS 4 bytes</text>
+</g>
+</g>
+</svg>
+</div>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-union-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figura&nbsp;3.2: Numa união, os membros se sobrepõem: <code>int i</code>, <code>float f</code> e <code>bytes[4]</code> ocupam os MESMOS 4 bytes. Escrever um sobrescreve os outros — só um é válido por vez.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="quando-uniões-fazem-sentido" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="quando-uniões-fazem-sentido"><span class="header-section-number">3.4</span> Quando uniões fazem sentido</h2>
+<p>Sozinha, uma union é perigosa: nada nela diz qual membro é o válido. O padrão útil é a <strong>união etiquetada</strong> (<em>tagged union</em>): uma struct que junta uma <strong>etiqueta</strong> de tipo e a union, prometendo “leia o membro que a etiqueta indica”.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode c code-with-copy"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Variant <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">enum</span> <span class="op">{</span> INT<span class="op">,</span> FLOAT<span class="op">,</span> TEXT <span class="op">}</span> tag<span class="op">;</span>  <span class="co">// qual membro está ativo</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">union</span> <span class="op">{</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="dt">int</span>    i<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="dt">float</span>  f<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">char</span>  <span class="op">*</span>text<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> as<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Isso modela “um valor que é <strong>um de vários</strong> tipos” gastando só o espaço do maior — em vez de carregar um campo para cada tipo possível, com todos vazios menos um. É como linguagens dinâmicas guardam variáveis, como protocolos compactam mensagens de tipos variados, e como interpretadores representam valores. A economia aparece quando há <strong>muitos</strong> desses valores e só um tipo ativo por vez.</p>
+</section>
+<section id="vendo-funcionar" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="vendo-funcionar"><span class="header-section-number">3.5</span> Vendo funcionar</h2>
+<pre class="text"><code>Point = (7, 10)
+sizeof(Point) = 8
+Padded: sizeof=12  (a@0 b@4 c@8)
+Packed: sizeof=8   (b@0 a@4 c@5)
+union: sizeof=4  i=1  bytes=[1 0 0 0]</code></pre>
+<p>Os deslocamentos (<code>a@0 b@4 c@8</code>) confirmam os buracos: entre <code>a</code> (byte 0) e <code>b</code> (byte 4) há 3 bytes de padding. E <code>bytes=[1 0 0 0]</code> revela a ordem little-endian do x86-64 — o byte menos significativo do <code>int</code> 1 vem primeiro.</p>
+<p><strong>Reordene e veja o padding.</strong> Escolha a ordem dos campos e observe o layout de bytes mudar — e o tamanho total encolher quando o padding some:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb6" data-startfrom="185" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 184;"><span id="cb6-185"><a href="#cb6-185" aria-hidden="true" tabindex="-1"></a>viewof ordem <span class="op">=</span> Inputs<span class="op">.</span><span class="fu">radio</span>([<span class="st">"char, int, char  (Padded)"</span><span class="op">,</span> <span class="st">"int, char, char  (Packed)"</span>]<span class="op">,</span> { <span class="dt">value</span><span class="op">:</span> <span class="st">"char, int, char  (Padded)"</span><span class="op">,</span> <span class="dt">label</span><span class="op">:</span> <span class="st">"ordem de declaração"</span> })</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code hidden" id="cb7" data-startfrom="190" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 189;"><span id="cb7-190"><a href="#cb7-190" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb7-191"><a href="#cb7-191" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> O <span class="op">=</span> <span class="st">"#F5793B"</span><span class="op">,</span> T <span class="op">=</span> <span class="st">"#2A9D8F"</span><span class="op">,</span> A <span class="op">=</span> <span class="st">"#F2A65A"</span><span class="op">,</span> G <span class="op">=</span> <span class="st">"#E9E4DC"</span><span class="op">;</span></span>
+<span id="cb7-192"><a href="#cb7-192" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> layouts <span class="op">=</span> {</span>
+<span id="cb7-193"><a href="#cb7-193" aria-hidden="true" tabindex="-1"></a>    <span class="st">"char, int, char  (Padded)"</span><span class="op">:</span> [[<span class="st">"a"</span><span class="op">,</span> O]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"c"</span><span class="op">,</span> A]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]]<span class="op">,</span></span>
+<span id="cb7-194"><a href="#cb7-194" aria-hidden="true" tabindex="-1"></a>    <span class="st">"int, char, char  (Packed)"</span><span class="op">:</span> [[<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"b"</span><span class="op">,</span> T]<span class="op">,</span> [<span class="st">"a"</span><span class="op">,</span> O]<span class="op">,</span> [<span class="st">"c"</span><span class="op">,</span> A]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]<span class="op">,</span> [<span class="st">"·"</span><span class="op">,</span> G]]</span>
+<span id="cb7-195"><a href="#cb7-195" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
+<span id="cb7-196"><a href="#cb7-196" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> L <span class="op">=</span> layouts[ordem]<span class="op">;</span></span>
+<span id="cb7-197"><a href="#cb7-197" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> cells <span class="op">=</span> L<span class="op">.</span><span class="fu">map</span>(([f<span class="op">,</span> c]<span class="op">,</span> i) <span class="kw">=&gt;</span> <span class="vs">`&lt;div style="display:flex;flex-direction:column;align-items:center"&gt;</span></span>
+<span id="cb7-198"><a href="#cb7-198" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:</span><span class="sc">${</span>c<span class="sc">}</span><span class="vs">;color:</span><span class="sc">${</span>f <span class="op">===</span> <span class="st">"·"</span> <span class="op">?</span> <span class="st">"#999"</span> <span class="op">:</span> <span class="st">"#fff"</span><span class="sc">}</span><span class="vs">;font:600 13px sans-serif;border:1px solid #fff"&gt;</span><span class="sc">${</span>f<span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb7-199"><a href="#cb7-199" aria-hidden="true" tabindex="-1"></a><span class="vs">      &lt;div style="font:8px monospace;color:#aaa"&gt;</span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">&lt;/div&gt;&lt;/div&gt;`</span>)<span class="op">.</span><span class="fu">join</span>(<span class="st">""</span>)<span class="op">;</span></span>
+<span id="cb7-200"><a href="#cb7-200" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> pad <span class="op">=</span> L<span class="op">.</span><span class="fu">filter</span>(([f]) <span class="kw">=&gt;</span> f <span class="op">===</span> <span class="st">"·"</span>)<span class="op">.</span><span class="at">length</span><span class="op">;</span></span>
+<span id="cb7-201"><a href="#cb7-201" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="fu">html</span><span class="vs">`&lt;div&gt;</span></span>
+<span id="cb7-202"><a href="#cb7-202" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="display:flex"&gt;</span><span class="sc">${</span>cells<span class="sc">}</span><span class="vs">&lt;/div&gt;</span></span>
+<span id="cb7-203"><a href="#cb7-203" aria-hidden="true" tabindex="-1"></a><span class="vs">    &lt;div style="margin-top:8px;font:13px sans-serif;color:#264653"&gt;</span></span>
+<span id="cb7-204"><a href="#cb7-204" aria-hidden="true" tabindex="-1"></a><span class="vs">      total: &lt;b&gt;</span><span class="sc">${</span>L<span class="op">.</span><span class="at">length</span><span class="sc">}</span><span class="vs"> bytes&lt;/b&gt; &amp;nbsp;·&amp;nbsp; padding: &lt;b style="color:#999"&gt;</span><span class="sc">${</span>pad<span class="sc">}</span><span class="vs"> bytes&lt;/b&gt; (cinza) &amp;nbsp;·&amp;nbsp; dados úteis: 6 bytes&lt;/div&gt;</span></span>
+<span id="cb7-205"><a href="#cb7-205" aria-hidden="true" tabindex="-1"></a><span class="vs">  &lt;/div&gt;`</span><span class="op">;</span></span>
+<span id="cb7-206"><a href="#cb7-206" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-2" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</section>
+<section id="pense-como-projetista" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="pense-como-projetista"><span class="header-section-number">3.6</span> Pense como projetista</h2>
+<div class="callout callout-style-default callout-tip callout-titled" title="Pense como projetista">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Pense como projetista
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Use uma <strong>struct</strong> para agrupar dados que andam juntos — e dê nomes claros aos campos: uma boa struct documenta o domínio. Quando o tamanho importar (muitos objetos, dados que vão para disco ou rede), ordene os campos do <strong>maior para o menor</strong> e confira com <code>sizeof</code>/<code>offsetof</code>. Use uma <strong>union</strong> (sempre etiquetada) quando um valor é <strong>um de vários tipos mutuamente exclusivos</strong> — ela troca espaço por uma promessa que você precisa cumprir à mão: ler só o membro que a etiqueta indica.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="No mundo real">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No mundo real
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O layout de structs é um contrato com o mundo: formatos de <strong>arquivo binário</strong>, <strong>protocolos de rede</strong> e registros em <strong>disco</strong> dependem de saber exatamente onde cada campo cai — daí diretivas como <code>#pragma pack</code> para remover o padding quando o formato exige bytes coladinhos. As <strong>uniões etiquetadas</strong> são tão fundamentais que linguagens modernas as elevaram a recurso de primeira classe: são os <code>enum</code> com dados do <strong>Rust</strong> e do <strong>Swift</strong>, os <em>sealed types</em>/<code>sealed</code> do Java e Kotlin, e os <em>tagged unions</em> no coração de praticamente todo interpretador e compilador.</p>
+</div>
+</div>
+</section>
+<section id="resumo" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="resumo"><span class="header-section-number">3.7</span> Resumo</h2>
+<ul>
+<li>Uma <strong>struct</strong> agrupa campos <strong>lado a lado</strong> num só tipo; acesso por <code>.</code> ou <code>-&gt;</code>. É o tijolo de toda estrutura de dados.</li>
+<li>O <strong>alinhamento</strong> faz o compilador inserir <strong>padding</strong> entre campos, então <code>sizeof</code> pode passar da soma dos campos. <strong>Declarar do maior para o menor</strong> minimiza o desperdício.</li>
+<li>Uma <strong>union</strong> <strong>sobrepõe</strong> os membros nos mesmos bytes: tamanho do maior membro, só um válido por vez. Sozinha é perigosa; útil como <strong>união etiquetada</strong>.</li>
+<li><code>sizeof</code> e <code>offsetof</code> revelam o layout real — use-os quando a memória importar.</li>
+</ul>
+<p>No próximo capítulo, fechamos os fundamentos com a <strong>modularização</strong>: como separar interface (<code>.h</code>) de implementação (<code>.c</code>), proteger cabeçalhos e compilar um projeto C real em partes — exatamente o esqueleto que cada capítulo de código deste livro seguiu.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+eyJjb250ZW50cyI6W3sibWV0aG9kTmFtZSI6ImludGVycHJldCIsImNlbGxOYW1lIjoib2pzLWNlbGwtMSIsImlubGluZSI6ZmFsc2UsInNvdXJjZSI6InZpZXdvZiBvcmRlbSA9IElucHV0cy5yYWRpbyhbXCJjaGFyLCBpbnQsIGNoYXIgIChQYWRkZWQpXCIsIFwiaW50LCBjaGFyLCBjaGFyICAoUGFja2VkKVwiXSwgeyB2YWx1ZTogXCJjaGFyLCBpbnQsIGNoYXIgIChQYWRkZWQpXCIsIGxhYmVsOiBcIm9yZGVtIGRlIGRlY2xhcmHDp8Ojb1wiIH0pXG4ifSx7Im1ldGhvZE5hbWUiOiJpbnRlcnByZXQiLCJjZWxsTmFtZSI6Im9qcy1jZWxsLTIiLCJpbmxpbmUiOmZhbHNlLCJzb3VyY2UiOiJ7XG4gIGNvbnN0IE8gPSBcIiNGNTc5M0JcIiwgVCA9IFwiIzJBOUQ4RlwiLCBBID0gXCIjRjJBNjVBXCIsIEcgPSBcIiNFOUU0RENcIjtcbiAgY29uc3QgbGF5b3V0cyA9IHtcbiAgICBcImNoYXIsIGludCwgY2hhciAgKFBhZGRlZClcIjogW1tcImFcIiwgT10sIFtcIsK3XCIsIEddLCBbXCLCt1wiLCBHXSwgW1wiwrdcIiwgR10sIFtcImJcIiwgVF0sIFtcImJcIiwgVF0sIFtcImJcIiwgVF0sIFtcImJcIiwgVF0sIFtcImNcIiwgQV0sIFtcIsK3XCIsIEddLCBbXCLCt1wiLCBHXSwgW1wiwrdcIiwgR11dLFxuICAgIFwiaW50LCBjaGFyLCBjaGFyICAoUGFja2VkKVwiOiBbW1wiYlwiLCBUXSwgW1wiYlwiLCBUXSwgW1wiYlwiLCBUXSwgW1wiYlwiLCBUXSwgW1wiYVwiLCBPXSwgW1wiY1wiLCBBXSwgW1wiwrdcIiwgR10sIFtcIsK3XCIsIEddXVxuICB9O1xuICBjb25zdCBMID0gbGF5b3V0c1tvcmRlbV07XG4gIGNvbnN0IGNlbGxzID0gTC5tYXAoKFtmLCBjXSwgaSkgPT4gYDxkaXYgc3R5bGU9XCJkaXNwbGF5OmZsZXg7ZmxleC1kaXJlY3Rpb246Y29sdW1uO2FsaWduLWl0ZW1zOmNlbnRlclwiPlxuICAgICAgPGRpdiBzdHlsZT1cIndpZHRoOjMwcHg7aGVpZ2h0OjMwcHg7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtqdXN0aWZ5LWNvbnRlbnQ6Y2VudGVyO2JhY2tncm91bmQ6JHtjfTtjb2xvcjoke2YgPT09IFwiwrdcIiA/IFwiIzk5OVwiIDogXCIjZmZmXCJ9O2ZvbnQ6NjAwIDEzcHggc2Fucy1zZXJpZjtib3JkZXI6MXB4IHNvbGlkICNmZmZcIj4ke2Z9PC9kaXY+XG4gICAgICA8ZGl2IHN0eWxlPVwiZm9udDo4cHggbW9ub3NwYWNlO2NvbG9yOiNhYWFcIj4ke2l9PC9kaXY+PC9kaXY+YCkuam9pbihcIlwiKTtcbiAgY29uc3QgcGFkID0gTC5maWx0ZXIoKFtmXSkgPT4gZiA9PT0gXCLCt1wiKS5sZW5ndGg7XG4gIHJldHVybiBodG1sYDxkaXY+XG4gICAgPGRpdiBzdHlsZT1cImRpc3BsYXk6ZmxleFwiPiR7Y2VsbHN9PC9kaXY+XG4gICAgPGRpdiBzdHlsZT1cIm1hcmdpbi10b3A6OHB4O2ZvbnQ6MTNweCBzYW5zLXNlcmlmO2NvbG9yOiMyNjQ2NTNcIj5cbiAgICAgIHRvdGFsOiA8Yj4ke0wubGVuZ3RofSBieXRlczwvYj4gJm5ic3A7wrcmbmJzcDsgcGFkZGluZzogPGIgc3R5bGU9XCJjb2xvcjojOTk5XCI+JHtwYWR9IGJ5dGVzPC9iPiAoY2luemEpICZuYnNwO8K3Jm5ic3A7IGRhZG9zIMO6dGVpczogNiBieXRlczwvZGl2PlxuICA8L2Rpdj5gO1xufVxuIn0seyJtZXRob2ROYW1lIjoiaW50ZXJwcmV0UXVpZXQiLCJzb3VyY2UiOiJzaGlueUlucHV0KCdvcmRlbScpIn1dfQ==
+</script>
+<script type="module">
+if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }
+window._ojs.paths.runtimeToDoc = "../../part-2-foundations";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../part-2-foundations/02-memory.html" class="pagination-link" aria-label="[Gerenciamento de memória: a pilha e o heap]{.typing-effect}">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Gerenciamento de memória: a pilha e o heap</span></span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../part-2-foundations/04-modularization.html" class="pagination-link" aria-label="[Modularização: interface e implementação]{.typing-effect}">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title"><span class="typing-effect">Modularização: interface e implementação</span></span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
