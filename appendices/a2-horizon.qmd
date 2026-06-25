@@ -1,0 +1,5 @@
+# Horizonte: o que estudar depois
+
+::: {.callout-note title="🚧 Em construção"}
+Capítulo ainda não escrito. A ordem e o cronograma de escrita estão no `_quarto.yml` e no método de trabalho do projeto.
+:::
