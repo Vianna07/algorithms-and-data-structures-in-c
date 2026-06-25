@@ -1,0 +1,311 @@
+---
+# 07-shadow-data.qmd — Estratégia Shadow Data (void*) + contraste com macros.
+---
+
+# [Shadow Data: um contêiner para qualquer tipo]{.typing-effect}
+
+As listas dos capítulos 5 e 6 guardavam `int`. Mas e se você quiser uma lista de
+`double`? De `char *`? De uma `struct Produto`? A resposta ingênua — copiar o
+arquivo e trocar `int` por `double` — leva a dez cópias quase idênticas para
+manter em sincronia. Em C não existe `template` como em C++ nem genéricos como em
+Java; precisamos de outra saída.
+
+Este capítulo é sobre a estratégia que dá a você um **contêiner genérico
+reutilizável**: a **Shadow Data** (dados sombra). A ideia é separar o que a
+estrutura controla (o esqueleto de nós e ponteiros) do que ela guarda (o dado de
+negócio, de qualquer tipo) usando o ponteiro genérico `void *`. É o destaque do
+livro — e o momento em que todo o estudo de ponteiros começa a pagar dividendos.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* um balcão de
+**guarda-volumes**: pessoas entregam objetos completamente diferentes (uma mala,
+um violão, uma caixa) e recebem um **gancho numerado**. O atendente organiza os
+ganchos por número sem se importar com o que há dentro de cada item. Ao lado, um
+rótulo: "a estrutura cuida dos ganchos (controle); o conteúdo é opaco (`void*`)".
+Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.
+:::
+
+## A analogia: o guarda-volumes
+
+Pense num guarda-volumes de museu. Você entrega qualquer coisa — uma mochila, um
+casaco, um capacete — e recebe uma ficha numerada. O sistema do guarda-volumes
+gerencia **ganchos e números**; ele não sabe (nem precisa saber) o que há dentro
+de cada item. Quando você volta com a ficha, ele devolve o que está pendurado
+naquele gancho.
+
+A estrutura genérica funciona igual. Ela administra o **controle** — os nós, os
+ponteiros, o tamanho — e trata o dado de negócio como um pacote opaco, acessível
+só por um endereço (`void *`). Quem sabe o que há "dentro" é o código que usa a
+estrutura, não a estrutura. Essa separação entre **o esqueleto (a sombra)** e **o
+dado real** é o coração da Shadow Data.
+
+## O problema concreto: reescrever a lista por tipo
+
+A lista do capítulo 6 amarrava o nó ao tipo: `int value;`. Para guardar outra
+coisa, seria preciso outro `SNode`, outro `slist_push_front`, outro tudo. Multiplique
+isso pelas estruturas do livro (pilha, fila, árvore...) e por cada tipo do seu
+programa: é uma explosão combinatória de código duplicado.
+
+A Shadow Data corta o nó pela raiz: em vez de um `int`, o nó guarda um `void *`.
+
+## Do `int` ao `void *`: o nó-sombra
+
+```{.c include="src/ch07-shadow-data/generic_list.h"}
+```
+
+Olhe o `GNode`: ele não tem mais um valor, e sim um **`void *data`** — um endereço
+"sem tipo" para onde o dado realmente mora. O nó virou uma **sombra**: puro
+controle (o ponteiro para o dado e o `next`), sem nada do negócio. A @fig-shadow
+mostra essa separação.
+
+```{dot}
+//| label: fig-shadow
+//| fig-width: 4.6
+//| fig-height: 1.8
+//| fig-cap: "O nó-sombra (azul) guarda só controle: um `void *data` e o `next`. O dado real (laranja) — de qualquer tipo — vive à parte, apontado pelo `void*`. A mesma estrutura serve a todos os tipos."
+digraph shadow {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+
+  gnode [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="8"><tr><td colspan="2"><font point-size="9">GNode — a "sombra" (só controle)</font></td></tr><tr><td port="d" bgcolor="#E7F1EF">data&#160;&#8226;</td><td port="x" bgcolor="#E7F1EF">next&#160;&#8226;</td></tr></table>>];
+  data [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="8"><tr><td bgcolor="#F5793B"><font color="white"><b>dado real</b></font></td></tr><tr><td><font point-size="9">int, string, struct…</font></td></tr></table>>];
+  nxt [shape=plaintext, label=<<font color="#888888">próximo nó →</font>>];
+
+  gnode:d -> data [color="#E2725B", style=dashed, label=<<font color="#E2725B">void*</font>>];
+  gnode:x -> nxt [color="#264653"];
+}
+```
+
+::: {.callout-note title="Ideia central"}
+Na lista do capítulo 6, o dado **morava dentro** do nó (`int value`). Na Shadow
+Data, o nó guarda apenas o **endereço** do dado, que mora à parte. O nó passa a
+ser um esqueleto reutilizável: trocar o tipo do dado não muda uma linha sequer da
+estrutura. O preço — você já deve estar farejando — é que a estrutura **deixa de
+saber o que está guardando**.
+:::
+
+## Ponteiros de função: ensinando o tipo à estrutura
+
+Se a lista não conhece o tipo, como ela faz para **comparar** dois elementos numa
+busca, ou para **liberar** cada elemento ao ser destruída? Ela não faz — ela
+**delega**. O chamador entrega, junto, as funções que sabem lidar com o tipo
+concreto. É exatamente o padrão do `qsort` da biblioteca padrão, que recebe um
+ponteiro para a função de comparação.
+
+No cabeçalho acima, três `typedef` definem esses contratos: `FreeFn` (como
+liberar um dado), `CmpFn` (como comparar dois, no mesmo formato `<0, 0, >0` do
+`qsort`) e `ApplyFn` (o que fazer com cada dado ao percorrer). A estrutura guarda
+o `free_fn` e recebe os outros quando precisa.
+
+## O contêiner genérico
+
+Criar e destruir mostram a Shadow Data em ação. Repare em `glist_free`: ele libera
+**duas coisas distintas** — o dado de negócio (via `free_fn`, *se* a lista for
+dona dele) e, separadamente, o nó-sombra (que é sempre nosso):
+
+```{.c include="src/ch07-shadow-data/generic_list.c" snippet="glife"}
+```
+
+Inserir é como na lista comum, só que o nó recebe um `void *` em vez de um `int`:
+
+```{.c include="src/ch07-shadow-data/generic_list.c" snippet="gpushfront"}
+```
+
+Buscar é onde o ponteiro de função brilha: a lista varre os nós, mas quem decide
+se dois dados são "iguais" é o `cmp` fornecido pelo chamador — igualzinho ao
+`qsort`:
+
+```{.c include="src/ch07-shadow-data/generic_list.c" snippet="gfind"}
+```
+
+E percorrer aplica uma função a cada dado, com um contexto opcional (útil para
+acumular um resultado, escrever num arquivo, etc.):
+
+```{.c include="src/ch07-shadow-data/generic_list.c" snippet="gforeach"}
+```
+
+::: {.callout-warning title="Cuidado: memory leak"}
+Com `void *`, a **posse** (*ownership*) do dado vira uma decisão sua, explícita. A
+lista é dona dos dados e deve liberá-los? Então passe um `free_fn` (ex.: `free`).
+Os dados são emprestados (literais de string, objetos de outra estrutura)? Passe
+`NULL` e a lista **não os toca**. Errar isso causa *leak* (esquecer de liberar) ou
+*double free* (liberar algo que outro já liberou). O `void *` te dá poder e te
+cobra atenção: a estrutura não consegue mais te proteger automaticamente.
+:::
+
+## Uma lista, vários tipos
+
+Aqui está a recompensa. A função `main` usa a **mesma** `GList` para guardar
+`int`s no heap (dos quais a lista é dona) e depois `char *` literais (dos quais
+não é) — sem uma linha de código de estrutura duplicada. As funções auxiliares
+(comparar, imprimir) são o que cada tipo traz de específico:
+
+```{.c include="src/ch07-shadow-data/main.c" snippet="helpers"}
+```
+
+```{.c include="src/ch07-shadow-data/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+ints: 30 20 10
+buscar 20 -> achou
+nomes: grace linus ada
+```
+
+::: {.content-visible when-format="html"}
+**Troque o tipo.** O esqueleto da lista é o mesmo; só muda o que pende de cada
+`void *`. Escolha um tipo e veja a estrutura acomodá-lo sem alteração:
+
+```{ojs}
+//| echo: false
+viewof tipo = Inputs.radio(["int", "string", "struct Point"], { value: "int", label: "Tipo do dado de negócio" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const samples = {
+    "int": ["10", "20", "30"],
+    "string": ["\"ada\"", "\"linus\"", "\"grace\""],
+    "struct Point": ["{1,2}", "{3,4}", "{5,6}"]
+  };
+  const item = (v) => html`<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="display:flex;font:600 12px sans-serif">
+        <span style="background:#E7F1EF;color:#2A9D8F;padding:5px 9px;border-radius:6px 0 0 6px">data</span>
+        <span style="background:#E7F1EF;color:#2A9D8F;padding:5px 9px;border-radius:0 6px 6px 0">next</span>
+      </div>
+      <div style="color:#E2725B;font:11px sans-serif">↓ void*</div>
+      <div style="background:#F5793B;color:#fff;padding:5px 11px;border-radius:6px;font:600 12px monospace">${v}</div>
+    </div>`;
+  return html`<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <b style="color:#2A9D8F;align-self:center">head →</b>
+      ${samples[tipo].map(item)}
+      <span style="color:#999;align-self:center">→ NULL</span>
+    </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção deixa você trocar o tipo do dado (`int`, `string`, `struct`) e
+ver a mesma estrutura acomodá-lo sem mudança — só muda o que pende de cada
+`void *` (ver @fig-shadow).
+:::
+
+## Os trade-offs do `void *`
+
+::: {.callout-important title="Trade-off: generalidade × type-safety × overhead"}
+A Shadow Data compra **máxima generalidade** (uma implementação serve todo tipo,
+hoje e amanhã) ao preço de:
+
+- **Perder a type-safety:** o compilador não verifica mais nada. Guardar um `int`
+  e ler como `double`, ou trocar a ordem dos argumentos de um `cmp`, compila sem
+  reclamar e quebra em tempo de execução. Os `cast`s são por sua conta e risco.
+- **Pagar overhead:** cada dado costuma exigir uma alocação separada no heap (mais
+  *pointer chasing*, pior localidade de cache), e cada operação passa por uma
+  **chamada indireta** via ponteiro de função, que o compilador não consegue
+  *inline*.
+- **Mais cerimônia:** `cast`s, funções auxiliares e a gestão manual de posse em
+  todo ponto de uso.
+:::
+
+Existe uma alternativa que faz o trade-off oposto — e todo projetista deveria
+conhecê-la.
+
+## O contraste: contêineres por macro (tempo de compilação)
+
+E se, em vez de apagar o tipo em tempo de execução, nós **gerássemos o código
+concreto para cada tipo** em tempo de compilação? É o que um *molde* de macro faz:
+uma macro que, expandida, escreve a struct e as funções para o tipo que você
+pedir. O compilador volta a enxergar o tipo — então a type-safety e a velocidade
+voltam.
+
+```{.c include="src/ch07-shadow-data/generic_macro.h"}
+```
+
+A macro `DEFINE_STACK(T, Name)` usa o operador `##` (*token pasting*, "colagem de
+tokens") para montar nomes: `Name##_push` vira `IntStack_push` quando você
+instancia com `DEFINE_STACK(int, IntStack)`. Cada uso gera um tipo completo,
+**type-safe** e com os dados **inline** (contíguos, como o array do capítulo 5 —
+sem `void *`, sem alocação por elemento):
+
+```{.c include="src/ch07-shadow-data/macro_demo.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+IntStack (pop ate esvaziar): 30 20 10
+```
+
+A linha comentada `IntStack_push(&s, 3.14)` **não compilaria**: o compilador sabe
+que a pilha é de `int`. Essa proteção é justamente o que o `void *` abre mão.
+
+::: {.callout-warning title="Cuidado: o lado sombrio das macros"}
+O poder das macros vem com armadilhas. Um erro de sintaxe dentro do molde gera
+mensagens do compilador apontando para a **expansão**, não para o seu código —
+crípticas e difíceis de rastrear. Não dá para *stepar* com o depurador dentro de
+uma macro. Cada instanciação duplica o código gerado (*code bloat*). E o
+pré-processador não tem noção de escopo nem de tipos: é substituição de texto, com
+todas as pegadinhas de parênteses e ponto-e-vírgula que isso implica. Por isso,
+para **aprender**, o `void *` é o melhor primeiro mestre; a macro é a ferramenta
+que vale **reconhecer** e usar com cuidado.
+:::
+
+## `void *` × macros: como escolher
+
+| Critério | `void *` (Shadow Data) | Macro (molde) |
+|:--|:--:|:--:|
+| Verificação de tipo | em execução (você) | em compilação (compilador) |
+| Overhead de tempo/espaço | indireção + heap por item | **nenhum** (inline) |
+| Implementações geradas | **uma só**, p/ todo tipo | uma cópia por tipo |
+| Mensagens de erro | claras | crípticas (na expansão) |
+| Depuração | normal | difícil |
+| Tipos em tempo de execução | ✅ (lista heterogênea, plugins) | ❌ (tipos fixos no build) |
+
+: Os dois caminhos para genéricos em C, fazendo trade-offs opostos. {tbl-colwidths="[34,33,33]"}
+
+::: {.callout-tip title="Pense como projetista"}
+Use **`void *`** quando a generalidade em tempo de execução é o que importa: APIs
+de biblioteca que não conhecem os tipos do cliente, coleções heterogêneas, sistemas
+de *plugin*, ou quando uma única implementação compartilhada vale mais que o último
+ciclo de CPU (é por isso que o `qsort` da libc é `void *`). Use **macros** quando
+você tem poucos tipos conhecidos e quer a velocidade e a type-safety de código
+escrito à mão, sem reescrevê-lo (contêineres de alto desempenho como o *klib*). E,
+honestamente: na maior parte do código de aplicação, um array dinâmico concreto do
+tipo certo (capítulo 5) já resolve — alcance os genéricos quando a repetição doer
+de verdade.
+:::
+
+::: {.callout-note title="No mundo real"}
+A própria biblioteca padrão do C é Shadow Data: **`qsort`** e **`bsearch`** ordenam
+e buscam em qualquer array recebendo `void *`, o tamanho do elemento e um ponteiro
+para a função de comparação — o mesmo `CmpFn` deste capítulo. A **GLib** (base do
+GNOME) oferece `GPtrArray`/`GList` genéricos via `gpointer` (um `void *`). Do lado
+das macros, o **klib** (`kvec.h`, `khash.h`) entrega vetores e tabelas hash
+type-safe gerados por macro, e o **`sys/queue.h`** dos sistemas BSD/Linux dá listas
+e filas intrusivas inteiras feitas de macros.
+:::
+
+## Resumo
+
+- A **Shadow Data** separa o **controle** (o nó-esqueleto: ponteiros, tamanho) do
+  **dado de negócio** (de qualquer tipo), guardando este último por um `void *`.
+  Uma implementação serve a todos os tipos.
+- Como a estrutura deixa de conhecer o tipo, ela **delega** as operações
+  específicas a **ponteiros de função** (`cmp`, `free`, `apply`) — o padrão do
+  `qsort`.
+- O custo é **perder a type-safety**, **pagar overhead** (indireção, heap por
+  item, pior cache) e **gerenciar a posse** dos dados à mão (`free_fn` ou `NULL`).
+- O **contraponto** são as **macros-molde**: geram código concreto por tipo, com
+  type-safety e zero overhead — ao custo de erros crípticos, depuração difícil e
+  *code bloat*.
+- Para **aprender**, prefira `void *` (concreto, depurável, é como a libc faz);
+  saiba **reconhecer** as macros como a alternativa de tempo de compilação.
+
+No próximo capítulo, usamos a lição genérica em estruturas **restritas** — pilhas
+e filas — implementando-as sobre os dois *backings* que já construímos (array
+dinâmico e lista encadeada) e comparando os dois lado a lado.
