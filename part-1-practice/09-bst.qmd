@@ -1,0 +1,311 @@
+---
+# 09-bst.qmd — Árvores Binárias de Busca: inserção, busca, remoção, percursos.
+---
+
+# [Árvores de busca: organizando para achar rápido]{.typing-effect}
+
+Todas as estruturas até aqui buscam em $O(n)$: array, lista, pilha, fila — para
+achar um valor, no pior caso, é preciso olhar todos. Neste capítulo encontramos a
+primeira estrutura em que **buscar pode custar $O(\log n)$**: a **árvore binária
+de busca** (BST). O truque não é mágica — é organização. Em vez de uma sequência
+plana, os dados ficam numa hierarquia com uma regra que permite, a cada passo,
+**descartar metade** do que sobrou.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* o jogo de
+adivinhar um número de 1 a 100. Uma pessoa pensa "57"; a outra chuta e ouve
+"maior" ou "menor", e a faixa possível encolhe pela metade a cada tentativa (um
+diagrama de barra sendo cortado ao meio repetidamente). Legenda: "cada comparação
+elimina metade — é assim que a árvore busca". Estilo lúdico à mão, paleta quente.
+Arte a comissionar — substituir este box.
+:::
+
+## A analogia: adivinhe o número
+
+No jogo de adivinhar um número de 1 a 100, a melhor estratégia é chutar 50: a
+resposta "maior" ou "menor" **elimina metade** das possibilidades. Cada palpite
+seguinte corta a metade que sobrou. Em ~7 tentativas você acha qualquer número —
+porque $\log_2 100 \approx 7$.
+
+A árvore binária de busca **materializa** essa estratégia. Cada nó é um "palpite";
+ir para a esquerda ou para a direita é o "menor/maior". Se a árvore estiver
+equilibrada, cada passo descarta metade dos nós, e a busca custa $O(\log n)$.
+
+## A invariante de ordenação
+
+A BST é uma árvore binária (cada nó tem até dois filhos) com **uma regra de ouro**:
+
+> Para todo nó, tudo na subárvore **esquerda** é **menor**, e tudo na subárvore
+> **direita** é **maior**.
+
+Essa invariante, mantida em toda inserção, é o que permite buscar descartando
+metades. O nó carrega o valor e dois ponteiros:
+
+```{.c include="src/ch09-bst/bst.h"}
+```
+
+A @fig-bst mostra a árvore que usaremos no capítulo. Confira a invariante em
+qualquer nó: à esquerda do `50` estão `30, 20, 40` (todos menores); à direita,
+`70, 60, 80` (todos maiores).
+
+```{dot}
+//| label: fig-bst
+//| fig-width: 3.3
+//| fig-height: 3.0
+//| fig-cap: "Uma BST equilibrada. Em todo nó vale a invariante: subárvore esquerda só com valores menores, direita só com maiores."
+digraph bst {
+  bgcolor="transparent";
+  node [shape=circle, style=filled, fillcolor="#F5793B", fontcolor="white",
+        fontname="Inter", fontsize=12, fixedsize=true, width=0.5];
+  edge [color="#264653", arrowsize=0.7];
+  50 -> 30;
+  50 -> 70;
+  30 -> 20;
+  30 -> 40;
+  70 -> 60;
+  70 -> 80;
+}
+```
+
+## Inserção: descer até achar o lugar
+
+Inserir é seguir a invariante até cair num ponto vazio (`NULL`) e criar ali uma
+folha. A cada nó, vamos para a esquerda (se menor) ou direita (se maior):
+
+```{.c include="src/ch09-bst/bst.c" snippet="insert"}
+```
+
+O custo é $O(h)$, onde $h$ é a **altura** da árvore — quantos níveis descemos.
+Guarde esse "$O(h)$"; toda a riqueza (e o perigo) da BST está em quanto vale $h$.
+
+## Busca: a cada passo, descarte metade
+
+Buscar é o mesmo movimento, sem criar nada: compare, vá para um lado, repita.
+
+```{.c include="src/ch09-bst/bst.c" snippet="contains"}
+```
+
+Numa árvore equilibrada, cada comparação elimina metade dos nós restantes — é o
+jogo da adivinhação. Por isso a busca é $O(h) = O(\log n)$ no caso equilibrado.
+Compare com a lista do capítulo 6, onde achar custa sempre $O(n)$: a árvore não
+varre, ela **navega**.
+
+## Percursos: visitar todos os nós
+
+Às vezes queremos percorrer a árvore inteira. Há quatro ordens clássicas. As três
+em **profundidade** (DFS) são recursivas e diferem *apenas* na hora de visitar a
+raiz em relação aos filhos:
+
+```{.c include="src/ch09-bst/bst.c" snippet="traversals"}
+```
+
+::: {.callout-tip title="Ideia central"}
+O percurso **em-ordem** (esquerda → raiz → direita) visita os valores em **ordem
+crescente** — de graça. É consequência direta da invariante: tudo à esquerda é
+menor, tudo à direita é maior. Ou seja: uma BST é, implicitamente, seus dados
+**ordenados**. Foi exatamente o que a saída `20 30 40 50 60 70 80` mostrou.
+:::
+
+A quarta ordem é em **largura** (BFS): visitar nível por nível, de cima para
+baixo. Ela não é recursiva — precisa de uma **fila** para lembrar os próximos nós
+a visitar, reaproveitando a ideia FIFO do capítulo 8:
+
+```{.c include="src/ch09-bst/bst.c" snippet="bfs"}
+```
+
+## Remoção: os três casos
+
+Remover é a operação mais delicada, porque não podemos deixar um buraco que quebre
+a invariante. Há três casos, em dificuldade crescente:
+
+1. **Folha** (sem filhos): basta liberar o nó e apontar o pai para `NULL`.
+2. **Um filho**: o pai "adota" o único neto — o filho sobe no lugar do removido.
+3. **Dois filhos**: o caso difícil. Não dá para escolher um filho para subir sem
+   desorganizar tudo. A solução: achar o **sucessor in-order** (o menor valor da
+   subárvore direita), **copiar** seu valor para o nó que íamos remover, e então
+   remover o sucessor lá embaixo — que, por ser o menor, nunca tem filho à
+   esquerda, recaindo no caso 1 ou 2.
+
+```{.c include="src/ch09-bst/bst.c" snippet="remove"}
+```
+
+No demo, removemos a raiz `50` (que tem dois filhos): o sucessor `60` assume seu
+lugar, e o `inorder` continua ordenado — `20 30 40 60 70 80`. A invariante
+sobreviveu.
+
+## Vendo funcionar
+
+O programa monta a árvore da @fig-bst, imprime os quatro percursos, busca dois
+valores e remove a raiz:
+
+```{.c include="src/ch09-bst/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+inorder (ordenado): 20 30 40 50 60 70 80
+preorder          : 50 30 20 40 70 60 80
+postorder         : 20 40 30 60 80 70 50
+levelorder (BFS)  : 50 30 70 20 40 60 80
+contem 40? sim | contem 45? nao
+altura: 3
+apos remover 50    : 20 30 40 60 70 80
+```
+
+## A altura é tudo: balanceamento e degeneração
+
+Repetimos que as operações são $O(h)$. Quando $h$ vale $O(\log n)$, a BST é
+maravilhosa. Mas $h$ depende de **como** os dados entraram. Insira `10, 20, 30,
+40, 50` **em ordem crescente** e veja o desastre da @fig-degenerada: cada nó só
+tem filho à direita. A árvore **degenera numa lista** — altura $n$, e toda
+operação volta a ser $O(n)$.
+
+```{.c include="src/ch09-bst/bst.c" snippet="height"}
+```
+
+```{dot}
+//| label: fig-degenerada
+//| fig-width: 5.0
+//| fig-height: 0.7
+//| fig-cap: "Inserir em ordem crescente degenera a BST numa lista: cada nó só tem filho à direita, a altura vira $n$ e a busca, $O(n)$. É o pior caso — compare com a árvore equilibrada da @fig-bst."
+digraph deg {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=circle, style=filled, fillcolor="#E2725B", fontcolor="white",
+        fontname="Inter", fontsize=12, fixedsize=true, width=0.5];
+  edge [color="#264653", arrowsize=0.7];
+  10 -> 20 -> 30 -> 40 -> 50;
+}
+```
+
+::: {.callout-important title="Trade-off: Big-O médio × pior caso"}
+A BST tem dois rostos:
+
+- **Caso médio** (inserções em ordem aleatória): altura $O(\log n)$ — busca,
+  inserção e remoção em $O(\log n)$. Rápida e elegante.
+- **Pior caso** (inserções já ordenadas, ou quase): altura $O(n)$ — tudo
+  degenera para $O(n)$, pior que um array para muitas tarefas.
+
+Essa fragilidade é a maior limitação da BST simples. A solução não é abandoná-la,
+e sim **rebalanceá-la** automaticamente a cada inserção/remoção — é o que fazem as
+árvores balanceadas do box "No mundo real".
+:::
+
+## Veja acontecer
+
+::: {.content-visible when-format="html"}
+**Os percursos lado a lado.** Escolha uma ordem e veja, sobre a mesma árvore, em
+que sequência os nós são visitados (o número verde é a ordem de visita):
+
+```{ojs}
+//| echo: false
+viewof trav = Inputs.radio(["pré-ordem", "em-ordem", "pós-ordem", "em-largura (BFS)"], { value: "em-ordem", label: "Percurso" })
+```
+
+```{ojs}
+//| echo: false
+bst_nodes = ({
+  50: { x: 150, y: 28 }, 30: { x: 82, y: 92 }, 70: { x: 218, y: 92 },
+  20: { x: 40, y: 156 }, 40: { x: 124, y: 156 }, 60: { x: 176, y: 156 }, 80: { x: 260, y: 156 }
+})
+bst_edges = [[50, 30], [50, 70], [30, 20], [30, 40], [70, 60], [70, 80]]
+bst_orders = ({
+  "pré-ordem": [50, 30, 20, 40, 70, 60, 80],
+  "em-ordem": [20, 30, 40, 50, 60, 70, 80],
+  "pós-ordem": [20, 40, 30, 60, 80, 70, 50],
+  "em-largura (BFS)": [50, 30, 70, 20, 40, 60, 80]
+})
+```
+
+```{ojs}
+//| echo: false
+{
+  const order = bst_orders[trav];
+  const idx = new Map(order.map((v, i) => [v, i + 1]));
+  const edges = bst_edges.map(([a, b]) => {
+    const pa = bst_nodes[a], pb = bst_nodes[b];
+    return `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="#264653" stroke-width="1.5"/>`;
+  }).join("");
+  const nodes = Object.entries(bst_nodes).map(([v, p]) => `
+    <circle cx="${p.x}" cy="${p.y}" r="16" fill="#F5793B" stroke="#fff" stroke-width="2"/>
+    <text x="${p.x}" y="${p.y + 4}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">${v}</text>
+    <circle cx="${p.x + 15}" cy="${p.y - 15}" r="9" fill="#2A9D8F"/>
+    <text x="${p.x + 15}" y="${p.y - 11}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">${idx.get(+v)}</text>`).join("");
+  return html`<div>
+    <svg viewBox="0 0 300 185" style="max-width:340px;width:100%">${edges}${nodes}</svg>
+    <div style="font:14px sans-serif;color:#264653;margin-top:4px">ordem de visita: <b>${order.join(" → ")}</b></div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção destaca, sobre a mesma árvore, a sequência de visita de cada
+percurso. As quatro ordens, na árvore da @fig-bst:
+
+- **pré-ordem:** 50, 30, 20, 40, 70, 60, 80
+- **em-ordem:** 20, 30, 40, 50, 60, 70, 80 (crescente!)
+- **pós-ordem:** 20, 40, 30, 60, 80, 70, 50
+- **em-largura:** 50, 30, 70, 20, 40, 60, 80
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Use uma árvore de busca quando precisar manter um conjunto **ordenado** com
+inserção, remoção **e** busca todas eficientes, ou quando consultas por **faixa**
+("todos entre 30 e 60") e "próximo maior/menor" importam — coisas que uma tabela
+hash não dá. Mas **não escreva uma BST simples para produção**: a degeneração para
+$O(n)$ é fácil de disparar (dados quase ordenados são comuns). Use uma árvore
+**balanceada** pronta (ver abaixo) ou a estrutura ordenada da sua linguagem. A BST
+crua é para **entender** o mecanismo — que é exatamente o que estamos fazendo.
+:::
+
+::: {.callout-note title="No mundo real: árvores balanceadas"}
+A resposta à degeneração são as **árvores auto-balanceadas**, que fazem pequenas
+rotações a cada inserção/remoção para manter a altura em $O(\log n)$ **garantido**.
+As **AVL** (mais rígidas, busca mais rápida) e as **Red-Black** (rebalanceiam
+menos, escrita mais rápida) são as clássicas: a Red-Black está por trás do
+`std::map`/`std::set` do C++, do `TreeMap` do Java e de várias estruturas do
+**kernel do Linux** (escalonador, gerência de memória). É a BST deste capítulo,
+blindada contra o pior caso.
+:::
+
+::: {.callout-note title="No mundo real: árvores de disco e de texto"}
+Quando os dados não cabem na RAM, entram as **B-trees** e **B+-trees**: árvores
+"gordas" com centenas de filhos por nó, desenhadas para minimizar leituras de
+disco/SSD. São a espinha dorsal dos índices de bancos de dados (**PostgreSQL**,
+**MySQL**) e de sistemas de arquivos (**NTFS**, **ext4**). Para texto, as **tries**
+(árvores de prefixo) e **radix trees** indexam por caractere e brilham em
+**autocompletar** e **roteamento de IP**.
+:::
+
+## Resumo
+
+- A BST mantém a **invariante de ordenação** (esquerda menor, direita maior), que
+  permite buscar **descartando metade** a cada passo — como o jogo de adivinhar.
+- Inserção, busca e remoção são todas $O(h)$, onde $h$ é a altura.
+- O percurso **em-ordem** entrega os dados **ordenados**; o **BFS** visita por
+  níveis usando uma fila (cap. 8).
+- A **remoção** tem três casos; o difícil (dois filhos) se resolve com o
+  **sucessor in-order**.
+- O calcanhar de Aquiles é a **altura**: dados ordenados degeneram a BST numa
+  lista ($O(n)$). A cura são as **árvores balanceadas** (AVL, Red-Black).
+
+### Tabela de complexidade do capítulo
+
+| Operação | Caso médio (equilibrada) | Pior caso (degenerada) |
+|:--|:--:|:--:|
+| Busca (`contains`) | $O(\log n)$ | $O(n)$ |
+| Inserção (`insert`) | $O(\log n)$ | $O(n)$ |
+| Remoção (`remove`) | $O(\log n)$ | $O(n)$ |
+| Percurso (qualquer) | $O(n)$ | $O(n)$ |
+| Mínimo / máximo | $O(\log n)$ | $O(n)$ |
+| Espaço | $O(n)$ | $O(n)$ |
+
+: Tempo das operações da BST. A diferença médio × pior caso é toda governada pela altura. {tbl-colwidths="[40,30,30]"}
+
+No próximo capítulo, vamos a uma árvore com uma invariante diferente — mais frouxa,
+porém **sempre equilibrada por construção**: o **heap binário**, que mora num array
+e serve de base para filas de prioridade e para o Huffman.
