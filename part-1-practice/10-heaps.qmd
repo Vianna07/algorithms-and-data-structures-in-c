@@ -1,0 +1,281 @@
+---
+# 10-heaps.qmd — Filas de prioridade: o min-heap binário em array.
+---
+
+# [Filas de prioridade: o heap binário]{.typing-effect}
+
+A fila do capítulo 8 atende por **ordem de chegada** (FIFO). Mas muitos problemas
+pedem outra coisa: atender por **prioridade** — o mais urgente primeiro, não
+importa quando chegou. É a **fila de prioridade**, e sua implementação eficiente é
+uma das estruturas mais elegantes do livro: o **heap binário**. Ele mantém o
+elemento de maior prioridade sempre à mão e suporta inserir e remover em
+$O(\log n)$ — e, surpresa, vive num **array comum**, sem um único ponteiro.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* a triagem de um
+pronto-socorro. Vários pacientes esperam, cada um com uma etiqueta de gravidade
+(número); a enfermeira chama **sempre o mais grave**, ignorando a ordem de
+chegada. Uma seta aponta "próximo" para o paciente de menor número (mais urgente).
+Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.
+:::
+
+## A analogia: a triagem do pronto-socorro
+
+Num pronto-socorro, não se atende por ordem de chegada — atende-se por
+**gravidade**. Quem chega infartando passa na frente de quem espera há uma hora
+com um corte no dedo. A cada chamada, a equipe precisa achar **o caso mais grave**
+rapidamente, e quando um novo paciente chega, encaixá-lo na ordem de urgência sem
+reorganizar a sala inteira.
+
+É exatamente o contrato de uma fila de prioridade: **achar o mínimo** (o mais
+urgente) e **inserir** novos elementos, ambos eficientes. Poderíamos manter tudo
+ordenado num array — aí o mínimo é o primeiro, $O(1)$. Mas inserir exigiria abrir
+espaço no meio, $O(n)$. O heap encontra o equilíbrio: nem busca do mínimo nem
+inserção custam mais que $O(\log n)$.
+
+## A árvore que é, na verdade, um array
+
+O heap é uma **árvore binária completa**: todos os níveis cheios, exceto talvez o
+último, preenchido da esquerda para a direita. Essa regularidade permite um truque
+lindo — guardar a árvore num **array**, sem ponteiros, mapeando posições por
+aritmética de índice:
+
+$$
+\text{filho esq.}(i) = 2i+1 \qquad \text{filho dir.}(i) = 2i+2 \qquad
+\text{pai}(i) = \left\lfloor \tfrac{i-1}{2} \right\rfloor
+$$
+
+Ler o array da esquerda para a direita é percorrer a árvore **nível a nível**
+(BFS). A @fig-heap mostra as duas faces da mesma estrutura:
+
+```{dot}
+//| label: fig-heap
+//| fig-width: 3.0
+//| fig-height: 3.8
+//| fig-cap: "As duas faces do heap: a árvore (em cima) e o array que a guarda (embaixo). Ler o array em ordem é percorrer a árvore nível a nível — `[0]` é a raiz, e os filhos de `[i]` estão em `2i+1` e `2i+2`."
+digraph heap {
+  bgcolor="transparent";
+  node [shape=circle, style=filled, fillcolor="#F5793B", fontcolor="white",
+        fontname="Inter", fontsize=11, fixedsize=true, width=0.5];
+  edge [color="#264653", arrowsize=0.6];
+
+  a [label="1"];
+  b [label="2"];
+  c [label="3"];
+  d [label="5"];
+  e [label="9"];
+  f [label="8"];
+  g [label="7"];
+  a -> b; a -> c; b -> d; b -> e; c -> f; c -> g;
+
+  arr [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr>
+        <td bgcolor="#F5793B"><font color="white"><b>1</b></font><br/><font color="#FFDFC9" point-size="7">[0]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>2</b></font><br/><font color="#FFDFC9" point-size="7">[1]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>3</b></font><br/><font color="#FFDFC9" point-size="7">[2]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>5</b></font><br/><font color="#FFDFC9" point-size="7">[3]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>9</b></font><br/><font color="#FFDFC9" point-size="7">[4]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>8</b></font><br/><font color="#FFDFC9" point-size="7">[5]</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>7</b></font><br/><font color="#FFDFC9" point-size="7">[6]</font></td>
+      </tr>
+    </table>>];
+
+  d -> arr [style=invis];
+  g -> arr [style=invis];
+}
+```
+
+::: {.callout-note title="Ideia central"}
+Guardar a árvore num array dá ao heap o melhor dos dois mundos: a **navegação
+hierárquica** de uma árvore (subir e descer por índice) com a **memória contígua e
+a localidade de cache** de um array (capítulo 5) — e **zero** ponteiros, zero
+`malloc` por nó. A estrutura de árvore é puramente *conceitual*; fisicamente, é só
+um vetor crescível.
+:::
+
+## A invariante do heap
+
+A regra de um **min-heap** é deliberadamente **mais frouxa** que a da BST:
+
+> Todo pai é **menor ou igual** a seus filhos.
+
+Só isso. Não há ordem entre irmãos, nem entre esquerda e direita — apenas a
+relação vertical pai/filho. A consequência é poderosa: o **menor elemento de
+todos está sempre na raiz**, em `[0]`, acessível em $O(1)$. Essa invariante mais
+fraca é mais barata de manter que a da BST, e é tudo o que uma fila de prioridade
+precisa.
+
+## Inserir e subir: `sift-up`
+
+Para inserir, colocamos o novo elemento no **fim** do array (a próxima folha) e o
+deixamos **subir** trocando com o pai enquanto for menor — restaurando a
+invariante ao longo de um único caminho até a raiz:
+
+```{.c include="src/ch10-heaps/heap.c" snippet="siftup"}
+```
+
+```{.c include="src/ch10-heaps/heap.c" snippet="push"}
+```
+
+Como a árvore é completa, sua altura é $\lfloor \log_2 n \rfloor$, e `sift-up`
+percorre no máximo essa altura: inserção em $O(\log n)$.
+
+## Remover o mínimo e descer: `sift-down`
+
+Extrair o mínimo é o espelho: o resultado é a raiz (`[0]`). Para preencher o
+buraco sem quebrar a forma completa, trazemos o **último** elemento para a raiz e o
+deixamos **descer**, sempre trocando com o **menor** dos filhos, até obedecer à
+invariante:
+
+```{.c include="src/ch10-heaps/heap.c" snippet="siftdown"}
+```
+
+```{.c include="src/ch10-heaps/heap.c" snippet="pop"}
+```
+
+Também $O(\log n)$ — um único caminho da raiz até, no máximo, uma folha.
+
+## Montar de uma vez: `build-heap` em $O(n)$
+
+Se você já tem todos os elementos num array, dá para transformá-lo num heap mais
+rápido do que inserir um a um. O algoritmo de **Floyd** aplica `sift-down` de baixo
+para cima, começando no último nó interno:
+
+```{.c include="src/ch10-heaps/heap.c" snippet="build"}
+```
+
+::: {.callout-tip title="Complexidade (Big-O)"}
+Inserir $n$ elementos um a um custa $O(n \log n)$. Mas o `build-heap` de Floyd faz
+o mesmo em **$O(n)$** — e a razão é elegante: a maioria dos nós está perto do fundo
+e quase não desce (`sift-down` curto), enquanto os poucos nós altos, que descem
+muito, são raros. A soma $\sum_{h} \frac{n}{2^{h+1}} \cdot h$ converge para $O(n)$,
+não $O(n \log n)$. Quando puder, **construa de uma vez** em vez de inserir em laço.
+:::
+
+## Heapsort de brinde
+
+Há um bônus escondido. Se você insere tudo num min-heap e depois **extrai o mínimo
+repetidamente**, os elementos saem em **ordem crescente** — porque cada `pop`
+devolve o menor que restou. Isso é o **heapsort**: ordenar em $O(n \log n)$ usando
+só as operações do heap, sem memória auxiliar além do próprio array.
+
+## Vendo funcionar
+
+O programa insere sete valores, espia o mínimo, esvazia o heap (heapsort) e por fim
+monta outro heap com `build-heap`:
+
+```{.c include="src/ch10-heaps/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+min (peek): 1
+extraindo (heapsort): 1 2 3 5 7 8 9
+build-heap O(n), min: 1
+```
+
+::: {.content-visible when-format="html"}
+**Construa o heap.** Arraste para inserir valores um a um (na sequência `5, 3, 8,
+1, 9, 2, 7`) e veja a árvore se reorganizar com o `sift-up` — o **mínimo** (em
+verde) sempre borbulha para a raiz e para a posição `[0]` do array:
+
+```{ojs}
+//| echo: false
+viewof k = Inputs.range([1, 7], { value: 7, step: 1, label: "elementos inseridos (push)" })
+heap_seq = [5, 3, 8, 1, 9, 2, 7]
+```
+
+```{ojs}
+//| echo: false
+{
+  const a = [];
+  for (let x = 0; x < k; x++) {
+    a.push(heap_seq[x]);
+    let i = a.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (a[i] >= a[p]) break;
+      [a[i], a[p]] = [a[p], a[i]];
+      i = p;
+    }
+  }
+  const pos = [{ x: 150, y: 24 }, { x: 85, y: 80 }, { x: 215, y: 80 },
+               { x: 50, y: 134 }, { x: 120, y: 134 }, { x: 180, y: 134 }, { x: 250, y: 134 }];
+  const edges = [];
+  for (let i = 1; i < a.length; i++) {
+    const p = (i - 1) >> 1;
+    edges.push(`<line x1="${pos[p].x}" y1="${pos[p].y}" x2="${pos[i].x}" y2="${pos[i].y}" stroke="#264653" stroke-width="1.5"/>`);
+  }
+  const nodes = a.map((v, i) => `
+    <circle cx="${pos[i].x}" cy="${pos[i].y}" r="16" fill="${i === 0 ? "#2A9D8F" : "#F5793B"}" stroke="#fff" stroke-width="2"/>
+    <text x="${pos[i].x}" y="${pos[i].y + 4}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">${v}</text>`).join("");
+  const cells = a.map((v, i) => `<span style="display:inline-flex;flex-direction:column;align-items:center">
+      <span style="background:${i === 0 ? "#2A9D8F" : "#F5793B"};color:#fff;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;font:600 13px sans-serif">${v}</span>
+      <span style="font:9px sans-serif;color:#777">[${i}]</span></span>`).join("");
+  return html`<div>
+    <svg viewBox="0 0 300 158" style="max-width:330px;width:100%">${edges}${nodes}</svg>
+    <div style="display:flex;margin-top:4px">${cells}</div>
+    <div style="font:13px sans-serif;color:#264653;margin-top:6px">o mínimo <b style="color:#2A9D8F">${a[0]}</b> está sempre na raiz e em <b>[0]</b></div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção deixa você inserir os valores `5, 3, 8, 1, 9, 2, 7` um a um e
+ver a árvore se reorganizar pelo `sift-up`, com o mínimo sempre subindo à raiz
+(ver @fig-heap).
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Use um heap quando precisar repetidamente do **extremo** (mínimo ou máximo) de um
+conjunto que muda — e *não* da ordenação completa. Se você só quer "o próximo mais
+urgente", o heap dá isso em $O(\log n)$ sem o custo de manter tudo ordenado. Mas se
+precisa buscar um elemento **arbitrário** (não o mínimo), o heap não ajuda: ele não
+tem a ordem esquerda-direita da BST, então procurar um valor no meio é $O(n)$. Heap
+é a ferramenta do "qual é o próximo?", não do "onde está o X?".
+:::
+
+::: {.callout-note title="No mundo real"}
+A fila de prioridade é o motor de algoritmos de **caminho mínimo**: o **Dijkstra**
+e o **A\*** (usado em GPS e em jogos) escolhem sempre o próximo nó mais promissor
+extraindo o mínimo de um heap. Escalonadores de tarefas, compressão (o **Huffman**
+do próximo capítulo!), simulação de eventos discretos e o **heapsort** também vivem
+disso. Para grafos enormes, há variantes que melhoram a teoria — como a **Fibonacci
+heap**, que torna certas operações $O(1)$ amortizado, ao custo de uma implementação
+bem mais intrincada.
+:::
+
+## Resumo
+
+- Uma **fila de prioridade** atende pelo elemento de maior prioridade (o mínimo),
+  não por ordem de chegada. O **heap binário** a implementa com inserção e
+  remoção em $O(\log n)$ e acesso ao mínimo em $O(1)$.
+- O heap é uma **árvore binária completa guardada num array**: filhos de `i` em
+  `2i+1` e `2i+2`, pai em `(i-1)/2`. Sem ponteiros, ótima localidade de cache.
+- A invariante (pai $\le$ filhos) é mantida por **`sift-up`** (na inserção) e
+  **`sift-down`** (na remoção), cada um percorrendo uma única altura $O(\log n)$.
+- **`build-heap`** monta um heap a partir de um array em **$O(n)$** — melhor que
+  inserir um a um. E extrair tudo dá o **heapsort**, $O(n \log n)$.
+
+### Tabela de complexidade do capítulo
+
+| Operação | Tempo | Observação |
+|:--|:--:|:--|
+| Espiar o mínimo (`peek`) | $O(1)$ | está sempre na raiz `[0]` |
+| Inserir (`push`) | $O(\log n)$ | `sift-up` por um caminho |
+| Remover o mínimo (`pop`) | $O(\log n)$ | `sift-down` por um caminho |
+| Construir (`build-heap`) | $O(n)$ | Floyd, melhor que $n$ inserções |
+| Buscar um valor qualquer | $O(n)$ | sem ordem esquerda-direita |
+| Espaço | $O(n)$ | um array contíguo |
+
+: Operações do min-heap. {tbl-colwidths="[42,20,38]"}
+
+No próximo capítulo, o **desafio final**: um compactador de arquivos com o
+algoritmo de **Huffman**. Ele vai puxar quase tudo o que construímos — e o heap
+deste capítulo será a peça que, a cada passo, entrega os **dois símbolos menos
+frequentes** para montar a árvore de codificação.
