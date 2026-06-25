@@ -1,0 +1,215 @@
+---
+# 04-modularization.qmd — Fundamentos: modularização (.h/.c), compilação separada.
+---
+
+# [Modularização: interface e implementação]{.typing-effect}
+
+Este é o último dos fundamentos — e o que você mais viu. Cada capítulo de código
+deste livro chegou em três peças: um `.h`, um `.c` e um `Makefile`. Não foi
+acaso: é assim que se organiza um programa C real. Em vez de um arquivo gigante e
+impossível de manter, dividimos o programa em **módulos**, cada um com uma
+**interface** pública (o `.h`) e uma **implementação** escondida (o `.c`),
+compilados em separado e ligados no fim. Este capítulo explica esse esqueleto.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* um restaurante
+visto em corte. No salão, um cliente lê o **cardápio** (a interface: o que dá para
+pedir). Atrás, a **cozinha** fechada (a implementação: como o prato é feito) —
+invisível ao cliente. Uma porta de vaivém separa os dois. Legenda: "você pede pelo
+cardápio sem conhecer as receitas". Estilo lúdico à mão, paleta quente. Arte a
+comissionar — substituir este box.
+:::
+
+## A analogia: o cardápio e a cozinha
+
+Num restaurante, o **cardápio** lista o que você pode pedir — nomes e descrições,
+nada de receitas. A **cozinha** sabe *como* preparar cada prato, mas fica fechada
+ao cliente. Você pede pelo cardápio sem saber (nem precisar saber) o que acontece
+lá dentro; e o chef pode trocar a receita sem mudar o cardápio.
+
+Um módulo C funciona igual. O cabeçalho **`.h`** é o cardápio: declara os tipos e
+as funções que o módulo oferece. O **`.c`** é a cozinha: contém o corpo das
+funções e os ajudantes privados. Quem usa o módulo lê só o `.h` — e o autor do
+`.c` pode reescrever as entranhas à vontade, desde que respeite o cardápio.
+
+## Interface vs. implementação
+
+Veja um módulo de conta bancária. O cabeçalho declara **o quê** — os tipos e as
+operações públicas:
+
+```{.c include="src/ch04-modularization/account.h"}
+```
+
+A implementação fornece o **como** — os corpos das funções, num arquivo separado:
+
+```{.c include="src/ch04-modularization/account.c" snippet="impl"}
+```
+
+E quem usa o módulo inclui só a interface; **não sabe nada** do `.c`:
+
+```{.c include="src/ch04-modularization/main.c" snippet="main"}
+```
+
+Essa separação é o que mantém um projeto sustentável. Enquanto o cardápio (`.h`)
+não muda, você reescreve a cozinha (`.c`) sem tocar em quem usa.
+
+| Vai no `.h` (interface) | Vai no `.c` (implementação) |
+|:--|:--|
+| Tipos públicos (`struct Account`) | Corpos das funções |
+| Assinaturas das funções | Helpers privados (`static`) |
+| Constantes/macros públicas | Variáveis internas do módulo |
+| Header guard | `#include` dos detalhes que só ele usa |
+
+: O que mora em cada arquivo. {tbl-colwidths="[50,50]"}
+
+## O header guard
+
+Repare nas três linhas que cercam o `account.h`: `#ifndef ACCOUNT_H`,
+`#define ACCOUNT_H` e `#endif`. É o **header guard**, e ele resolve um problema
+real: um mesmo `.h` acaba sendo incluído **mais de uma vez** (porque vários
+arquivos o incluem, e uns incluem os outros). Sem proteção, o tipo `Account`
+seria **redefinido**, e o compilador recusaria. O guard diz: "se este símbolo já
+foi definido, pule todo o conteúdo".
+
+::: {.content-visible when-format="html"}
+**Veja o guard agir.** Imagine que `main.c` inclui `account.h` direta e
+indiretamente (via outro cabeçalho). Ligue e desligue o guard:
+
+```{ojs}
+//| echo: false
+viewof guard = Inputs.toggle({ value: true, label: "header guard ativo" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const inc1 = { text: '#include "account.h"   (1ª vez)', ok: true, note: "define Account ✓" };
+  const inc2 = guard
+    ? { text: '#include "account.h"   (2ª vez)', ok: true, note: "ACCOUNT_H já definido → conteúdo PULADO ✓" }
+    : { text: '#include "account.h"   (2ª vez)', ok: false, note: "redefine Account → ❌ erro de compilação" };
+  const row = (r) => `<div style="display:flex;align-items:center;gap:10px;margin:4px 0;flex-wrap:wrap">
+      <code style="font:12px monospace;color:#264653;background:#f4efe9;padding:2px 6px;border-radius:4px">${r.text}</code>
+      <span style="font:12px sans-serif;color:${r.ok ? "#2A9D8F" : "#E2725B"}">${r.note}</span></div>`;
+  return html`<div>${row(inc1)}${row(inc2)}
+    <div style="margin-top:8px;font:13px sans-serif;font-weight:600;color:${guard ? "#2A9D8F" : "#E2725B"}">
+      ${guard ? "✅ compila: cada cabeçalho entra uma vez só" : "❌ não compila: «redefinição de Account»"}</div></div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+Sem o header guard, incluir `account.h` duas vezes (direta e indiretamente)
+redefiniria `Account`, e o compilador recusaria. Com o guard, a segunda inclusão
+encontra `ACCOUNT_H` já definido e pula todo o conteúdo — cada cabeçalho entra uma
+vez só.
+:::
+
+## `static`: o privado do módulo
+
+No `account.c`, a função `can_afford` é declarada `static`. Isso lhe dá
+**ligação interna**: ela existe só dentro daquele `.c`, invisível para o resto do
+programa. É o "privado" do C — um detalhe de implementação que o módulo usa, mas
+não expõe. Tentar chamá-la do `main.c` daria um **erro de link**: o `main.o` não
+encontra esse símbolo, porque ele não saiu do `account.o`. Manter privado o que é
+privado é o que deixa a interface pequena e o módulo fácil de evoluir.
+
+## Compilação separada
+
+Por que `.o`? Porque cada `.c` é compilado **independentemente** para um arquivo
+objeto (`.o`), e só no fim o **ligador** (*linker*) junta os `.o`s num executável.
+A @fig-compilation mostra o fluxo:
+
+```{dot}
+//| label: fig-compilation
+//| fig-width: 5.0
+//| fig-height: 1.1
+//| fig-cap: "Compilação separada: o `.h` é incluído por ambos os `.c`; cada `.c` compila para um `.o` sozinho; o ligador junta os `.o`s no executável. Mudou um só `.c`? Recompila só ele."
+digraph build {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=10];
+
+  h [shape=box, style="filled,rounded", fillcolor="#EAF4F2", color="#2A9D8F",
+     label="account.h\n(interface)"];
+  ac [shape=box, style="filled,rounded", fillcolor="#FBE3D3", color="#F5793B", label="account.c"];
+  mc [shape=box, style="filled,rounded", fillcolor="#FBE3D3", color="#F5793B", label="main.c"];
+  ao [shape=box, fillcolor="#EFEFEF", color="#999", label="account.o"];
+  mo [shape=box, fillcolor="#EFEFEF", color="#999", label="main.o"];
+  exe [shape=box, style="filled,rounded", fillcolor="#F5793B", fontcolor="white", label="demo"];
+
+  h -> ac [style=dashed, color="#2A9D8F", label="#include"];
+  h -> mc [style=dashed, color="#2A9D8F", label="#include"];
+  ac -> ao [label="compila"];
+  mc -> mo [label="compila"];
+  ao -> exe [label="liga"];
+  mo -> exe [label="liga"];
+}
+```
+
+O `Makefile` codifica exatamente esse grafo de dependências:
+
+```{.makefile include="src/ch04-modularization/Makefile"}
+```
+
+::: {.callout-tip title="Ideia central"}
+A grande vantagem da compilação separada: ao mudar **um** arquivo, você recompila
+**só ele** (e religa). Num projeto com 200 arquivos, isso é a diferença entre
+esperar segundos e esperar minutos a cada alteração. O `Makefile` rastreia as
+dependências (note como cada `.o` depende do seu `.c` **e** do `.h`) e refaz só o
+necessário.
+:::
+
+## Vendo funcionar
+
+```text
+saldo: 3000 centavos
+saque 120,00: ok | saque 999,99: negado
+```
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Projete a **interface primeiro**, e deixe-a **mínima**: exponha só o que o cliente
+precisa, e esconda todo o resto no `.c` com `static`. Uma interface pequena é uma
+promessa pequena — mais fácil de manter estável enquanto a implementação evolui.
+Agrupe num módulo as coisas que mudam juntas (alta coesão) e minimize o que um
+módulo precisa saber do outro (baixo acoplamento). Os pares `da_init`/`da_free`,
+`bst_insert`/`bst_inorder` de todo o livro são exatamente isto: módulos com uma
+interface enxuta sobre uma implementação que você pôde ler sem medo.
+:::
+
+::: {.callout-note title="No mundo real"}
+Toda biblioteca C que você já usou é um módulo desses em escala: `stdio.h` é a
+**interface** (você inclui e chama `printf`), e a implementação vem pré-compilada
+numa biblioteca (`.a` estática ou `.so`/`.dll` dinâmica) — você nunca vê o `.c`.
+É por isso que software comercial distribui **cabeçalhos + biblioteca compilada**:
+você programa contra o cardápio sem nunca entrar na cozinha. Linguagens mais novas
+trocam os cabeçalhos por **módulos** de primeira classe (os `module` do C++20, os
+*crates* do Rust, os pacotes de Go), mas resolvendo o mesmo problema: separar o que
+um componente **oferece** do como ele **funciona**.
+:::
+
+## Fim dos fundamentos
+
+Com isto, você tem o chão completo: **ponteiros** (o endereço é o dado), a
+**memória** (pilha e heap, e seus fantasmas), os **tipos compostos** (structs e
+uniões) e a **modularização** (interface e implementação). É exatamente o
+ferramental que a Parte da prática usa o tempo todo — cada `malloc` com seu `free`,
+cada nó com seu ponteiro, cada estrutura num par `.h`/`.c`.
+
+Se você leu os fundamentos primeiro, está pronto: vá para a **Parte da prática** e
+construa, do array dinâmico ao compactador de Huffman, as estruturas que fazem o
+software real funcionar — agora entendendo cada byte que elas movem.
+
+### Resumo
+
+- Um **módulo** separa **interface** (`.h`: o quê — tipos e assinaturas públicas)
+  de **implementação** (`.c`: o como — corpos e helpers privados).
+- O **header guard** (`#ifndef`/`#define`/`#endif`) impede que um cabeçalho seja
+  incluído duas vezes e cause redefinições.
+- **`static`** dá ligação interna: torna uma função ou variável privada ao seu
+  `.c` — o "privado" do módulo.
+- Na **compilação separada**, cada `.c` vira um `.o` independente, e o **ligador**
+  junta tudo. Mudou um arquivo? Recompila só ele.
+- Interface **mínima**, implementação **escondida**: alta coesão, baixo
+  acoplamento. É o esqueleto de todo projeto C — e de todo capítulo deste livro.
