@@ -1,0 +1,348 @@
+---
+# 06-linked-lists.qmd — Listas encadeadas (simples, duplas e circulares).
+---
+
+# [Listas encadeadas: quando o vizinho mora longe]{.typing-effect}
+
+No capítulo anterior, o array dinâmico nos deu acesso por índice em $O(1)$ e uma
+memória compacta — ao custo de **deslocar elementos** para inserir no meio e de
+**realocar e copiar** tudo ao crescer. Agora vamos ao outro lado desse trade-off:
+uma estrutura em que inserir e remover é barato e nunca há realocação, mas onde
+perdemos o acesso direto por índice. É a **lista encadeada**.
+
+A diferença de filosofia é radical. No array, os elementos são **vizinhos
+obrigatórios** na memória: o elemento 5 fica logo depois do 4. Na lista encadeada,
+cada elemento mora **onde der** no heap, e guarda no próprio corpo o **endereço**
+de onde está o próximo. Ninguém precisa ser vizinho de ninguém.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* uma caça ao
+tesouro — cada pista (um cartãozinho colorido) está num lugar diferente da cidade
+e traz escrito o **endereço da próxima pista**; uma seta liga cada cartão ao
+seguinte, e a última diz "FIM". Ao lado, um array desenhado como caixas grudadas
+numa prateleira, para contraste. Estilo lúdico à mão, paleta quente. Arte a
+comissionar — substituir este box.
+:::
+
+## A analogia: a caça ao tesouro
+
+Imagine uma caça ao tesouro. A primeira pista está na sua mão; ela não contém o
+tesouro, mas diz **onde está a próxima pista**. Você vai até lá, encontra a
+segunda pista, que aponta para a terceira, e assim por diante até uma pista que
+diz "acabou".
+
+Note duas consequências dessa brincadeira, que são *exatamente* as da lista
+encadeada:
+
+1. **As pistas podem estar espalhadas pela cidade inteira.** Não precisam ser
+   vizinhas. Acrescentar uma pista nova no meio do percurso é fácil: basta
+   reescrever um endereço. (Inserir é barato.)
+2. **Para chegar à 7ª pista, você é obrigado a passar pelas 6 anteriores.** Não
+   dá para "pular" direto. (Acesso por índice é caro.)
+
+Guarde esse par: **inserção barata, acesso caro**. É o espelho do array.
+
+## O nó: um dado e um endereço
+
+A peça fundamental é o **nó** (*node*): uma struct que carrega o dado de negócio e
+um **ponteiro para o próximo nó**.
+
+```{.c include="src/ch06-linked-lists/singly_list.h"}
+```
+
+Repare no campo `next`: é um ponteiro para *outra* struct do mesmo tipo
+(`struct SNode *`). É isso que "encadeia" a lista. A struct `SList` em si guarda
+só dois campos: o ponteiro para a **cabeça** (`head`, o primeiro nó) e o `size`.
+A @fig-singly mostra uma lista com três nós:
+
+```{dot}
+//| label: fig-singly
+//| fig-width: 5.0
+//| fig-height: 0.55
+//| fig-cap: "Uma lista simplesmente encadeada. Cada nó guarda um valor (laranja) e um ponteiro `next` (azul) para o próximo. O último aponta para `NULL`."
+digraph singly {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+  edge [color="#264653"];
+
+  head [shape=plaintext, label=<<font color="#2A9D8F"><b>head</b></font>>];
+  n1 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#F5793B"><font color="white"><b>10</b></font></td><td port="p" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  n2 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#F5793B"><font color="white"><b>20</b></font></td><td port="p" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  n3 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#F5793B"><font color="white"><b>30</b></font></td><td port="p" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  nul [shape=plaintext, label=<<font color="#999999">NULL</font>>];
+
+  head -> n1;
+  n1:p -> n2;
+  n2:p -> n3;
+  n3:p -> nul;
+}
+```
+
+::: {.callout-note title="Ideia central"}
+No array, a posição de um elemento **é** a informação de ordem — o vizinho seguinte
+é o próximo endereço, automaticamente. Na lista encadeada, a ordem é dada
+**explicitamente** por ponteiros: cada nó diz quem vem depois dele. Isso liberta
+os nós da obrigação de serem contíguos — e é a origem de todas as vantagens e
+desvantagens que veremos.
+:::
+
+## Inserir no início: o caso barato — $O(1)$
+
+Como a lista guarda a cabeça, inserir um nó no **começo** é trivial e *não depende
+do tamanho*: criamos o nó, apontamos seu `next` para a antiga cabeça, e movemos a
+cabeça para o nó novo.
+
+```{.c include="src/ch06-linked-lists/singly_list.c" snippet="pushfront"}
+```
+
+São duas religações de ponteiro e um `malloc` — custo constante, $O(1)$,
+independentemente de a lista ter 3 ou 3 milhões de nós. Compare com o array: para
+inserir no **início** de um array, seria preciso empurrar todos os elementos uma
+casa para a direita — $O(n)$. Aqui está a primeira vitória da lista.
+
+Inserir **depois de um nó que você já tem em mãos** é igualmente barato:
+
+```{.c include="src/ch06-linked-lists/singly_list.c" snippet="insert"}
+```
+
+A ordem das duas linhas importa: primeiro `fresh->next = node->next` (o nó novo
+passa a apontar para quem vinha depois), só então `node->next = fresh`. Inverter
+isso perderia o resto da lista.
+
+## Remover: o truque do ponteiro para ponteiro
+
+Remover exige primeiro **achar** o nó (varrendo desde a cabeça, $O(n)$) e depois
+**religar** o anterior diretamente ao seguinte, pulando o nó removido. O ponto
+delicado é o "anterior": e se o nó a remover for a própria cabeça?
+
+A solução elegante usa um **ponteiro para ponteiro** (`SNode **`), que aponta para
+o *campo que aponta* o nó atual — seja ele `list->head` ou o `next` de outro nó.
+Assim, religar é sempre a mesma linha, sem caso especial para a cabeça:
+
+```{.c include="src/ch06-linked-lists/singly_list.c" snippet="remove"}
+```
+
+A @fig-remove mostra o instante da religação ao remover o `20`: o `next` do `10`
+passa a apontar direto para o `30`, e o nó `20` é liberado.
+
+```{dot}
+//| label: fig-remove
+//| fig-width: 5.0
+//| fig-height: 1.4
+//| fig-cap: "Removendo o nó `20`: religamos o `next` do `10` diretamente ao `30` (`*link = cur->next`) e devolvemos o nó `20` com `free`."
+digraph rem {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+  edge [color="#264653"];
+
+  head [shape=plaintext, label=<<font color="#2A9D8F"><b>head</b></font>>];
+  n1 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#F5793B"><font color="white"><b>10</b></font></td><td port="p" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  n2 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#E9E4DC"><font color="#999999"><s>20</s></font></td><td bgcolor="#E9E4DC"><font color="#999999">free</font></td></tr></table>>];
+  n3 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td bgcolor="#F5793B"><font color="white"><b>30</b></font></td><td port="p" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  nul [shape=plaintext, label=<<font color="#999999">NULL</font>>];
+
+  { rank=same; n1; n2; n3; }
+  head -> n1;
+  n1:p -> n3 [constraint=false, color="#2A9D8F", penwidth=1.6, label=<<font color="#2A9D8F">religa</font>>];
+  n3:p -> nul;
+}
+```
+
+## Por que indexar custa $O(n)$ — e o cache não ajuda
+
+Quer o elemento de índice `k`? Não há atalho: é preciso partir da cabeça e seguir
+`next` `k` vezes. Buscar por valor é igual — varrer até achar.
+
+```{.c include="src/ch06-linked-lists/singly_list.c" snippet="find"}
+```
+
+Há um custo escondido além do Big-O, e ele é o reverso exato da vantagem do array.
+Como os nós foram alocados em momentos diferentes com `malloc`, eles estão
+**espalhados pelo heap**. Seguir um `next` é um salto para um endereço
+imprevisível — o processador não consegue "adivinhar" e pré-carregar o próximo nó
+no cache. É o chamado *pointer chasing*: cada passo pode ser uma falha de cache.
+No array contíguo, varrer é uma rajada sequencial que a CPU adora; na lista, é um
+ziguezague pela RAM.
+
+::: {.callout-tip title="Complexidade (Big-O)"}
+Na lista simplesmente encadeada:
+
+- **Inserir no início** ou **depois de um nó conhecido**: $O(1)$ de tempo.
+- **Buscar / acessar por índice**: $O(n)$ — sem acesso aleatório.
+- **Remover** um valor: $O(n)$ para achar, $O(1)$ para religar.
+- **Espaço**: $O(n)$, **mas** com um custo fixo por elemento que o array não tem —
+  o ponteiro `next` (8 bytes numa máquina de 64 bits) somado ao *overhead* de cada
+  bloco do `malloc`. Guardar um `int` de 4 bytes pode custar 24 bytes ou mais.
+:::
+
+## Lista duplamente encadeada: o ponteiro extra
+
+A lista simples só anda para a frente. Se você está num nó e quer o **anterior**,
+não há como — teria de varrer de novo desde a cabeça. A **lista duplamente
+encadeada** resolve isso dando a cada nó um segundo ponteiro, `prev`, além de
+guardar também a **cauda** (`tail`) da lista:
+
+```{.c include="src/ch06-linked-lists/doubly_list.h"}
+```
+
+A @fig-doubly mostra a estrutura: setas azuis para a frente (`next`) e setas
+vermelhas para trás (`prev`); `head` e `tail` dão acesso $O(1)$ às duas pontas.
+
+```{dot}
+//| label: fig-doubly
+//| fig-width: 5.0
+//| fig-height: 3.3
+//| fig-cap: "Lista duplamente encadeada. Cada nó tem `prev` (vermelho) e `next` (azul); `head` e `tail` apontam as duas pontas, tornando inserções e remoções nas pontas $O(1)$."
+digraph doubly {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+  nodesep=0.5;
+
+  head [shape=plaintext, label=<<font color="#2A9D8F"><b>head</b></font>>];
+  tail [shape=plaintext, label=<<font color="#2A9D8F"><b>tail</b></font>>];
+  d1 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td port="pv" bgcolor="#FBEAE7">&#8226;</td><td bgcolor="#F5793B"><font color="white"><b>10</b></font></td><td port="nx" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  d2 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td port="pv" bgcolor="#FBEAE7">&#8226;</td><td bgcolor="#F5793B"><font color="white"><b>20</b></font></td><td port="nx" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+  d3 [shape=plaintext, label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6"><tr><td port="pv" bgcolor="#FBEAE7">&#8226;</td><td bgcolor="#F5793B"><font color="white"><b>30</b></font></td><td port="nx" bgcolor="#E7F1EF">&#8226;</td></tr></table>>];
+
+  head -> d1 [color="#2A9D8F"];
+  tail -> d3 [color="#2A9D8F"];
+  d1:nx -> d2 [color="#2A9D8F"];
+  d2:nx -> d3 [color="#2A9D8F"];
+  d3:pv -> d2 [color="#E2725B", constraint=false];
+  d2:pv -> d1 [color="#E2725B", constraint=false];
+}
+```
+
+O ganho concreto: com `prev` e `tail`, inserir no fim (`push_back`) é $O(1)$ —
+
+```{.c include="src/ch06-linked-lists/doubly_list.c" snippet="dpushback"}
+```
+
+— e remover um nó que você **já tem em mãos** também vira $O(1)$, porque o `prev`
+dá o anterior de graça, sem varrer:
+
+```{.c include="src/ch06-linked-lists/doubly_list.c" snippet="dremove"}
+```
+
+::: {.callout-important title="Trade-off: o ponteiro extra"}
+A lista dupla compra **navegação bidirecional** e **remoção $O(1)$ por nó** ao
+preço de **mais memória** (um ponteiro `prev` por nó, +8 bytes cada) e **mais
+ponteiros para manter corretos** em cada operação — toda inserção/remoção precisa
+costurar *quatro* ligações em vez de duas, e um deslize deixa a lista corrompida.
+Use lista dupla quando você realmente precisa andar para trás ou remover nós
+arbitrários com eficiência; caso contrário, a lista simples é mais leve e mais
+fácil de acertar.
+:::
+
+## Lista circular: a cobra que morde o próprio rabo
+
+Uma variação útil: em vez de o último nó apontar para `NULL`, ele aponta de volta
+para a **cabeça**, formando um anel. Numa lista circular, não há "fim" — você pode
+girar indefinidamente. É a estrutura natural para **rodízios** (*round-robin*):
+distribuir tarefas entre N servidores em ciclo, alternar jogadores numa mesa,
+agendar processos. Costura-se igual à lista comum; muda apenas que `tail->next`
+volta a `head` (numa dupla circular, também `head->prev = tail`). O cuidado novo é
+a **condição de parada**: como não há `NULL`, percorrer exige contar `size` passos
+ou marcar o nó de partida — senão você gira para sempre.
+
+## Veja acontecer
+
+::: {.content-visible when-format="html"}
+**`push_front` passo a passo.** Arraste para empilhar nós no início e veja a cabeça
+sempre receber o mais recente — por isso a lista sai na ordem **inversa** da
+inserção. Cada passo é $O(1)$, sem tocar nos nós já existentes:
+
+```{ojs}
+//| echo: false
+viewof n_push = Inputs.range([0, 8], { value: 3, step: 1, label: "push_front aplicados" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const vals = Array.from({ length: n_push }, (_, i) => (n_push - i) * 10);
+  const node = (v) => html`<span style="display:inline-flex;align-items:stretch;font:600 13px sans-serif">
+      <span style="background:#F5793B;color:#fff;padding:6px 10px;border-radius:6px 0 0 6px">${v}</span>
+      <span style="background:#E7F1EF;color:#2A9D8F;padding:6px 8px;border-radius:0 6px 6px 0">●</span>
+    </span>`;
+  return html`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    <b style="color:#2A9D8F">head</b><span>→</span>
+    ${vals.flatMap((v) => [node(v), html`<span>→</span>`])}
+    <span style="color:#999">NULL</span>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção anima `push_front` nó a nó. Em resumo: inserir 10, depois 20,
+depois 30 com `push_front` produz a lista `head → 30 → 20 → 10 → NULL` — a ordem
+**inversa** da inserção, porque cada novo nó vira a cabeça (ver @fig-singly).
+:::
+
+A saída do programa de demonstração (`main.c`) confirma o comportamento das duas
+listas:
+
+```text
+simples (size=3):  30 20 10
+após remover 20:    30 10
+dupla (frente->tras): 10 20 30
+dupla (tras->frente): 30 20 10
+```
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+A pergunta decisiva não é "lista ou array?", mas **"qual é o padrão de acesso?"**.
+Se o seu código vive **inserindo e removendo em pontos que já tem em mãos** (uma
+fila de tarefas, uma lista de espera, nós que você guarda em outra estrutura), a
+lista encadeada brilha. Se vive **lendo por índice e varrendo em ordem** (a maior
+parte dos casos!), o array dinâmico quase sempre ganha — inclusive porque a
+localidade de cache faz a varredura voar. Na dúvida, comece com array; troque para
+lista quando o perfil de inserção/remoção provar que vale.
+:::
+
+::: {.callout-note title="No mundo real"}
+Quando uma lista encadeada *ordenada* precisa de busca rápida, entra a **skip
+list**: uma lista com "atalhos" probabilísticos em vários níveis que permitem
+pular trechos, alcançando busca em $O(\log n)$ médio. É o que o **Redis** usa por
+baixo dos *sorted sets*. Mas vale a contraparte honesta: na prática, para
+percorrer e buscar, **arrays costumam vencer listas** mesmo quando o Big-O empata —
+a localidade de cache de um bloco contíguo supera o *pointer chasing* de nós
+espalhados pela RAM. A lista encadeada é uma ferramenta de nicho, não o padrão.
+:::
+
+## Resumo
+
+- A lista encadeada troca **contiguidade** por **ponteiros explícitos**: cada nó
+  diz onde está o próximo, então os nós não precisam ser vizinhos na memória.
+- Isso inverte o perfil do array: **inserir/remover em pontos conhecidos é $O(1)$**
+  e nunca há realocação, **mas acesso por índice e busca são $O(n)$**, e não há
+  localidade de cache.
+- A **lista dupla** adiciona `prev` (e `tail`): navegação nos dois sentidos e
+  remoção $O(1)$ por nó, ao custo de mais memória e mais ponteiros a manter.
+- A **lista circular** fecha o anel (`tail->next = head`), ideal para rodízios —
+  com atenção à condição de parada.
+- Disciplina de memória: cada nó é um `malloc` com seu `free`; ao liberar a lista,
+  guarde o `next` **antes** de liberar o nó atual.
+
+### Tabela de complexidade do capítulo
+
+| Operação | Simples | Dupla | Array dinâmico (cap. 5) |
+|:--|:--:|:--:|:--:|
+| Acesso por índice | $O(n)$ | $O(n)$ | $O(1)$ |
+| Inserir no início | $O(1)$ | $O(1)$ | $O(n)$ |
+| Inserir no fim | $O(n)$¹ | $O(1)$ | $O(1)$ amortizado |
+| Inserir/remover dado o nó | $O(1)$ | $O(1)$ | $O(n)$ |
+| Buscar por valor | $O(n)$ | $O(n)$ | $O(n)$ |
+| Memória por elemento | +1 ponteiro | +2 ponteiros | ~nenhuma (mais cache) |
+
+: Tempo das operações. ¹A lista simples sem cauda paga $O(n)$ para achar o fim; com um ponteiro `tail`, vira $O(1)$. {tbl-colwidths="[34,16,16,34]"}
+
+No próximo capítulo, generalizamos o nó: em vez de guardar um `int`, ele guardará
+um ponteiro genérico `void*` — a **estratégia Shadow Data**, que separa os
+metadados de controle da estrutura dos dados de negócio e nos dá um contêiner
+reutilizável para qualquer tipo.
