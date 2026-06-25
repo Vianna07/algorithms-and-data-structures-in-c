@@ -1,0 +1,253 @@
+---
+# 03-structs-unions.qmd — Fundamentos: structs, alinhamento/padding e uniões.
+---
+
+# [Structs e uniões: compondo tipos]{.typing-effect}
+
+Até aqui, cada variável guardava **um** valor: um `int`, um endereço. Mas o mundo
+é feito de coisas com várias partes — um ponto tem `x` e `y`, um nó tem um valor e
+um ponteiro. Para modelá-las, agrupamos campos num só tipo: a **struct**. Ela é o
+tijolo de **todas** as estruturas da Parte da prática — cada nó, cada container era
+uma struct. Aqui entendemos como o compilador a organiza na memória (com um custo
+escondido, o **alinhamento**) e conhecemos sua imagem espelhada, a **união**.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* uma **ficha de
+cadastro** com campos rotulados (nome, idade, cidade) representando a struct; ao
+lado, um **camaleão** sobre uma única poltrona que muda de cor (ora é um número,
+ora um texto) representando a união — uma poltrona, vários "tipos", um de cada vez.
+Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este box.
+:::
+
+## A struct: agrupar campos
+
+Uma `struct` junta campos de tipos quaisquer sob um único nome de tipo. Você acessa
+os campos com `.` (numa variável) ou `->` (por um ponteiro):
+
+```{.c include="src/ch03-structs-unions/structs.c" snippet="struct"}
+```
+
+Na memória, os campos de uma struct ficam **lado a lado**, na ordem em que você os
+declarou. Foi assim que cada `Node`, cada `DynamicArray`, cada `MinHeap` do livro
+existiu: um punhado de campos arrumados em sequência num bloco. Mas "em sequência"
+esconde uma sutileza.
+
+## O custo escondido: alinhamento e padding
+
+A CPU lê a memória mais rápido quando cada tipo está num endereço **alinhado** ao
+seu tamanho — um `int` de 4 bytes prefere começar num endereço múltiplo de 4. Para
+garantir isso, o compilador insere **bytes de enchimento** (*padding*) entre os
+campos. O resultado surpreende: o tamanho de uma struct pode ser **maior** que a
+soma dos seus campos.
+
+```{.c include="src/ch03-structs-unions/structs.c" snippet="padding"}
+```
+
+As duas structs têm os **mesmos** campos (um `int` e dois `char` = 6 bytes de
+dados), mas tamanhos diferentes. A @fig-layout mostra por quê: na ordem ruim, o
+`int` força 3 bytes de buraco depois do primeiro `char`; reordenando do **maior
+para o menor**, os buracos quase somem.
+
+```{dot}
+//| label: fig-layout
+//| fig-width: 4.6
+//| fig-height: 2.9
+//| fig-cap: "O mesmo conteúdo (1 `int` + 2 `char`), duas ordens. Laranja/teal/âmbar = campos; cinza = padding (buracos de alinhamento). Declarar do maior para o menor leva `Padded` de 12 a `Packed` de 8 bytes."
+digraph layout {
+  bgcolor="transparent";
+  node [shape=plaintext, fontname="Inter", fontsize=10];
+
+  padded [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+      <tr><td colspan="12" border="0" align="left"><b>struct Padded</b> — 12 bytes (má ordem)</td></tr>
+      <tr>
+        <td bgcolor="#F5793B"><font color="white">a</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#F2A65A"><font color="white">c</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+      </tr>
+    </table>>];
+
+  packed [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+      <tr><td colspan="8" border="0" align="left"><b>struct Packed</b> — 8 bytes (boa ordem)</td></tr>
+      <tr>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#2A9D8F"><font color="white">b</font></td>
+        <td bgcolor="#F5793B"><font color="white">a</font></td>
+        <td bgcolor="#F2A65A"><font color="white">c</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+        <td bgcolor="#E9E4DC"><font color="#aaa">·</font></td>
+      </tr>
+    </table>>];
+
+  padded -> packed [style=invis];
+}
+```
+
+::: {.callout-tip title="Trade-off: ordem dos campos × memória"}
+**Declarar os campos do maior para o menor** costuma minimizar o padding — de
+graça, sem mudar o código que usa a struct. Para um ponto isolado, 4 bytes a mais
+não importam. Mas multiplique por um **milhão** de nós numa estrutura, e o padding
+vira megabytes desperdiçados (e menos elementos por linha de cache, deixando tudo
+mais lento). É o tipo de detalhe que separa o código que "funciona" do código que
+**escala**.
+:::
+
+## A união: campos que se sobrepõem
+
+A `union` é a imagem espelhada da struct. Numa struct, os campos ficam **lado a
+lado** (a memória é a soma deles). Numa union, os campos ficam **sobrepostos** —
+todos começam no mesmo endereço e **compartilham os mesmos bytes**. Por isso seu
+tamanho é o do **maior** membro, e só **um** membro é válido por vez.
+
+```{.c include="src/ch03-structs-unions/structs.c" snippet="union"}
+```
+
+A @fig-union mostra os três membros ocupando exatamente os mesmos 4 bytes:
+
+```{dot}
+//| label: fig-union
+//| fig-width: 3.4
+//| fig-height: 2.4
+//| fig-cap: "Numa união, os membros se sobrepõem: `int i`, `float f` e `bytes[4]` ocupam os MESMOS 4 bytes. Escrever um sobrescreve os outros — só um é válido por vez."
+digraph un {
+  bgcolor="transparent";
+  node [shape=plaintext, fontname="Inter", fontsize=10];
+
+  u [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="6">
+      <tr><td colspan="4" bgcolor="#F5793B"><font color="white"><b>int i</b> &#183; usa os 4 bytes</font></td></tr>
+      <tr><td colspan="4" bgcolor="#2A9D8F"><font color="white"><b>float f</b> &#183; usa os 4 bytes</font></td></tr>
+      <tr>
+        <td bgcolor="#F2A65A"><font color="white">b[0]</font></td>
+        <td bgcolor="#F2A65A"><font color="white">b[1]</font></td>
+        <td bgcolor="#F2A65A"><font color="white">b[2]</font></td>
+        <td bgcolor="#F2A65A"><font color="white">b[3]</font></td>
+      </tr>
+      <tr><td colspan="4" border="0"><font point-size="8" color="#888">os três membros = os MESMOS 4 bytes</font></td></tr>
+    </table>>];
+}
+```
+
+## Quando uniões fazem sentido
+
+Sozinha, uma union é perigosa: nada nela diz qual membro é o válido. O padrão útil
+é a **união etiquetada** (*tagged union*): uma struct que junta uma **etiqueta** de
+tipo e a union, prometendo "leia o membro que a etiqueta indica".
+
+```c
+struct Variant {
+    enum { INT, FLOAT, TEXT } tag;  // qual membro está ativo
+    union {
+        int    i;
+        float  f;
+        char  *text;
+    } as;
+};
+```
+
+Isso modela "um valor que é **um de vários** tipos" gastando só o espaço do maior —
+em vez de carregar um campo para cada tipo possível, com todos vazios menos um. É
+como linguagens dinâmicas guardam variáveis, como protocolos compactam mensagens de
+tipos variados, e como interpretadores representam valores. A economia aparece
+quando há **muitos** desses valores e só um tipo ativo por vez.
+
+## Vendo funcionar
+
+```text
+Point = (7, 10)
+sizeof(Point) = 8
+Padded: sizeof=12  (a@0 b@4 c@8)
+Packed: sizeof=8   (b@0 a@4 c@5)
+union: sizeof=4  i=1  bytes=[1 0 0 0]
+```
+
+Os deslocamentos (`a@0 b@4 c@8`) confirmam os buracos: entre `a` (byte 0) e `b`
+(byte 4) há 3 bytes de padding. E `bytes=[1 0 0 0]` revela a ordem little-endian
+do x86-64 — o byte menos significativo do `int` 1 vem primeiro.
+
+::: {.content-visible when-format="html"}
+**Reordene e veja o padding.** Escolha a ordem dos campos e observe o layout de
+bytes mudar — e o tamanho total encolher quando o padding some:
+
+```{ojs}
+//| echo: false
+viewof ordem = Inputs.radio(["char, int, char  (Padded)", "int, char, char  (Packed)"], { value: "char, int, char  (Padded)", label: "ordem de declaração" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const O = "#F5793B", T = "#2A9D8F", A = "#F2A65A", G = "#E9E4DC";
+  const layouts = {
+    "char, int, char  (Padded)": [["a", O], ["·", G], ["·", G], ["·", G], ["b", T], ["b", T], ["b", T], ["b", T], ["c", A], ["·", G], ["·", G], ["·", G]],
+    "int, char, char  (Packed)": [["b", T], ["b", T], ["b", T], ["b", T], ["a", O], ["c", A], ["·", G], ["·", G]]
+  };
+  const L = layouts[ordem];
+  const cells = L.map(([f, c], i) => `<div style="display:flex;flex-direction:column;align-items:center">
+      <div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:${c};color:${f === "·" ? "#999" : "#fff"};font:600 13px sans-serif;border:1px solid #fff">${f}</div>
+      <div style="font:8px monospace;color:#aaa">${i}</div></div>`).join("");
+  const pad = L.filter(([f]) => f === "·").length;
+  return html`<div>
+    <div style="display:flex">${cells}</div>
+    <div style="margin-top:8px;font:13px sans-serif;color:#264653">
+      total: <b>${L.length} bytes</b> &nbsp;·&nbsp; padding: <b style="color:#999">${pad} bytes</b> (cinza) &nbsp;·&nbsp; dados úteis: 6 bytes</div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção deixa você alternar a ordem dos campos (`char,int,char` ×
+`int,char,char`) e ver o layout de bytes e o total mudarem de 12 para 8 (ver
+@fig-layout).
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Use uma **struct** para agrupar dados que andam juntos — e dê nomes claros aos
+campos: uma boa struct documenta o domínio. Quando o tamanho importar (muitos
+objetos, dados que vão para disco ou rede), ordene os campos do **maior para o
+menor** e confira com `sizeof`/`offsetof`. Use uma **union** (sempre etiquetada)
+quando um valor é **um de vários tipos mutuamente exclusivos** — ela troca espaço
+por uma promessa que você precisa cumprir à mão: ler só o membro que a etiqueta
+indica.
+:::
+
+::: {.callout-note title="No mundo real"}
+O layout de structs é um contrato com o mundo: formatos de **arquivo binário**,
+**protocolos de rede** e registros em **disco** dependem de saber exatamente onde
+cada campo cai — daí diretivas como `#pragma pack` para remover o padding quando o
+formato exige bytes coladinhos. As **uniões etiquetadas** são tão fundamentais que
+linguagens modernas as elevaram a recurso de primeira classe: são os `enum` com
+dados do **Rust** e do **Swift**, os *sealed types*/`sealed` do Java e Kotlin, e os
+*tagged unions* no coração de praticamente todo interpretador e compilador.
+:::
+
+## Resumo
+
+- Uma **struct** agrupa campos **lado a lado** num só tipo; acesso por `.` ou `->`.
+  É o tijolo de toda estrutura de dados.
+- O **alinhamento** faz o compilador inserir **padding** entre campos, então
+  `sizeof` pode passar da soma dos campos. **Declarar do maior para o menor**
+  minimiza o desperdício.
+- Uma **union** **sobrepõe** os membros nos mesmos bytes: tamanho do maior membro,
+  só um válido por vez. Sozinha é perigosa; útil como **união etiquetada**.
+- `sizeof` e `offsetof` revelam o layout real — use-os quando a memória importar.
+
+No próximo capítulo, fechamos os fundamentos com a **modularização**: como separar
+interface (`.h`) de implementação (`.c`), proteger cabeçalhos e compilar um projeto
+C real em partes — exatamente o esqueleto que cada capítulo de código deste livro
+seguiu.
