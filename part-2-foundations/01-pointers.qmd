@@ -1,0 +1,304 @@
+---
+# 01-pointers.qmd — Fundamentos: ponteiros e aritmética de ponteiros.
+---
+
+# [Ponteiros: o endereço é o dado]{.typing-effect}
+
+Bem-vindo aos fundamentos. Se você leu a Parte da prática, viu ponteiros em ação o
+tempo todo — `node->next`, `int *out`, `void *data`. Aqui destrinchamos a ideia
+única que sustenta tudo aquilo, e que é o conceito mais importante do C: o
+**ponteiro**. Quem entende ponteiros entende listas, árvores, `malloc`, `void*` e
+por que C é tão poderoso (e tão perigoso). Tudo se resume a uma distinção: **o
+valor de uma variável** versus **o endereço onde ela mora**.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* uma rua com casas
+numeradas. Dentro de uma casa (nº 104), um móvel rotulado "42". Na mão de um
+personagem, um papelzinho onde está escrito "104" — ele aponta para a casa, mas
+não é a casa. Legenda: "o ponteiro é o papel com o endereço; o valor é o que está
+dentro". Estilo lúdico à mão, paleta quente. Arte a comissionar — substituir este
+box.
+:::
+
+## A analogia: a rua de endereços
+
+Pense na memória do computador como uma **rua imensa de casas numeradas**. Cada
+casa é um byte, e cada uma tem um **endereço** único (um número). Quando você
+declara `int x = 42;`, o compilador reserva uma casa (na verdade, quatro bytes
+seguidos) num certo endereço e guarda ali o valor `42`.
+
+Um **ponteiro** é um papelzinho onde você anota o **endereço** de uma casa. O papel
+não é a casa nem o móvel lá dentro — é só a localização. Com ele, você consegue
+**chegar** à casa e mexer no que há dentro. Essa é a essência: ponteiro guarda
+endereço; pelo endereço, chega-se ao valor.
+
+## Endereço vs. valor: `&` e `*`
+
+Dois operadores fazem a ponte entre os dois mundos:
+
+- **`&x`** — "o **endereço** de `x`" (pega o número da casa).
+- **`*p`** — "o **valor** apontado por `p`" (entra na casa e olha/mexe no móvel).
+
+```{.c include="src/ch01-pointers/pointers.c" snippet="basics"}
+```
+
+A @fig-pointer desenha o estado depois de `int *p = &x;`: `p` guarda o endereço de
+`x`, e a seta representa o "aponta para".
+
+```{dot}
+//| label: fig-pointer
+//| fig-width: 3.4
+//| fig-height: 0.9
+//| fig-cap: "`p` é uma variável que guarda o ENDEREÇO de `x` (aqui, `0x7ffe…a4`). `*p` segue a seta e chega ao valor `42`. Os endereços são ilustrativos — variam a cada execução."
+digraph ptr {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=plaintext, fontname="Inter", fontsize=11];
+
+  pbox [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>p</b></td><td port="v" bgcolor="#E7F1EF">0x7ffe…a4</td></tr>
+      <tr><td colspan="2"><font point-size="8" color="#999">um ponteiro (int *)</font></td></tr>
+    </table>>];
+  xbox [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>x</b></td><td bgcolor="#F5793B"><font color="white"><b>42</b></font></td></tr>
+      <tr><td colspan="2"><font point-size="8" color="#999">mora em 0x7ffe…a4</font></td></tr>
+    </table>>];
+
+  pbox:v -> xbox [label="  aponta para  ", color="#2A9D8F", fontcolor="#2A9D8F"];
+}
+```
+
+::: {.callout-note title="Ideia central"}
+`x` e `p` são **duas variáveis distintas**, em casas distintas. `x` guarda um
+*valor* (`42`); `p` guarda um *endereço* (o de `x`). `&` vai do valor para o
+endereço; `*` vai do endereço de volta ao valor. Confundir os dois é a fonte de
+metade dos bugs em C — e dominá-los é metade do domínio da linguagem.
+:::
+
+## Mudar à distância
+
+O detalhe que torna ponteiros indispensáveis: por `*p` você não só **lê** como
+também **escreve** na casa apontada. No código acima, `*p = 99;` mudou `x` sem
+mencionar o nome `x`. Foi assim que, na prática, toda função que devolvia um
+resultado por um parâmetro `int *out` funcionou: ela escrevia na casa do chamador.
+É também como uma função consegue alterar uma variável de quem a chamou — em C, os
+argumentos são **cópias**, então passar o **endereço** é a única forma de deixar a
+função tocar no original.
+
+## Aritmética de ponteiros
+
+Ponteiros e arrays são íntimos. O nome de um array "decai" no endereço do seu
+primeiro elemento, e somar a um ponteiro **anda em elementos**, não em bytes:
+
+```{.c include="src/ch01-pointers/pointers.c" snippet="arithmetic"}
+```
+
+`p + 2` não pula 2 bytes — pula 2 **`int`s**, ou seja, $2 \times 4 = 8$ bytes. O
+compilador conhece o tipo apontado e escala a conta automaticamente. A
+@fig-arithmetic mostra por que `v[i]` é literalmente `*(v + i)`:
+
+```{dot}
+//| label: fig-arithmetic
+//| fig-width: 4.4
+//| fig-height: 0.75
+//| fig-cap: "O array `v` ocupa bytes contíguos; cada `int` avança o endereço em 4. `p + i` aponta para `v[i]` porque a soma conta em elementos. Por isso `v[i]` é só açúcar para `*(v + i)`."
+digraph arr {
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+  edge [color="#2A9D8F", arrowsize=0.7];
+
+  cells [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="8">
+      <tr>
+        <td port="c0" bgcolor="#F5793B"><font color="white"><b>10</b></font></td>
+        <td port="c1" bgcolor="#F5793B"><font color="white"><b>20</b></font></td>
+        <td port="c2" bgcolor="#F5793B"><font color="white"><b>30</b></font></td>
+        <td port="c3" bgcolor="#F5793B"><font color="white"><b>40</b></font></td>
+      </tr>
+      <tr>
+        <td><font point-size="8">v[0] · 0x…00</font></td>
+        <td><font point-size="8">v[1] · 0x…04</font></td>
+        <td><font point-size="8">v[2] · 0x…08</font></td>
+        <td><font point-size="8">v[3] · 0x…0c</font></td>
+      </tr>
+    </table>>];
+
+  p [shape=plaintext, label=<<font color="#2A9D8F"><b>p</b></font>>];
+  p1 [shape=plaintext, label=<<font color="#2A9D8F"><b>p+1</b></font>>];
+  p2 [shape=plaintext, label=<<font color="#2A9D8F"><b>p+2</b></font>>];
+  p -> cells:c0;
+  p1 -> cells:c1;
+  p2 -> cells:c2;
+}
+```
+
+## Ponteiro para ponteiro
+
+Se um ponteiro é uma variável, ela também tem um endereço — e podemos guardá-lo em
+**outro** ponteiro. Um `int **pp` é "um ponteiro para um ponteiro para int":
+
+```{.c include="src/ch01-pointers/pointers.c" snippet="ptr2ptr"}
+```
+
+A @fig-ptr2ptr mostra a corrente: `pp → p → x`. Cada `*` desfaz um salto, então
+`**pp` chega lá em `x`. Não é abstração gratuita: foi exatamente o **ponteiro para
+ponteiro** que tornou a remoção na lista encadeada (capítulo 6) elegante, sem caso
+especial para a cabeça — e é como uma função altera um ponteiro do chamador.
+
+```{dot}
+//| label: fig-ptr2ptr
+//| fig-width: 3.4
+//| fig-height: 1.85
+//| fig-cap: "`pp` aponta para `p`, que aponta para `x`. Cada `*` segue uma seta: `*pp` é `p`, e `**pp` é `x`."
+digraph p2p {
+  rankdir=LR;
+  bgcolor="transparent";
+  margin=0;
+  nodesep=0.4;
+  node [shape=plaintext, fontname="Inter", fontsize=11];
+
+  ppb [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>pp</b></td><td port="v" bgcolor="#E7F1EF">&amp;p</td></tr>
+    </table>>];
+  pb [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>p</b></td><td port="v" bgcolor="#E7F1EF">&amp;x</td></tr>
+    </table>>];
+  xb [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr><td><b>x</b></td><td bgcolor="#F5793B"><font color="white"><b>7</b></font></td></tr>
+    </table>>];
+
+  ppb -> pb [color="#2A9D8F"];
+  pb -> xb [color="#2A9D8F"];
+}
+```
+
+## O ponteiro genérico `void *`
+
+Todo ponteiro até aqui tinha um tipo: `int *`, `char *`. O **`void *`** é o
+ponteiro **sem tipo** — guarda qualquer endereço, mas esqueceu o que há lá. Para
+usá-lo, é preciso um **cast** que reanuncia o tipo:
+
+```{.c include="src/ch01-pointers/pointers.c" snippet="voidptr"}
+```
+
+O `void *` é o que permite escrever código **genérico** — uma estrutura que guarda
+"qualquer coisa". Foi a base da estratégia **Shadow Data** (capítulo 7) e é como o
+`qsort` da biblioteca padrão ordena arrays de qualquer tipo. O preço é perder a
+verificação do compilador: com `void *`, a responsabilidade pelo tipo correto
+passa a ser **sua**.
+
+## Vendo funcionar
+
+As quatro demonstrações, rodadas em sequência, produzem:
+
+```text
+x        = 42
+*p       = 42
+x depois = 99
+*p       = 10
+*(p + 2) = 30
+bytes(v[1] - v[0]) = 4
+x=7  *p=7  **pp=7
+x agora = 50
+via void*: 1234
+```
+
+::: {.content-visible when-format="html"}
+**Aritmética interativa.** Arraste o deslocamento `i` e veja `p + i` apontar para
+`v[i]`, com o endereço avançando 4 bytes por elemento:
+
+```{ojs}
+//| echo: false
+viewof off = Inputs.range([0, 3], { value: 0, step: 1, label: "deslocamento i em (p + i)" })
+```
+
+```{ojs}
+//| echo: false
+{
+  const v = [10, 20, 30, 40];
+  const base = 0x1000;
+  const cells = v.map((val, i) => {
+    const sel = (i === off);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="width:48px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:7px;
+        background:${sel ? "#F5793B" : "#FBE3D3"};color:${sel ? "#fff" : "#555"};font:600 15px sans-serif;
+        border:${sel ? "2px solid #2A9D8F" : "1px solid #E6CDBA"}">${val}</div>
+      <div style="font:9px monospace;color:#777">0x${(base + i * 4).toString(16)}</div>
+      <div style="font:9px sans-serif;color:#999">v[${i}]</div>
+    </div>`;
+  }).join("");
+  return html`<div>
+    <div style="display:flex;gap:8px">${cells}</div>
+    <div style="margin-top:8px;font:13px sans-serif;color:#264653">
+      <b style="color:#2A9D8F;font-family:monospace">*(p + ${off})</b> = <b>${v[off]}</b>,
+      no endereço <b style="font-family:monospace">0x${(base + off * 4).toString(16)}</b>
+      &nbsp;—&nbsp; <code>p + ${off}</code> avançou ${off} elemento${off === 1 ? "" : "s"} = ${off * 4} bytes</div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção deixa você variar o deslocamento `i` e ver `p + i` apontar
+para `v[i]`, com o endereço subindo 4 bytes por elemento (ver @fig-arithmetic).
+:::
+
+## Cuidados: os ponteiros que mordem
+
+::: {.callout-warning title="Cuidado: ponteiros inválidos"}
+Um ponteiro guarda um endereço — e nada garante que o endereço seja **válido**. Os
+três perigos clássicos:
+
+- **`NULL`:** o endereço "nenhum". Fazer `*p` quando `p == NULL` é o famoso
+  *segmentation fault*. Sempre cheque antes de seguir um ponteiro que pode ser nulo.
+- **Selvagem** (*wild*): um ponteiro não inicializado aponta para lixo. Inicialize
+  sempre — com `NULL` se ainda não tem para onde apontar.
+- **Pendurado** (*dangling*): aponta para uma casa que já foi liberada (`free`) ou
+  que saiu de escopo. Usá-lo é comportamento indefinido. Veja mais no capítulo 2.
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Passe um ponteiro quando a função precisa **modificar** o original do chamador
+(parâmetros de saída, como os `*out` do livro) ou para **evitar copiar** um dado
+grande (passar o endereço de uma `struct` de 1 KB custa 8 bytes, não 1 KB). Para
+dados pequenos que a função só lê, passar por valor (uma cópia) é mais simples e
+seguro. E sinalize a intenção com `const`: um `const int *p` promete "vou ler pela
+seta, não escrever" — um contrato que o compilador faz cumprir.
+:::
+
+::: {.callout-note title="No mundo real"}
+Ponteiros não são exclusividade do C — eles só ficam **escondidos** em linguagens
+de mais alto nível. Quando, em Java ou Python, dois nomes referenciam o mesmo
+objeto e mudar por um afeta o outro, são ponteiros (chamados de "referências") por
+baixo. A diferença é que essas linguagens proíbem aritmética de ponteiro e
+gerenciam a memória por você. Tony Hoare, que inventou a referência nula em 1965,
+a chamou de seu **"erro de um bilhão de dólares"**, de tantos *crashes* que o
+`NULL` causou desde então — o mesmo `NULL` que você acabou de aprender a respeitar.
+:::
+
+## Resumo
+
+- A memória é uma sequência de bytes endereçados. Toda variável tem um **valor** e
+  um **endereço**.
+- Um **ponteiro** é uma variável que guarda um endereço. **`&x`** dá o endereço de
+  `x`; **`*p`** lê (ou escreve) o valor na casa apontada por `p`.
+- Por um ponteiro, uma função **modifica** dados do chamador — daí os parâmetros de
+  saída e o "passar por endereço".
+- A **aritmética de ponteiros** conta em elementos: `p + i` aponta para o `i`-ésimo
+  elemento, e `v[i]` é só `*(v + i)`.
+- Um **ponteiro para ponteiro** (`**pp`) guarda o endereço de um ponteiro — útil
+  para alterar ponteiros e para evitar casos especiais (como na lista do cap. 6).
+- O **`void *`** guarda qualquer endereço sem tipo; um cast o recupera. É a base do
+  código genérico (Shadow Data, `qsort`) — e abre mão da proteção do compilador.
+
+No próximo capítulo, vamos ao **gerenciamento de memória**: de onde vêm os
+endereços que os ponteiros guardam — a pilha e o heap —, como pedir e devolver
+memória com `malloc`/`free`, e como nascem (e como se evitam) os vazamentos e os
+ponteiros pendurados.
