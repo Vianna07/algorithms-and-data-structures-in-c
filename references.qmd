@@ -1,0 +1,8 @@
+# Referências {.unnumbered}
+
+As obras citadas ao longo do livro aparecem listadas abaixo (estilo limpo via
+CSL — sem ABNT). Cite no texto com a sintaxe `[@chave]`, usando as chaves de
+`refs.bib`.
+
+::: {#refs}
+:::

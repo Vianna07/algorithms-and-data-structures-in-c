@@ -1,0 +1,58 @@
+---
+# index.qmd — Capa / apresentação / como ler. Front matter do livro (sem número).
+---
+
+# [Estruturas de Dados e Algoritmos em C]{.typing-effect} {.unnumbered}
+
+> *O caderno do projetista: da RAM ao compactador de Huffman.*
+
+Este é um livro **prático e ilustrado** para quem já programa um pouco e quer
+entender, de verdade, o que acontece na memória quando uma estrutura de dados é
+construída em C — e por que cada decisão de projeto custa (ou economiza) tempo e
+espaço. Em vez de tratar as estruturas como caixas-pretas, vamos **abri-las byte
+a byte**, desenhar a RAM, e terminar construindo um compactador de arquivos real
+com o algoritmo de Huffman.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — abertura.** *Brief:* um(a) projetista diante de
+um diagrama de RAM (blocos de bytes numerados) que se transmuta, da esquerda
+para a direita, em **array → lista encadeada → árvore**. Estilo lúdico desenhado
+à mão (referência: *Entendendo Algoritmos*), paleta quente (laranja/teal). Arte
+a comissionar — substituir este box.
+:::
+
+## Os dois caminhos de leitura
+
+Este material existe em dois formatos gerados da **mesma fonte**:
+
+- **Site-curso (HTML).** Navegação por tópicos, modo escuro, código com cópia e
+  realce, animações e páginas de *scrollytelling* para os momentos de maior
+  impacto (travessia de ponteiros, montagem da árvore de Huffman). Ideal para
+  estudar no computador, mexendo nos exemplos.
+- **Livro (PDF).** Tipografia impressa, diagramas vetoriais e layout pensado
+  para leitura linear e anotações à mão. Ideal para ler com calma, longe da tela.
+
+O conteúdo é o mesmo; só o **design** muda. Use o que combinar com o seu momento.
+
+## Pré-requisitos
+
+Você aproveita melhor o livro se já consegue:
+
+- escrever e compilar um programa simples em C (`gcc`/`clang`);
+- usar variáveis, funções, `if`/`for`/`while` e arrays de tamanho fixo;
+- ler a saída de um programa no terminal.
+
+**Não** é preciso dominar ponteiros nem alocação dinâmica: a **Parte I —
+Fundamentos do C** existe justamente para construir essa base com calma.
+
+## A mentalidade do livro
+
+::: {.callout-tip title="Pense como projetista"}
+Ao longo do texto, vamos repetir uma pergunta: *por que esta estrutura aqui, e
+não outra?* Cada capítulo traz o **Big-O de tempo e de espaço**, um **trade-off
+explícito** (tempo × memória) e o **diagrama da RAM** correspondente. A meta não
+é decorar implementações, mas desenvolver o olho do projetista que escolhe a
+ferramenta certa para cada problema.
+:::
+
+Boa leitura — e bons diagramas de memória.
