@@ -1,0 +1,336 @@
+---
+# 08-stacks-queues.qmd — Pilhas e Filas sobre dois backings; fila circular.
+---
+
+# [Pilhas e Filas: o poder de restringir o acesso]{.typing-effect}
+
+As estruturas dos capítulos anteriores eram **generalistas**: você insere e remove
+onde quiser. Agora vamos no sentido oposto — estruturas que, **de propósito**, só
+deixam você mexer nas pontas. Parece um retrocesso, mas é o contrário: ao
+restringir o acesso, a estrutura ganha simplicidade, garante uma **ordem de
+saída** previsível e fica difícil de usar errado. Restringir é um recurso.
+
+São duas, definidas pela ordem em que os elementos saem:
+
+- **Pilha** (*stack*): o último a entrar é o primeiro a sair — **LIFO** (*Last In,
+  First Out*).
+- **Fila** (*queue*): o primeiro a entrar é o primeiro a sair — **FIFO** (*First
+  In, First Out*).
+
+E aqui está a lição central do capítulo: pilha e fila são **interfaces** (um
+contrato de operações), não implementações. Cada uma pode ser construída sobre os
+dois *backings* que já dominamos — o **array dinâmico** (cap. 5) e a **lista
+encadeada** (cap. 6). Vamos montar as duas de cada jeito e comparar.
+
+::: {.callout-note appearance="minimal" icon="false"}
+🎨 **Placeholder de ilustração — analogia de abertura.** *Brief:* lado a lado,
+uma **pilha de pratos** (você tira o de cima — o último empilhado) e uma **fila de
+padaria** (quem chegou primeiro é atendido primeiro, sai pela frente). Setas
+indicam onde se entra e onde se sai em cada uma. Estilo lúdico à mão, paleta
+quente. Arte a comissionar — substituir este box.
+:::
+
+## Pilha (LIFO): a pilha de pratos
+
+Pense numa pilha de pratos na pia. Você sempre coloca e tira **do topo**; o prato
+do fundo é o último a sair. Só existem três operações:
+
+- **`push`**: coloca um elemento no topo.
+- **`pop`**: tira o elemento do topo.
+- **`peek`**: espia o topo sem tirar.
+
+Repare o que *não* existe: "inserir no meio", "acessar o terceiro". A pilha
+proíbe — e é essa proibição que a torna simples e segura. A @fig-stack-queue
+ilustra as duas estruturas e por onde se entra e sai.
+
+```{dot}
+//| label: fig-stack-queue
+//| fig-width: 5.0
+//| fig-height: 2.15
+//| fig-cap: "Pilha (LIFO): entra e sai pelo mesmo lado (o topo). Fila (FIFO): entra por um lado (o fim) e sai pelo outro (a frente). A cor mais forte marca a ponta ativa."
+digraph sq {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=plaintext, fontname="Inter", fontsize=11];
+
+  stack [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr>
+        <td border="0"><b><font color="#2A9D8F">Pilha (LIFO)&#160;&#160;</font></b></td>
+        <td bgcolor="#FBC9A8">10</td>
+        <td bgcolor="#F8A878">20</td>
+        <td bgcolor="#F5793B"><font color="white"><b>30</b></font></td>
+        <td border="0"><font point-size="9" color="#264653">&#160;&#8592; topo: push / pop</font></td>
+      </tr>
+    </table>>];
+
+  queue [label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="7">
+      <tr>
+        <td border="0"><b><font color="#2A9D8F">Fila (FIFO)&#160;&#160;&#160;&#160;</font></b></td>
+        <td border="0"><font point-size="9" color="#264653">sai &#8592;&#160;</font></td>
+        <td bgcolor="#F5793B"><font color="white"><b>10</b></font></td>
+        <td bgcolor="#F8A878">20</td>
+        <td bgcolor="#FBC9A8">30</td>
+        <td border="0"><font point-size="9" color="#264653">&#160;&#8592; entra</font></td>
+      </tr>
+    </table>>];
+
+  stack -> queue [style=invis];
+}
+```
+
+## Dois backings para a mesma pilha
+
+**Sobre array dinâmico**, a pilha é quase de graça: `push` é o `append` do
+capítulo 5 (escreve no fim, dobra a capacidade se encher) e `pop` só decrementa o
+tamanho. As duas operações mexem no **fim** do array — onde tudo é $O(1)$.
+
+```{.c include="src/ch08-stacks-queues/stacks.c" snippet="arrops"}
+```
+
+**Sobre lista encadeada**, o topo é a **cabeça** da lista: `push` insere na
+cabeça, `pop` remove da cabeça — exatamente o caso $O(1)$ do capítulo 6, sem
+deslocar nada e sem nunca realocar.
+
+```{.c include="src/ch08-stacks-queues/stacks.c" snippet="listops"}
+```
+
+::: {.callout-important title="Trade-off: array × lista como backing"}
+As duas pilhas têm operações $O(1)$, mas o caráter difere:
+
+- **Array:** memória contígua (ótima localidade de cache), sem ponteiro por
+  elemento. Em troca, há realocações ocasionais $O(n)$ (amortizadas) e pode
+  sobrar capacidade ociosa.
+- **Lista:** nunca realoca e cresce de um em um, sem capacidade ociosa. Em troca,
+  cada elemento custa um `malloc` e um ponteiro extra, e os nós ficam espalhados
+  pela RAM (pior cache).
+
+Para a maioria dos usos, **a pilha sobre array vence** — pela cache e por evitar um
+`malloc` por elemento. Prefira a lista quando não puder tolerar a pausa ocasional
+de uma realocação grande, ou quando os elementos já vivem em nós encadeados.
+:::
+
+## Fila (FIFO): a fila da padaria
+
+Na fila da padaria, quem chega entra **no fim**; quem é atendido sai **pela
+frente**. As operações:
+
+- **`enqueue`**: põe um elemento no fim.
+- **`dequeue`**: tira o elemento da frente.
+
+O detalhe que torna a fila mais interessante que a pilha: ela mexe nas **duas
+pontas** — entra numa, sai na outra. E é justamente isso que cria um problema
+quando tentamos usar um array comum.
+
+### Por que um array ingênuo não serve
+
+Imagine uma fila sobre um array, com a frente no índice 0. Cada `dequeue` tira o
+elemento 0 e... precisa **deslocar todos os outros** uma casa para a esquerda —
+$O(n)$ por remoção. Inaceitável. A saída elegante é não deslocar nada: deixar a
+frente "andar" pelo array e **dar a volta** quando chega ao fim. É o **buffer
+circular** (*ring buffer*).
+
+## A fila circular (ring buffer)
+
+A ideia: um array de capacidade fixa e dois números — `head` (índice da frente) e
+`count` (quantos elementos há). O fim fica em `(head + count) % cap`. Quando um
+índice passaria do fim do array, o **módulo** o traz de volta ao começo. Nada se
+desloca; os índices é que circulam.
+
+```{.c include="src/ch08-stacks-queues/queues.c" snippet="ringops"}
+```
+
+A @fig-ring mostra um buffer de capacidade 5 com a frente em `[1]`: ao avançar
+além de `[4]`, o índice volta a `[0]`.
+
+```{dot}
+//| label: fig-ring
+//| fig-width: 5.0
+//| fig-height: 2.5
+//| fig-cap: "Buffer circular: os elementos não se movem; os índices `head` e o fim é que circulam pelo array com `% cap`. O slot após `[4]` é o `[0]`."
+digraph ring {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Inter", fontsize=11];
+
+  buf [shape=plaintext, label=<
+    <table border="0" cellborder="1" cellspacing="0" cellpadding="9">
+      <tr>
+        <td port="c0" bgcolor="#E9E4DC">&#183;</td>
+        <td port="c1" bgcolor="#F5793B"><font color="white"><b>20</b></font></td>
+        <td port="c2" bgcolor="#F5793B"><font color="white"><b>30</b></font></td>
+        <td port="c3" bgcolor="#F5793B"><font color="white"><b>40</b></font></td>
+        <td port="c4" bgcolor="#E9E4DC">&#183;</td>
+      </tr>
+      <tr>
+        <td><font point-size="8">[0]</font></td>
+        <td><font point-size="8" color="#2A9D8F"><b>[1] head</b></font></td>
+        <td><font point-size="8">[2]</font></td>
+        <td><font point-size="8">[3]</font></td>
+        <td><font point-size="8" color="#E2725B"><b>[4] fim</b></font></td>
+      </tr>
+    </table>>];
+
+  buf:c4:s -> buf:c0:s [constraint=false, color="#2A9D8F", penwidth=1.4, label=<<font point-size="9" color="#2A9D8F">  (i+1) % cap</font>>];
+}
+```
+
+::: {.callout-tip title="Ideia central"}
+Por que guardar `head` + `count` em vez de `head` + `tail` (frente e fim)? Porque
+só com dois índices a condição `head == tail` é ambígua: vale tanto para fila
+**vazia** quanto **cheia**. Rastrear o `count` desfaz a ambiguidade de imediato.
+(A alternativa clássica é manter um slot sempre vazio para distinguir os dois
+casos — funciona, mas desperdiça uma posição.)
+:::
+
+## A fila sobre lista
+
+Sobre lista encadeada, a fila é direta: guarde ponteiros para a **frente**
+(`head`) e o **fim** (`tail`). `enqueue` costura no `tail`, `dequeue` remove do
+`head` — ambos $O(1)$, e a fila cresce sem limite de capacidade.
+
+```{.c include="src/ch08-stacks-queues/queues.c" snippet="listqops"}
+```
+
+A diferença de projeto em relação ao ring buffer: a fila sobre lista **nunca
+enche** (cresce sob demanda), mas paga um `malloc`/`free` por elemento e perde a
+localidade de cache. O ring buffer tem **capacidade fixa**, mas zero alocações
+após a criação e memória contígua — por isso é o queridinho de sistemas de tempo
+real.
+
+## Vendo as quatro em ação
+
+```{.c include="src/ch08-stacks-queues/main.c" snippet="main"}
+```
+
+Saída do programa:
+
+```text
+pilha/array (LIFO): 30 20 10
+pilha/lista (LIFO): 30 20 10
+fila/lista  (FIFO): 10 20 30
+fila circular     : 20 30 40
+```
+
+As duas pilhas saem invertidas (LIFO); a fila sai na ordem de chegada (FIFO). Na
+fila circular, o `40` enfileirado após um `dequeue` ocupa o slot que o `10`
+liberou — o **wrap** em ação.
+
+## Veja acontecer
+
+::: {.content-visible when-format="html"}
+**O buffer circular, passo a passo.** Arraste para aplicar operações a um ring de
+capacidade 3. Veja `head` e o fim circularem e os slots serem **reaproveitados**
+quando os índices dão a volta (laranja = ocupado, cinza = livre):
+
+```{ojs}
+//| echo: false
+viewof passo = Inputs.range([0, 9], { value: 3, step: 1, label: "operações aplicadas" })
+```
+
+```{ojs}
+//| echo: false
+ring_ops = [
+  { op: "enqueue", v: 10 }, { op: "enqueue", v: 20 }, { op: "enqueue", v: 30 },
+  { op: "dequeue" }, { op: "enqueue", v: 40 }, { op: "dequeue" },
+  { op: "enqueue", v: 50 }, { op: "dequeue" }, { op: "dequeue" }
+]
+```
+
+```{ojs}
+//| echo: false
+{
+  const cap = 3;
+  const buf = new Array(cap).fill(null);
+  let head = 0, count = 0, last = "—";
+  for (let i = 0; i < passo; i++) {
+    const o = ring_ops[i];
+    if (o.op === "enqueue") {
+      if (count < cap) { buf[(head + count) % cap] = o.v; count++; last = `enqueue(${o.v})`; }
+      else last = `enqueue(${o.v}) — cheia, rejeitada`;
+    } else {
+      if (count > 0) { last = `dequeue() → ${buf[head]}`; head = (head + 1) % cap; count--; }
+      else last = "dequeue() — vazia";
+    }
+  }
+  const tail = (head + count) % cap;
+  const occupied = (s) => { for (let j = 0; j < count; j++) if ((head + j) % cap === s) return true; return false; };
+  const cell = (s) => {
+    const occ = occupied(s);
+    const marks = [];
+    if (count > 0 && s === head) marks.push("head");
+    if (count < cap && s === tail) marks.push("fim");
+    return html`<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:8px;font:600 15px sans-serif;background:${occ ? "#F5793B" : "#E9E4DC"};color:${occ ? "#fff" : "#999"}">${occ ? buf[s] : "·"}</div>
+      <div style="font:10px sans-serif;color:#777">[${s}]</div>
+      <div style="font:10px sans-serif;color:#2A9D8F;height:12px">${marks.join(" · ")}</div>
+    </div>`;
+  };
+  return html`<div>
+    <div style="display:flex;gap:12px;align-items:flex-start">${Array.from({ length: cap }, (_, s) => cell(s))}</div>
+    <div style="margin-top:8px;font:13px sans-serif;color:#264653">última operação: <b>${last}</b> &nbsp;·&nbsp; count = ${count}/${cap}</div>
+  </div>`;
+}
+```
+:::
+
+::: {.content-visible when-format="typst"}
+No site, esta seção anima um buffer circular de capacidade 3 passo a passo,
+mostrando `head` e o fim circulando e os slots sendo reaproveitados no *wrap*
+(ver @fig-ring).
+:::
+
+## Pense como projetista
+
+::: {.callout-tip title="Pense como projetista"}
+Escolha **pilha** quando a ordem natural do problema é "desfazer o mais recente
+primeiro": histórico de *undo*, avaliação de expressões, a própria pilha de
+chamadas, backtracking. Escolha **fila** quando é "atender por ordem de chegada":
+tarefas a processar, eventos, mensagens, busca em largura. Para o *backing*: array
+(ou ring buffer) é o padrão — rápido e cache-friendly; vá para a lista quando
+precisar crescer sem limite e sem pausas de realocação, ou quando os elementos já
+moram em nós. E não esqueça: ao restringir a interface a `push`/`pop` ou
+`enqueue`/`dequeue`, você documenta a intenção e blinda o código contra usos
+indevidos.
+:::
+
+::: {.callout-note title="No mundo real"}
+A **pilha de chamadas** (*call stack*) do seu programa é literalmente uma pilha:
+cada função chamada empilha um quadro com suas variáveis locais, que é
+desempilhado no `return` — e o *stack overflow* é ela estourando. **Ring buffers**
+estão em todo sistema que processa um fluxo contínuo: placas de **áudio** (o
+buffer entre o programa e o alto-falante), pilhas de **rede** (pacotes que chegam
+mais rápido do que são processados), *logs* de alta velocidade. E há a **deque**
+(*double-ended queue*): uma fila que aceita inserir e remover **nas duas pontas**,
+generalizando pilha e fila — é o que está por trás do `deque` do Python e do
+`std::deque` do C++.
+:::
+
+## Resumo
+
+- Pilha (**LIFO**) e fila (**FIFO**) são **interfaces restritas**: só se mexe nas
+  pontas. A restrição é proposital — traz simplicidade, ordem previsível e
+  segurança.
+- A mesma interface roda sobre **dois backings**: array dinâmico (cap. 5) ou lista
+  encadeada (cap. 6). Todas as operações essenciais são $O(1)$.
+- A **fila sobre array** exige o truque do **buffer circular** (`% cap`) para não
+  pagar $O(n)$ deslocando elementos a cada `dequeue`.
+- **Array/ring**: contíguo, cache-friendly, sem `malloc` por item, mas com
+  capacidade (fixa ou amortizada). **Lista**: cresce sem limite e sem realocar,
+  mas com ponteiro e alocação por elemento e pior cache.
+
+### Tabela de complexidade do capítulo
+
+| Operação | Pilha/array | Pilha/lista | Fila/ring | Fila/lista |
+|:--|:--:|:--:|:--:|:--:|
+| Inserir (`push`/`enqueue`) | $O(1)$ amort. | $O(1)$ | $O(1)$ | $O(1)$ |
+| Remover (`pop`/`dequeue`) | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ |
+| Espiar a ponta ativa | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ |
+| Memória por elemento | ~nenhuma | +1 ponteiro | ~nenhuma | +1 ponteiro |
+| Capacidade | cresce (realoca) | ilimitada | **fixa** | ilimitada |
+
+: As quatro implementações deste capítulo. {tbl-colwidths="[28,18,18,18,18]"}
+
+No próximo capítulo, saímos das estruturas lineares e entramos nas **árvores
+binárias de busca** — onde, pela primeira vez, a busca pode ser melhor que $O(n)$.
